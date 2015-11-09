@@ -101,11 +101,12 @@ public class MessageParsers {
             throw new FieldException(FixTags.BeginString, "Missing BeginString(8)");
     }
 
-    public static void parseMessageType(MessageParser parser, ByteArrayReference out) {
+    public static CharSequence parseMessageType(MessageParser parser, ByteArrayReference out) {
         if (!parser.next() || parser.getTagNum() != FixTags.MsgType)
             throw new FieldException(FixTags.MsgType, "Missing MsgType(35)");
 
         parser.getByteSequence(out);
+        return out;
     }
 
     public static int parseBodyLength(MessageParser parser) {

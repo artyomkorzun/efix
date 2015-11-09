@@ -20,7 +20,7 @@ public class SessionSettings {
     protected SessionID sessionID;
     protected boolean initiator = true;
     protected int heartbeatInterval = 30;
-    protected int heartbeatTimeout = 1000 * heartbeatInterval + 100;
+    protected int heartbeatTimeout = 1000 * (heartbeatInterval + 1);
     protected boolean resetSeqNumsOnEachLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
@@ -54,6 +54,7 @@ public class SessionSettings {
 
     public void setHeartbeatInterval(int heartbeatInterval) {
         this.heartbeatInterval = heartbeatInterval;
+        this.heartbeatTimeout = 1000 * (heartbeatInterval + 1);
     }
 
     public int getHeartbeatTimeout() {

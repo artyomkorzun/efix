@@ -51,7 +51,7 @@ public class Sender {
         this.channel = channel;
     }
 
-    public void send(int msgSeqNum, long sendingTime, Buffer chunk, int offset, int length) {
+    public void send(int msgSeqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
         Channel channel = this.channel;
         if (channel == null)
             return;
@@ -77,7 +77,7 @@ public class Sender {
         builder.append(checkSumChunk).append3Digit(Fields.checkSum(sum)).end();
     }
 
-    public void send(int msgSeqNum, long sendingTime, long origSendingTime, Buffer chunk, int offset, int length) {
+    public void send(int msgSeqNum, long sendingTime, boolean possDup, long origSendingTime, CharSequence msgType, Buffer body, int offset, int length) {
 
     }
 

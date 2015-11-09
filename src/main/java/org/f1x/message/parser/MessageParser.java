@@ -56,6 +56,10 @@ public interface MessageParser {
 
     boolean isValueEquals(byte[] constant);
 
+    int fieldOffset();
+
+    int fieldLength();
+
     MessageParser wrap(Buffer buffer, int offset, int length);
 
     MessageParser reset();

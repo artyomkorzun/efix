@@ -16,6 +16,7 @@ import org.f1x.schedule.SessionSchedule;
 import org.f1x.state.SessionState;
 import org.f1x.state.SessionStatus;
 import org.f1x.store.MessageStore;
+import org.f1x.util.ByteArrayReference;
 import org.f1x.util.EpochClock;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
@@ -51,9 +52,10 @@ public class SessionProcessor implements Worker {
     protected final TestRequest testRequest = new TestRequest();
     protected final ResendRequest resendRequest = new ResendRequest();
     protected final SequenceReset sequenceReset = new SequenceReset();
+    protected final ByteArrayReference msgTypeToSend = new ByteArrayReference();
 
-    protected final Reader inboundMessageHandler = createInboundMessageHandler();
-    protected final Reader outboundMessageHandler = createOutboundMessageHandler();
+    protected final Reader inMessageHandler = createInMessageHandler();
+    protected final Reader outMessageHandler = createOutMessageHandler();
     protected final MessageStore.Visitor resendMessagesHandler = createResendMessagesHandler();
 
     protected Channel channel;
@@ -108,8 +110,8 @@ public class SessionProcessor implements Worker {
         int work = 0;
 
         work += checkSession();
-        work += pollTransport();
-        work += drainMessageQueue();
+        work += processInboundMessages();
+        work += processOutboundMessages();
         work += processTimers(clock.time());
 
         return work;
@@ -137,9 +139,9 @@ public class SessionProcessor implements Worker {
         }
     }
 
-    protected int pollTransport() {
+    protected int processInboundMessages() {
         try {
-            int bytesRead = receiver.pollTransport(inboundMessageHandler);
+            int bytesRead = receiver.receive(inMessageHandler);
             if (bytesRead == -1) {
                 disconnect("No more data");
                 return 1;
@@ -152,9 +154,9 @@ public class SessionProcessor implements Worker {
         }
     }
 
-    protected int drainMessageQueue() {
+    protected int processOutboundMessages() {
         try {
-            return messageQueue.read(outboundMessageHandler);
+            return messageQueue.read(outMessageHandler);
         } catch (Throwable e) {
             onError(e);
             return 1;
@@ -213,10 +215,10 @@ public class SessionProcessor implements Worker {
         long idle = now - state.getLastReceivedTime();
         int limit = settings.getHeartbeatTimeout();
         if (idle >= 2 * limit) {
-            disconnect("Heartbeat timeout expired");
+            disconnect("Heartbeat timeout");
             ok = false;
         } else if (idle >= limit && !state.isTestRequestSent()) {
-            sendTestRequest("Are you there?");
+            sendTestRequest("Heartbeat timeout");
             ok = false;
         }
 
@@ -306,10 +308,9 @@ public class SessionProcessor implements Worker {
         if (resetSeqNums)
             state.setNextTargetSeqNum(1);
 
+        state.setSeqNumsSynchronized(false);
         int msgSeqNum = header.msgSeqNum();
         boolean expectedSeqNum = checkTargetSeqNum(msgSeqNum, resetSeqNums);
-        state.setSeqNumsSynchronized(expectedSeqNum);
-        state.setTestRequestSent(false);
         if (expectedSeqNum)
             state.setNextTargetSeqNum(msgSeqNum + 1);
 
@@ -322,8 +323,9 @@ public class SessionProcessor implements Worker {
             sendLogon(resetSeqNums);
 
         if (!expectedSeqNum)
-            sendResendRequest(msgSeqNum);
+            sendResendRequest(state.getNextTargetSeqNum(), 0);
 
+        sendTestRequest("MsgSeqNum check");
         setStatus(APPLICATION_CONNECTED);
     }
 
@@ -331,12 +333,16 @@ public class SessionProcessor implements Worker {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
         assertNotDuplicate(header.possDup(), "Heartbeat with PossDup(44)=Y");
 
+        state.setTestRequestSent(false);
         int msgSeqNum = header.msgSeqNum();
         if (checkTargetSeqNum(msgSeqNum, state.isSeqNumsSynchronized())) {
             state.setNextTargetSeqNum(msgSeqNum + 1);
-            state.setTestRequestSent(false);
-            onAdminMessage(header, parser);
+            state.setSeqNumsSynchronized(true);
+        } else {
+            sendResendRequest(state.getNextTargetSeqNum(), 0);
         }
+
+        onAdminMessage(header, parser);
     }
 
     protected void processTestRequest(Header header, MessageParser parser) {
@@ -349,7 +355,9 @@ public class SessionProcessor implements Worker {
             TestRequest request = MessageParsers.parseTestRequest(parser, this.testRequest);
             validateTestRequest(request);
             onAdminMessage(header, parser.reset());
-            sendHeartbeat(request.testReqID());
+
+            if (state.getStatus() == APPLICATION_CONNECTED)
+                sendHeartbeat(request.testReqID());
         }
     }
 
@@ -483,73 +491,74 @@ public class SessionProcessor implements Worker {
     }
 
     protected void sendHeartbeat(CharSequence testReqID) {
-        if (state.getStatus() == APPLICATION_CONNECTED) {
-            MessageBuilder builder = this.builder.wrap(messageBuffer);
-            makeHeartbeat(testReqID, builder);
-            sendMessage(messageBuffer, 0, builder.getLength());
-        }
+        MessageBuilder builder = this.builder.wrap(messageBuffer);
+        makeHeartbeat(testReqID, builder);
+        sendMessage(messageBuffer, 0, builder.getLength());
     }
 
     protected void sendTestRequest(CharSequence testReqID) {
-        if (state.getStatus() == APPLICATION_CONNECTED) {
-            state.setTestRequestSent(true);
-            MessageBuilder builder = this.builder.wrap(messageBuffer);
-            makeTestRequest(testReqID, builder);
-            sendMessage(messageBuffer, 0, builder.getLength());
-        }
+        state.setTestRequestSent(true);
+        MessageBuilder builder = this.builder.wrap(messageBuffer);
+        makeTestRequest(testReqID, builder);
+        sendMessage(messageBuffer, 0, builder.getLength());
     }
 
-    protected void sendResendRequest(int beginSeqNo) {
+    protected void sendResendRequest(int beginSeqNo, int endSeqNo) {
         MessageBuilder builder = this.builder.wrap(messageBuffer);
-        makeResendRequest(beginSeqNo, 0, builder);
+        makeResendRequest(beginSeqNo, endSeqNo, builder);
         sendMessage(messageBuffer, 0, builder.getLength());
     }
 
     protected void sendReject(Buffer buffer, int offset, int length) {
         boolean send = (state.getStatus() == APPLICATION_CONNECTED);
-        sendMessage(true, send, buffer, offset, length);
+        sendMessage(send, buffer, offset, length);
     }
 
     protected void sendSequenceReset(boolean gapFill, int seqNum, int newSeqNo) {
         MessageBuilder builder = this.builder.wrap(messageBuffer);
         makeSequenceReset(gapFill, newSeqNo, builder);
-        sendMessage(false, true, seqNum, messageBuffer, 0, builder.getLength());
+        sendMessage(true, seqNum, messageBuffer, 0, builder.getLength());
     }
 
     protected void sendAppMessage(Buffer buffer, int offset, int length) {
         boolean send = (state.getStatus() == APPLICATION_CONNECTED);
-        sendMessage(true, send, buffer, offset, length);
+        sendMessage(send, buffer, offset, length);
     }
 
     protected void sendMessage(Buffer buffer, int offset, int length) {
-        sendMessage(false, true, buffer, offset, length);
+        sendMessage(true, buffer, offset, length);
     }
 
-    protected void sendMessage(boolean persist, boolean send, Buffer buffer, int offset, int length) {
+    protected void sendMessage(boolean send, Buffer buffer, int offset, int length) {
         int seqNum = state.getNextSenderSeqNum();
         state.setNextSenderSeqNum(seqNum + 1);
-        sendMessage(persist, send, seqNum, buffer, offset, length);
+        sendMessage(send, seqNum, buffer, offset, length);
     }
 
     protected void resendMessages(int beginSeqNo, int endSeqNo) {
         store.read(beginSeqNo, endSeqNo, resendMessagesHandler);
     }
 
-    protected void resendMessage(int seqNum, long origSendingTime, Buffer buffer, int offset, int length) {
+    protected void resendMessage(int seqNum, long origSendingTime, CharSequence msgType, Buffer buffer, int offset, int length) {
         long time = clock.time();
         state.setLastSentTime(time);
-        sender.send(seqNum, time, origSendingTime, buffer, offset, length);
+        sender.send(seqNum, time, true, origSendingTime, msgType, buffer, offset, length);
     }
 
-    protected void sendMessage(boolean persist, boolean send, int seqNum, Buffer buffer, int offset, int length) {
+    protected void sendMessage(boolean send, int seqNum, Buffer buffer, int offset, int length) {
+        MessageParser parser = this.parser.wrap(buffer, offset, length);
+        CharSequence msgType = MessageParsers.parseMessageType(parser, msgTypeToSend);
+        length -= parser.fieldLength();
+        offset += parser.fieldLength();
+
         long time = clock.time();
         try {
             if (send) {
                 state.setLastSentTime(time);
-                sender.send(seqNum, time, buffer, offset, length);
+                sender.send(seqNum, time, msgType, buffer, offset, length);
             }
         } finally {
-            if (persist)
+            if (shouldStoreMessage(seqNum, time, msgType, buffer, offset, length))
                 store.write(seqNum, time, buffer, offset, length);
         }
     }
@@ -614,29 +623,21 @@ public class SessionProcessor implements Worker {
     protected void onAppMessage(Header header, MessageParser parser) {
     }
 
-    protected Reader createInboundMessageHandler() {
-        return new Reader() {
-            @Override
-            public boolean read(int messageType, Buffer buffer, int offset, int length) {
-                processMessage(buffer, offset, length);
-                return true;
-            }
-        };
+    protected boolean shouldStoreMessage(int seqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
+        return !AdminMessageTypes.isAdmin(msgType) || msgType.charAt(0) == AdminMessageTypes.REJECT;
     }
 
-    protected Reader createOutboundMessageHandler() {
-        return new Reader() {
+    protected Reader createInMessageHandler() {
+        return (messageType, buffer, offset, length) -> processMessage(buffer, offset, length);
+    }
 
-            @Override
-            public boolean read(int messageType, Buffer buffer, int offset, int length) {
-                try {
-                    sendAppMessage(buffer, offset, length);
-                } catch (Throwable e) {
-                    onError(e);
-                }
-                return true;
+    protected Reader createOutMessageHandler() {
+        return (messageType, buffer, offset, length) -> {
+            try {
+                sendAppMessage(buffer, offset, length);
+            } catch (Throwable e) {
+                onError(e);
             }
-
         };
     }
 

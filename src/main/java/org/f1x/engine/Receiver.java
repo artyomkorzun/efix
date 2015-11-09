@@ -31,7 +31,7 @@ public class Receiver {
         this.buffer = new UnsafeBuffer(byteBuffer);
     }
 
-    public int pollTransport(Reader reader) throws IOException {
+    public int receive(Reader reader) throws IOException {
         Channel channel = this.channel;
         if (channel == null)
             return 0;

@@ -214,11 +214,17 @@ public class DefaultMessageParser implements MessageParser {
         return this;
     }
 
-    public int getOffset() {
+    @Override
+    public int fieldOffset() {
         return offset;
     }
 
-   /* @Override
+    @Override
+    public int fieldLength() {
+        return valueOffset;
+    }
+
+    /* @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(128);
         sb.append ("Buffer pos ");
