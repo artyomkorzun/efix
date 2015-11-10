@@ -109,7 +109,7 @@ public class SessionProcessor implements Worker {
     protected int work() {
         int work = 0;
 
-        work += checkSession();
+        work += checkSession(clock.time());
         work += processInboundMessages();
         work += processOutboundMessages();
         work += processTimers(clock.time());
@@ -123,20 +123,19 @@ public class SessionProcessor implements Worker {
         log.flush();
     }
 
-    protected int checkSession() {
+    protected int checkSession(long now) {
+        int work = 0;
         try {
-            int work = 0;
-            long now = clock.time();
             if (state.getStatus() == DISCONNECTED)
-                work += checkSessionStart(now) ? 1 : 0;
+                work += checkSessionStart(now);
             else
-                work += checkSessionEnd(now) ? 1 : 0;
-
-            return work;
+                work += checkSessionEnd(now);
         } catch (Throwable e) {
             onError(e);
-            return 1;
+            work += 1;
         }
+
+        return work;
     }
 
     protected int processInboundMessages() {
@@ -164,12 +163,19 @@ public class SessionProcessor implements Worker {
     }
 
     protected int processTimers(long now) {
-        return checkIdleInterval(now) ? 0 : 1;
+        int work = 0;
+        SessionStatus status = state.getStatus();
+        if (status == APPLICATION_CONNECTED)
+            work += checkIdleInterval(now);
+        else if (status == LOGOUT_SENT)
+            work += checkLogoutTimeout(now);
+
+        return work;
     }
 
-    protected boolean checkSessionStart(long now) {
+    protected int checkSessionStart(long now) {
+        int work = 0;
         long start = schedule.getStartTime(now);
-
         if (now >= start) {
             boolean connected = connect();
             if (connected) {
@@ -184,57 +190,76 @@ public class SessionProcessor implements Worker {
                 if (settings.isInitiator())
                     sendLogon(settings.resetSeqNumsOnEachLogon());
 
-                return true;
+                work += 1;
             }
         }
 
-        return false;
+        return 0;
     }
 
-    protected boolean checkSessionEnd(long now) {
+    protected int checkSessionEnd(long now) {
+        int work = 0;
         long end = schedule.getEndTime(state.getSessionStartTime());
         if (now >= end) {
             SessionStatus status = state.getStatus();
-            if (status == SOCKET_CONNECTED || status == LOGON_SENT)
-                disconnect("Session expired");
-            else if (status == APPLICATION_CONNECTED)
+            if (status == SOCKET_CONNECTED || status == LOGON_SENT) {
                 sendLogout("Session expired");
-
-            return true;
+                disconnect("Session expired");
+                work += 1;
+            } else if (status == APPLICATION_CONNECTED) {
+                sendLogout("Session expired");
+                work += 1;
+            }
         }
 
-        return false;
+        return work;
     }
 
-    protected boolean checkIdleInterval(long now) {
-        return checkLastReceivedTime(now) & checkLastSentTime(now);
+    protected int checkIdleInterval(long now) {
+        int work = 0;
+
+        work += checkLastReceivedTime(now);
+        work += checkLastSentTime(now);
+
+        return work;
     }
 
-    protected boolean checkLastReceivedTime(long now) {
-        boolean ok = true;
-        long idle = now - state.getLastReceivedTime();
-        int limit = settings.getHeartbeatTimeout();
-        if (idle >= 2 * limit) {
+    protected int checkLastReceivedTime(long now) {
+        int work = 0;
+        long elapsed = now - state.getLastReceivedTime();
+        int timeout = settings.getHeartbeatTimeout();
+        if (elapsed >= 2 * timeout) {
             disconnect("Heartbeat timeout");
-            ok = false;
-        } else if (idle >= limit && !state.isTestRequestSent()) {
+            work += 1;
+        } else if (elapsed >= timeout && !state.isTestRequestSent()) {
             sendTestRequest("Heartbeat timeout");
-            ok = false;
+            work += 1;
         }
 
-        return ok;
+        return work;
     }
 
-    protected boolean checkLastSentTime(long now) {
-        boolean ok = true;
-        long idle = now - state.getLastSentTime();
-        int limit = settings.getHeartbeatTimeout();
-        if (idle >= limit) {
+    protected int checkLastSentTime(long now) {
+        int work = 0;
+        long elapsed = now - state.getLastSentTime();
+        int timeout = settings.getHeartbeatTimeout();
+        if (elapsed >= timeout) {
             sendHeartbeat(null);
-            ok = false;
+            work += 1;
         }
 
-        return ok;
+        return work;
+    }
+
+    protected int checkLogoutTimeout(long now) {
+        long elapsed = state.getLastSentTime() - now;
+        int timeout = settings.getLogoutTimeout();
+        if (elapsed >= timeout) {
+            disconnect("Logout timeout");
+            return 1;
+        }
+
+        return 0;
     }
 
     protected boolean connect() {
@@ -335,14 +360,15 @@ public class SessionProcessor implements Worker {
 
         state.setTestRequestSent(false);
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.isSeqNumsSynchronized())) {
+        boolean expectedSeqNum = checkTargetSeqNum(msgSeqNum, state.isSeqNumsSynchronized());
+        if (expectedSeqNum) {
             state.setNextTargetSeqNum(msgSeqNum + 1);
             state.setSeqNumsSynchronized(true);
-        } else {
-            sendResendRequest(state.getNextTargetSeqNum(), 0);
         }
 
         onAdminMessage(header, parser);
+        if (!expectedSeqNum)
+            sendResendRequest(state.getNextTargetSeqNum(), 0);
     }
 
     protected void processTestRequest(Header header, MessageParser parser) {
@@ -350,15 +376,15 @@ public class SessionProcessor implements Worker {
         assertNotDuplicate(header.possDup(), "TestRequest with PossDup(44)=Y");
 
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.isSeqNumsSynchronized())) {
+        if (checkTargetSeqNum(msgSeqNum, state.isSeqNumsSynchronized()))
             state.setNextTargetSeqNum(msgSeqNum + 1);
-            TestRequest request = MessageParsers.parseTestRequest(parser, this.testRequest);
-            validateTestRequest(request);
-            onAdminMessage(header, parser.reset());
 
-            if (state.getStatus() == APPLICATION_CONNECTED)
-                sendHeartbeat(request.testReqID());
-        }
+        TestRequest request = MessageParsers.parseTestRequest(parser, this.testRequest);
+        validateTestRequest(request);
+
+        onAdminMessage(header, parser.reset());
+        if (state.getStatus() == APPLICATION_CONNECTED)
+            sendHeartbeat(request.testReqID());
     }
 
     protected void processResendRequest(Header header, MessageParser parser) {
@@ -390,17 +416,16 @@ public class SessionProcessor implements Worker {
 
     protected void processSequenceReset(Header header, MessageParser parser) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
+        assertNotDuplicate(header.possDup(), "Sequence Reset with PossDup(44)=Y");
 
-        if (!header.possDup()) {
-            SequenceReset reset = MessageParsers.parseSequenceReset(parser, this.sequenceReset);
-            if (reset.isGapFill())
-                checkTargetSeqNum(header.msgSeqNum(), true);
+        SequenceReset reset = MessageParsers.parseSequenceReset(parser, this.sequenceReset);
+        if (reset.isGapFill())
+            checkTargetSeqNum(header.msgSeqNum(), true);
 
-            validateSequenceReset(reset);
-            onAdminMessage(header, parser.reset());
-            state.setSeqNumsSynchronized(true);
-            state.setNextTargetSeqNum(reset.newSeqNo());
-        }
+        validateSequenceReset(reset);
+        onAdminMessage(header, parser.reset());
+        state.setSeqNumsSynchronized(true);
+        state.setNextTargetSeqNum(reset.newSeqNo());
     }
 
     protected void processLogout(Header header, MessageParser parser) {
