@@ -46,19 +46,17 @@ public class SessionProcessor implements Worker {
     protected final MutableBuffer messageBuffer;
     protected final Receiver receiver;
     protected final Sender sender;
+    protected final Resender resender = createResender();
 
     protected final Header header = new Header();
     protected final Logon logon = new Logon();
     protected final TestRequest testRequest = new TestRequest();
     protected final ResendRequest resendRequest = new ResendRequest();
     protected final SequenceReset sequenceReset = new SequenceReset();
-    protected final ByteArrayReference msgTypeToSend = new ByteArrayReference();
+    protected final ByteArrayReference outMsgType = new ByteArrayReference();
 
     protected final Reader inMessageHandler = createInMessageHandler();
     protected final Reader outMessageHandler = createOutMessageHandler();
-    protected final MessageStore.Visitor resendMessagesHandler = createResendMessagesHandler();
-
-    protected Channel channel;
 
     public SessionProcessor(SessionSettings settings, EpochClock clock, SessionSchedule schedule,
                             SessionState state, MessageStore store, MessageLog log,
@@ -84,9 +82,9 @@ public class SessionProcessor implements Worker {
     @Override
     public void onStart() {
         state.open();
-        state.setStatus(DISCONNECTED);
         store.open();
         log.open();
+        connector.open();
     }
 
     @Override
@@ -139,6 +137,9 @@ public class SessionProcessor implements Worker {
     }
 
     protected int processInboundMessages() {
+        if (state.getStatus() == DISCONNECTED)
+            return 0;
+
         try {
             int bytesRead = receiver.receive(inMessageHandler);
             if (bytesRead == -1) {
@@ -165,12 +166,14 @@ public class SessionProcessor implements Worker {
     protected int processTimers(long now) {
         int work = 0;
         SessionStatus status = state.getStatus();
-        if (status == SOCKET_CONNECTED || status == LOGON_SENT)
+        if (status == SOCKET_CONNECTED || status == LOGON_SENT) {
             work += checkLogonTimeout(now);
-        else if (status == APPLICATION_CONNECTED)
-            work += checkIdleInterval(now);
-        else if (status == LOGOUT_SENT)
+        } else if (status == APPLICATION_CONNECTED) {
+            work += checkInHeartbeatTimeout(now);
+            work += checkOutHeartbeatTimeout(now);
+        } else if (status == LOGOUT_SENT) {
             work += checkLogoutTimeout(now);
+        }
 
         return work;
     }
@@ -194,6 +197,8 @@ public class SessionProcessor implements Worker {
 
                 work += 1;
             }
+        } else if (connector.connectionPending()) {
+            disconnect("Session expired");
         }
 
         return work;
@@ -212,43 +217,6 @@ public class SessionProcessor implements Worker {
                 sendLogout("Session expired");
                 work += 1;
             }
-        }
-
-        return work;
-    }
-
-    protected int checkIdleInterval(long now) {
-        int work = 0;
-
-        work += checkLastReceivedTime(now);
-        work += checkLastSentTime(now);
-
-        return work;
-    }
-
-    protected int checkLastReceivedTime(long now) {
-        int work = 0;
-        long elapsed = now - state.getLastReceivedTime();
-        int timeout = settings.getHeartbeatTimeout();
-        if (elapsed >= 2 * timeout) {
-            sendLogout("Heartbeat timeout");
-            disconnect("Heartbeat timeout");
-            work += 1;
-        } else if (elapsed >= timeout && !state.isTestRequestSent()) {
-            sendTestRequest("Heartbeat timeout");
-            work += 1;
-        }
-
-        return work;
-    }
-
-    protected int checkLastSentTime(long now) {
-        int work = 0;
-        long elapsed = now - state.getLastSentTime();
-        int timeout = settings.getHeartbeatTimeout();
-        if (elapsed >= timeout) {
-            sendHeartbeat(null);
-            work += 1;
         }
 
         return work;
@@ -280,11 +248,39 @@ public class SessionProcessor implements Worker {
         return work;
     }
 
+    protected int checkInHeartbeatTimeout(long now) {
+        int work = 0;
+        long elapsed = now - state.getLastReceivedTime();
+        int timeout = settings.getHeartbeatTimeout();
+        if (elapsed >= 2 * timeout) {
+            sendLogout("Heartbeat timeout");
+            disconnect("Heartbeat timeout");
+            work += 1;
+        } else if (elapsed >= timeout && !state.isTestRequestSent()) {
+            sendTestRequest("Heartbeat timeout");
+            work += 1;
+        }
+
+        return work;
+    }
+
+    protected int checkOutHeartbeatTimeout(long now) {
+        int work = 0;
+        long elapsed = now - state.getLastSentTime();
+        int timeout = settings.getHeartbeatTimeout();
+        if (elapsed >= timeout) {
+            sendHeartbeat(null);
+            work += 1;
+        }
+
+        return work;
+    }
+
     protected boolean connect() {
-        // TODO: polish
         Channel channel = connector.connect();
         if (channel != null) {
-            this.channel = channel;
+            receiver.setChannel(channel);
+            sender.setChannel(channel);
             setStatus(SOCKET_CONNECTED);
         }
 
@@ -293,14 +289,15 @@ public class SessionProcessor implements Worker {
 
     protected void disconnect(CharSequence cause) {
         SessionStatus status = state.getStatus();
-        if (status != DISCONNECTED) {
-            if (status != SOCKET_CONNECTED)
-                setStatus(SOCKET_CONNECTED);
+        if (status != DISCONNECTED && status != SOCKET_CONNECTED)
+            setStatus(SOCKET_CONNECTED);
 
-            channel.close();
-            this.channel = null;
+        connector.disconnect();
+        receiver.setChannel(null);
+        sender.setChannel(null);
+
+        if (status != DISCONNECTED)
             setStatus(DISCONNECTED);
-        }
     }
 
     protected void processMessage(Buffer buffer, int offset, int length) {
@@ -525,49 +522,51 @@ public class SessionProcessor implements Worker {
 
         MessageBuilder builder = this.builder.wrap(messageBuffer);
         makeLogon(resetSeqNums, builder);
-        sendMessage(messageBuffer, 0, builder.getLength());
+        sendMessage(messageBuffer, 0, builder.length());
         setStatus(LOGON_SENT);
     }
 
     protected void sendLogout(CharSequence text) {
         MessageBuilder builder = this.builder.wrap(messageBuffer);
         makeLogout(text, builder);
-        sendMessage(messageBuffer, 0, builder.getLength());
+        sendMessage(messageBuffer, 0, builder.length());
         setStatus(LOGOUT_SENT);
     }
 
     protected void sendHeartbeat(CharSequence testReqID) {
         MessageBuilder builder = this.builder.wrap(messageBuffer);
         makeHeartbeat(testReqID, builder);
-        sendMessage(messageBuffer, 0, builder.getLength());
+        sendMessage(messageBuffer, 0, builder.length());
     }
 
     protected void sendTestRequest(CharSequence testReqID) {
         state.setTestRequestSent(true);
         MessageBuilder builder = this.builder.wrap(messageBuffer);
         makeTestRequest(testReqID, builder);
-        sendMessage(messageBuffer, 0, builder.getLength());
+        sendMessage(messageBuffer, 0, builder.length());
     }
 
     protected void sendResendRequest(int beginSeqNo, int endSeqNo) {
         MessageBuilder builder = this.builder.wrap(messageBuffer);
         makeResendRequest(beginSeqNo, endSeqNo, builder);
-        sendMessage(messageBuffer, 0, builder.getLength());
+        sendMessage(messageBuffer, 0, builder.length());
     }
 
     protected void sendReject(Buffer buffer, int offset, int length) {
-        boolean send = (state.getStatus() == APPLICATION_CONNECTED);
+        SessionStatus status = state.getStatus();
+        boolean send = (status == APPLICATION_CONNECTED || status == LOGON_SENT);
         sendMessage(send, buffer, offset, length);
     }
 
     protected void sendSequenceReset(boolean gapFill, int seqNum, int newSeqNo) {
         MessageBuilder builder = this.builder.wrap(messageBuffer);
         makeSequenceReset(gapFill, newSeqNo, builder);
-        sendMessage(true, seqNum, messageBuffer, 0, builder.getLength());
+        sendMessage(true, seqNum, messageBuffer, 0, builder.length());
     }
 
     protected void sendAppMessage(Buffer buffer, int offset, int length) {
-        boolean send = (state.getStatus() == APPLICATION_CONNECTED);
+        SessionStatus status = state.getStatus();
+        boolean send = (status == APPLICATION_CONNECTED || status == LOGON_SENT);
         sendMessage(send, buffer, offset, length);
     }
 
@@ -582,18 +581,18 @@ public class SessionProcessor implements Worker {
     }
 
     protected void resendMessages(int beginSeqNo, int endSeqNo) {
-        store.read(beginSeqNo, endSeqNo, resendMessagesHandler);
+        resender.resendMessages(beginSeqNo, endSeqNo, store);
     }
 
     protected void resendMessage(int seqNum, long origSendingTime, CharSequence msgType, Buffer buffer, int offset, int length) {
         long time = clock.time();
         state.setLastSentTime(time);
-        sender.send(seqNum, time, true, origSendingTime, msgType, buffer, offset, length);
+        sender.send(true, seqNum, time, origSendingTime, msgType, buffer, offset, length);
     }
 
     protected void sendMessage(boolean send, int seqNum, Buffer buffer, int offset, int length) {
         MessageParser parser = this.parser.wrap(buffer, offset, length);
-        CharSequence msgType = MessageParsers.parseMessageType(parser, msgTypeToSend);
+        CharSequence msgType = MessageParsers.parseMessageType(parser, outMsgType);
         length -= parser.fieldLength();
         offset += parser.fieldLength();
 
@@ -605,7 +604,7 @@ public class SessionProcessor implements Worker {
             }
         } finally {
             if (shouldStoreMessage(seqNum, time, msgType, buffer, offset, length))
-                store.write(seqNum, time, buffer, offset, length);
+                store.write(seqNum, time, msgType, buffer, offset, length);
         }
     }
 
@@ -673,6 +672,10 @@ public class SessionProcessor implements Worker {
         return !AdminMessageTypes.isAdmin(msgType) || msgType.charAt(0) == AdminMessageTypes.REJECT;
     }
 
+    protected boolean shouldResendMessage(int seqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
+        return true;
+    }
+
     protected Reader createInMessageHandler() {
         return (messageType, buffer, offset, length) -> processMessage(buffer, offset, length);
     }
@@ -687,13 +690,8 @@ public class SessionProcessor implements Worker {
         };
     }
 
-    protected MessageStore.Visitor createResendMessagesHandler() {
-        return new MessageStore.Visitor() {
-            @Override
-            public void onMessage(int seqNum, long sendingTime, Buffer buffer, int offset, int length) {
-                resendMessage(seqNum, sendingTime, buffer, offset, length);
-            }
-        };
+    protected Resender createResender() {
+        return new Resender();
     }
 
     protected void assertStatus(SessionStatus expected1, SessionStatus expected2) {
@@ -722,6 +720,31 @@ public class SessionProcessor implements Worker {
     protected static void assertNotDuplicate(boolean possDup, String message) {
         if (possDup)
             throw new FieldException(FixTags.PossDupFlag, message);
+    }
+
+    protected class Resender implements MessageStore.Visitor {
+
+        protected int lastSeqNum;
+
+        protected void resendMessages(int fromSeqNum, int toSeqNum, MessageStore store) {
+            lastSeqNum = fromSeqNum - 1;
+            store.read(fromSeqNum, toSeqNum, this);
+            if (toSeqNum > lastSeqNum)
+                sendSequenceReset(true, lastSeqNum + 1, toSeqNum + 1);
+        }
+
+        @Override
+        public void onMessage(int seqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
+            if (shouldResendMessage(seqNum, sendingTime, msgType, body, offset, length)) {
+                if (seqNum - lastSeqNum > 1)
+                    sendSequenceReset(true, lastSeqNum + 1, seqNum);
+
+                resendMessage(seqNum, sendingTime, msgType, body, offset, length);
+                lastSeqNum = seqNum;
+            }
+
+        }
+
     }
 
 }

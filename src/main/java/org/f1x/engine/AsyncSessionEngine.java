@@ -33,7 +33,7 @@ public class AsyncSessionEngine implements SessionEngine {
     }
 
     @Override
-    public void sendAppMessage(Buffer buffer, int offset, int length) {
+    public void sendMessage(Buffer buffer, int offset, int length) {
         RingBuffer queue = this.messageQueue;
         while (!queue.write(EventTypes.OUTBOUND_MESSAGE, buffer, offset, length))
             Thread.yield();

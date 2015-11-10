@@ -2,15 +2,13 @@ package org.f1x.engine;
 
 import org.f1x.connector.channel.Channel;
 import org.f1x.log.MessageLog;
-import org.f1x.message.parser.DefaultMessageParser;
+import org.f1x.message.parser.MessageParser;
 import org.f1x.util.Fields;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.concurrent.Reader;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import static org.f1x.message.parser.MessageParsers.parseBeginString;
 import static org.f1x.message.parser.MessageParsers.parseBodyLength;
@@ -18,32 +16,31 @@ import static org.f1x.message.parser.MessageParsers.parseBodyLength;
 public class Receiver {
 
     protected final MessageLog log;
-
-    protected final DefaultMessageParser parser = new DefaultMessageParser();
-    protected final ByteBuffer byteBuffer;
+    protected final MessageParser parser;
     protected final MutableBuffer buffer;
 
     protected Channel channel;
+    protected int offset;
 
-    public Receiver(MessageLog log) {
+    public Receiver(MessageLog log, MessageParser parser, MutableBuffer buffer) {
+        this.parser = parser;
         this.log = log;
-        this.byteBuffer = ByteBuffer.allocateDirect(1 << 20);
-        this.buffer = new UnsafeBuffer(byteBuffer);
+        this.buffer = buffer;
     }
 
-    public int receive(Reader reader) throws IOException {
+    public int receive(Reader reader) {
         Channel channel = this.channel;
-        if (channel == null)
-            return 0;
-
-        ByteBuffer byteBuffer = this.byteBuffer;
-        int bytesRead = channel.read(byteBuffer);
+        MutableBuffer buffer = this.buffer;
+        int offset = this.offset;
+        int bytesRead = channel.read(buffer, offset, buffer.capacity() - offset);
         if (bytesRead > 0) {
-            int position = byteBuffer.position();
-            int bytesProcessed = processMessages(reader, buffer, 0, position);
+            int length = offset + bytesRead;
+            int bytesProcessed = processMessages(reader, buffer, length);
             if (bytesProcessed != 0) {
-                byteBuffer.limit(position).position(bytesProcessed);
-                byteBuffer.compact();
+                int remaining = length - bytesProcessed;
+                this.offset = remaining;
+                if (remaining > 0)
+                    buffer.putBytes(0, buffer, bytesProcessed, remaining);
             }
         }
 
@@ -54,7 +51,8 @@ public class Receiver {
         this.channel = channel;
     }
 
-    protected int processMessages(Reader reader, Buffer buffer, int offset, int length) {
+    protected int processMessages(Reader reader, Buffer buffer, int length) {
+        int offset = 0;
         int remaining = length;
         while (remaining >= Fields.MIN_MESSAGE_LENGTH) {
             int messageLength = parseMessageLength(buffer, offset, remaining);
@@ -74,15 +72,15 @@ public class Receiver {
         try {
             reader.read(EventTypes.INBOUND_MESSAGE, buffer, offset, messageLength);
         } finally {
-            log.log(true);
+            log.log(true, buffer, offset, messageLength);
         }
     }
 
     protected int parseMessageLength(Buffer buffer, int offset, int length) {
-        DefaultMessageParser parser = this.parser.wrap(buffer, offset, length);
-        parseBeginString(parser, null);
+        MessageParser parser = this.parser.wrap(buffer, offset, length);
+        parseBeginString(parser);
         int bodyLength = parseBodyLength(parser);
-        int headerLength = parser.getOffset() - offset;
+        int headerLength = parser.fieldOffset() + parser.fieldLength() - offset;
         return headerLength + bodyLength + Fields.CHECK_SUM_FIELD_LENGTH;
     }
 

@@ -4,8 +4,16 @@ import org.f1x.connector.channel.Channel;
 
 public interface Connector extends AutoCloseable {
 
-    Channel connect();
+    void open() throws ConnectionException;
 
-    void close();
+    void close() throws ConnectionException;
+
+    Channel connect() throws ConnectionException;
+
+    void disconnect() throws ConnectionException;
+
+   /* boolean connected();*/
+
+    boolean connectionPending();
 
 }

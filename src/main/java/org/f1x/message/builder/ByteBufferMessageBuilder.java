@@ -30,7 +30,7 @@ import org.f1x.util.format.*;
 /**
  * Simple implementation of MessageBuilder that collects all fields in fixed size byte array.
  */
-public final class ByteBufferMessageBuilder implements MessageBuilder, AppendableValue {
+public final class ByteBufferMessageBuilder implements MessageBuilder {
 
     private static final byte BYTE_Y = (byte) 'Y';
     private static final byte BYTE_N = (byte) 'N';
@@ -60,25 +60,9 @@ public final class ByteBufferMessageBuilder implements MessageBuilder, Appendabl
     }
 
     @Override
-    public void clear() {
+    public MessageBuilder clear() {
         offset = 0;
-    }
-
-    @Override
-    public void setMessageType(MsgType msgType) {
-        this.msgType = msgType.getCode();
-    }
-
-    @Override
-    public void setMessageType(CharSequence msgType) {
-        checkValue(35, msgType);
-
-        this.msgType = msgType;
-    }
-
-    @Override
-    public CharSequence getMessageType() {
-        return msgType;
+        return this;
     }
 
     @Override
@@ -223,13 +207,6 @@ public final class ByteBufferMessageBuilder implements MessageBuilder, Appendabl
     }
 
     @Override
-    public AppendableValue add(int tagNo) {
-        offset = IntFormatter.format(tagNo, buffer, offset);
-        addTagValueSeparator();
-        return this;
-    }
-
-    @Override
     public void add(int tag, ByteEnum value) {
         add(tag, value.getCode());
     }
@@ -246,15 +223,7 @@ public final class ByteBufferMessageBuilder implements MessageBuilder, Appendabl
     }
 
     @Override
-    public int output(MutableBuffer buffer, int offset) {
-        if (this.offset > buffer.capacity() - offset)
-            throw new IndexOutOfBoundsException("Output FIX message exceeds maximum size");
-        buffer.putBytes(offset, this.buffer, 0, getLength());
-        return offset + this.offset;
-    }
-
-    @Override
-    public int getLength() {
+    public int length() {
         return offset - start;
     }
 

@@ -4,47 +4,30 @@ import org.f1x.FIXVersion;
 import org.f1x.SessionID;
 import org.f1x.connector.channel.Channel;
 import org.f1x.log.MessageLog;
-import org.f1x.message.builder.ByteBufferMessageBuilder;
 import org.f1x.message.builder.MessageBuilder;
 import org.f1x.message.fields.FixTags;
 import org.f1x.util.Fields;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.format.IntFormatter;
 import org.f1x.util.format.TimestampFormatter;
 
 public class Sender {
 
-    protected final static int MIN_MSG_TYPE_END_OFFSET = Fields.tagWithSeparatorLength(FixTags.MsgType) + 1; // minimum one character msg type
-
+    protected final FIXVersion version;
+    protected final SessionID sessionID;
     protected final MessageLog log;
-
-    protected final ByteBufferMessageBuilder builder = new ByteBufferMessageBuilder(1);
-    protected final Buffer beginStringWithBodyLengthChunk;
-    protected final Buffer msgSeqNumChunk;
-    protected final Buffer sessionIDWithSendingTimeChunk;
-    protected final Buffer checkSumChunk;
-
-    protected final int precomputedBodyLength;
-    protected final int precomputedMessageLength;
-    protected final int precomputedCheckSum;
-
-    protected final MutableBuffer buffer = null;
+    protected final MessageBuilder builder;
+    protected final MutableBuffer buffer;
 
     protected Channel channel;
 
-    public Sender(FIXVersion version, SessionID sessionID, MessageLog log) {
+    public Sender(FIXVersion version, SessionID sessionID, MessageLog log, MessageBuilder builder, MutableBuffer buffer) {
+        this.version = version;
+        this.sessionID = sessionID;
         this.log = log;
-
-        beginStringWithBodyLengthChunk = createBeginWithBodyLengthChunk(version.getBeginString(), builder);
-        msgSeqNumChunk = createFieldChunk(FixTags.MsgSeqNum, builder);
-        sessionIDWithSendingTimeChunk = createSessionIDWithSendingTimeChunk(sessionID, builder);
-        checkSumChunk = createFieldChunk(FixTags.CheckSum, builder);
-        precomputedBodyLength = precomputeBodyLength(msgSeqNumChunk, sessionIDWithSendingTimeChunk);
-        precomputedMessageLength = precomputeMessageLength(beginStringWithBodyLengthChunk);
-        precomputedCheckSum = precomputeCheckSum(beginStringWithBodyLengthChunk, msgSeqNumChunk, sessionIDWithSendingTimeChunk);
-
+        this.builder = builder.wrap(buffer);
+        this.buffer = buffer;
     }
 
     public void setChannel(Channel channel) {
@@ -52,144 +35,95 @@ public class Sender {
     }
 
     public void send(int msgSeqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
-        Channel channel = this.channel;
-        if (channel == null)
-            return;
-
-        int bodyLength = computeBodyLength(msgSeqNum, length);
-        int messageLength = computeMessageLength(bodyLength);
-
-        ByteBufferMessageBuilder builder = this.builder.wrap(buffer);
-
-        int sum = precomputedCheckSum;
-        sum += appendIntFieldChunk(bodyLength, beginStringWithBodyLengthChunk, builder);
-
-        int nextFieldOffset = findNextFieldOffsetAfterMsgType(chunkBuffer, chunkOffset, chunkLength);
-        int msgTypeFieldLength = nextFieldOffset - chunkOffset;
-        builder.append(chunkBuffer, chunkOffset, msgTypeFieldLength);
-
-        sum += appendIntFieldChunk(msgSeqNum, msgSeqNumChunk, builder);
-        sum += appendTimestampFieldChunk(sendingTime, sessionIDWithSendingTimeChunk, builder);
-
-        builder.append(chunkBuffer, nextFieldOffset, chunkLength - msgTypeFieldLength);
-        sum += computeSum(chunkBuffer, chunkOffset, chunkLength);
-
-        builder.append(checkSumChunk).append3Digit(Fields.checkSum(sum)).end();
+        MessageBuilder builder = this.builder.clear();
+        int bodyLength = computeBodyLength(msgSeqNum, sendingTime, msgType, length);
+        addStandardHeader(bodyLength, msgSeqNum, sendingTime, msgType, builder);
+        builder.append(body, offset, length);
+        addCheckSum(builder);
+        send(buffer, builder.length());
     }
 
-    public void send(int msgSeqNum, long sendingTime, boolean possDup, long origSendingTime, CharSequence msgType, Buffer body, int offset, int length) {
 
+    public void send(boolean possDup, int msgSeqNum, long sendingTime, long origSendingTime, CharSequence msgType, Buffer body, int offset, int length) {
+        MessageBuilder builder = this.builder.clear();
+        int bodyLength = computeBodyLength(possDup, msgSeqNum, sendingTime, origSendingTime, msgType, length);
+        addStandardHeader(bodyLength, msgSeqNum, sendingTime, msgType, builder);
+        builder.add(FixTags.PossDupFlag, possDup);
+        builder.addUTCTimestamp(FixTags.OrigSendingTime, origSendingTime);
+        builder.append(body, offset, length);
+        addCheckSum(builder);
+        send(buffer, builder.length());
     }
 
-    protected int computeBodyLength(int msgSeqNum, int chunkLength) {
-        return precomputedBodyLength + IntFormatter.stringSize(msgSeqNum) + chunkLength;
+    protected void send(Buffer buffer, int length) {
+        try {
+            int written = 0;
+            while ((written += channel.write(buffer, written, length - written)) < length)
+                Thread.yield();
+
+        } finally {
+            log.log(false, buffer, 0, length);
+        }
     }
 
-    protected int computeMessageLength(int bodyLength) {
-        return precomputedMessageLength + bodyLength + IntFormatter.stringSize(bodyLength);
+    protected void addStandardHeader(int bodyLength, int msgSeqNum, long sendingTime, CharSequence msgType, MessageBuilder builder) {
+        builder.add(FixTags.BeginString, version.getBeginString());
+        builder.add(FixTags.BodyLength, bodyLength);
+        builder.add(FixTags.MsgType, msgType);
+        builder.add(FixTags.MsgSeqNum, msgSeqNum);
+
+        builder.add(FixTags.SenderCompID, sessionID.getSenderCompId());
+        if (sessionID.getSenderSubId() != null)
+            builder.add(FixTags.SenderSubID, sessionID.getSenderSubId());
+
+        builder.add(FixTags.TargetCompID, sessionID.getTargetCompId());
+        if (sessionID.getTargetSubId() != null)
+            builder.add(FixTags.TargetSubID, sessionID.getTargetSubId());
+
+        builder.addUTCTimestamp(FixTags.SendingTime, sendingTime);
     }
 
-    protected static int precomputeBodyLength(Buffer msgSeqNumChunk, Buffer sessionIDWithSendingTimeChunk) {
-        return msgSeqNumChunk.capacity() + sessionIDWithSendingTimeChunk.capacity() + TimestampFormatter.DATE_TIME_LENGTH + 2 * Fields.FIELD_SEPARATOR_LENGTH;
+
+    protected void addCheckSum(MessageBuilder builder) {
+        int checkSum = computeCheckSum(buffer, 0, builder.length());
+        builder.append(FixTags.CheckSum).append3Digit(checkSum);
     }
 
-    private static int precomputeMessageLength(Buffer beginStringWithBodyLength) {
-        return beginStringWithBodyLength.capacity() + Fields.FIELD_SEPARATOR_LENGTH + Fields.CHECK_SUM_FIELD_LENGTH;
+    protected int computeBodyLength(boolean possDup, int msgSeqNum, long sendingTime, long origSendingTime, CharSequence msgType, int length) {
+        int bodyLength = 0;
+
+        bodyLength += computeBodyLength(msgSeqNum, sendingTime, msgType, length);
+        bodyLength += 5; // 43=Y|
+        bodyLength += 4 + TimestampFormatter.DATE_TIME_LENGTH;
+
+        return bodyLength;
     }
 
-    private static int precomputeCheckSum(Buffer beginStringWithBodyLengthChunk, Buffer msgSeqNumChunk, Buffer sessionIDWithSendingTimeChunk) {
-        int sum = computeSum(beginStringWithBodyLengthChunk) + computeSum(msgSeqNumChunk) + computeSum(sessionIDWithSendingTimeChunk) + 3 * Fields.FIELD_SEPARATOR_CHECK_SUM;
-        return Fields.checkSum(sum);
+    protected int computeBodyLength(int msgSeqNum, long sendingTime, CharSequence msgType, int length) {
+        int bodyLength = 0;
+
+        bodyLength += 4 + msgType.length();
+        bodyLength += 4 + IntFormatter.stringSize(msgSeqNum);
+        bodyLength += 4 + sessionID.getSenderCompId().length();
+        if (sessionID.getSenderSubId() != null)
+            bodyLength += 4 + sessionID.getSenderSubId().length();
+
+        bodyLength += 4 + sessionID.getTargetCompId().length();
+        if (sessionID.getTargetSubId() != null)
+            bodyLength += 4 + sessionID.getTargetSubId().length();
+
+        bodyLength += 4 + TimestampFormatter.DATE_TIME_LENGTH;
+        bodyLength += length;
+
+        return bodyLength;
     }
 
-    protected static int computeSum(Buffer buffer) {
-        int sum = 0;
-        for (int i = 0, end = buffer.capacity(); i < end; i++)
-            sum += buffer.getByte(i);
-
-        return sum;
-    }
-
-    protected static int computeSum(Buffer buffer, int offset, int length) {
+    protected int computeCheckSum(Buffer buffer, int offset, int length) {
         int sum = 0;
         for (int i = offset, end = offset + length; i < end; i++)
             sum += buffer.getByte(i);
 
-        return sum;
-    }
-
-    protected static int findNextFieldOffsetAfterMsgType(Buffer buffer, int offset, int length) {
-        for (int i = offset + MIN_MSG_TYPE_END_OFFSET, end = offset + length; i < end; i++) {
-            if (buffer.getByte(i) == Fields.FIELD_SEPARATOR)
-                return i + 1;
-        }
-
-        throw new IllegalArgumentException("Buffer does not contain SOH");
-    }
-
-    protected static int appendIntFieldChunk(int value, Buffer chunk, ByteBufferMessageBuilder builder) {
-        builder.append(chunk);
-        int start = builder.getOffset();
-        builder.append(value);
-        int end = builder.getOffset();
-        builder.end();
-        return computeSum(builder.getBuffer(), start, end - start);
-    }
-
-    protected static int appendTimestampFieldChunk(long value, Buffer chunk, ByteBufferMessageBuilder builder) {
-        builder.append(chunk);
-        int start = builder.getOffset();
-        builder.appendTimestamp(value);
-        int end = builder.getOffset();
-        builder.end();
-        return computeSum(builder.getBuffer(), start, end - start);
-    }
-
-    protected static Buffer createBeginWithBodyLengthChunk(CharSequence beginString, MessageBuilder builder) {
-        int length = Fields.fieldLength(FixTags.BeginString, beginString) + Fields.tagWithSeparatorLength(FixTags.BodyLength);
-        MutableBuffer buffer = new UnsafeBuffer(new byte[length]);
-
-        builder.wrap(buffer);
-        builder.add(FixTags.BeginString, beginString);
-        builder.add(FixTags.BodyLength);
-
-        return buffer;
-    }
-
-    protected static Buffer createFieldChunk(int field, MessageBuilder builder) {
-        int length = Fields.tagWithSeparatorLength(field);
-        MutableBuffer buffer = new UnsafeBuffer(new byte[length]);
-
-        builder.wrap(buffer);
-        builder.add(field);
-
-        return buffer;
-    }
-
-    protected static Buffer createSessionIDWithSendingTimeChunk(SessionID sessionID, MessageBuilder builder) {
-        CharSequence senderCompID = sessionID.getSenderCompId();
-        CharSequence senderSubID = sessionID.getSenderSubId();
-        CharSequence targetCompID = sessionID.getTargetCompId();
-        CharSequence targetSubID = sessionID.getTargetSubId();
-
-        int length = Fields.fieldLength(FixTags.SenderCompID, senderCompID) + Fields.nullableFieldLength(FixTags.SenderSubID, senderSubID) +
-                Fields.fieldLength(FixTags.TargetCompID, targetCompID) + Fields.nullableFieldLength(FixTags.TargetSubID, targetSubID) +
-                Fields.tagWithSeparatorLength(FixTags.SendingTime);
-
-        MutableBuffer buffer = new UnsafeBuffer(new byte[length]);
-        builder.wrap(buffer);
-
-        builder.add(FixTags.SenderCompID, senderCompID);
-        if (senderSubID != null)
-            builder.add(FixTags.SenderSubID, senderSubID);
-
-        builder.add(FixTags.TargetCompID, targetCompID);
-        if (targetSubID != null)
-            builder.add(FixTags.TargetSubID, targetSubID);
-
-        builder.add(FixTags.SendingTime);
-
-        return buffer;
+        return Fields.checkSum(sum);
     }
 
 }

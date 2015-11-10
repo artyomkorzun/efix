@@ -21,7 +21,7 @@ import org.f1x.message.types.StringEnum;
 import org.f1x.util.ByteArrayReference;
 import org.f1x.util.buffer.MutableBuffer;
 
-public interface MessageBuilder {
+public interface MessageBuilder extends AppendableValue {
 
     void add(int tag, CharSequence value);
 
@@ -61,13 +61,9 @@ public interface MessageBuilder {
 
     void addRaw(int tag, ByteArrayReference bytes);
 
-    AppendableValue add(int tag);
+    int length();
 
-    int output(MutableBuffer buffer, int offset);
-
-    int getLength();
-
-    void clear();
+    MessageBuilder clear();
 
     MessageBuilder wrap(MutableBuffer buffer, int offset, int length);
 

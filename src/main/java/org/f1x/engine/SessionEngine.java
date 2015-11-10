@@ -8,6 +8,6 @@ public interface SessionEngine extends AutoCloseable {
 
     void close();
 
-    void sendAppMessage(Buffer buffer, int offset, int length);
+    void sendMessage(Buffer buffer, int offset, int length);
 
 }
