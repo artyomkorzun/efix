@@ -165,7 +165,9 @@ public class SessionProcessor implements Worker {
     protected int processTimers(long now) {
         int work = 0;
         SessionStatus status = state.getStatus();
-        if (status == APPLICATION_CONNECTED)
+        if (status == SOCKET_CONNECTED || status == LOGON_SENT)
+            work += checkLogonTimeout(now);
+        else if (status == APPLICATION_CONNECTED)
             work += checkIdleInterval(now);
         else if (status == LOGOUT_SENT)
             work += checkLogoutTimeout(now);
@@ -194,7 +196,7 @@ public class SessionProcessor implements Worker {
             }
         }
 
-        return 0;
+        return work;
     }
 
     protected int checkSessionEnd(long now) {
@@ -229,6 +231,7 @@ public class SessionProcessor implements Worker {
         long elapsed = now - state.getLastReceivedTime();
         int timeout = settings.getHeartbeatTimeout();
         if (elapsed >= 2 * timeout) {
+            sendLogout("Heartbeat timeout");
             disconnect("Heartbeat timeout");
             work += 1;
         } else if (elapsed >= timeout && !state.isTestRequestSent()) {
@@ -251,15 +254,30 @@ public class SessionProcessor implements Worker {
         return work;
     }
 
-    protected int checkLogoutTimeout(long now) {
-        long elapsed = state.getLastSentTime() - now;
-        int timeout = settings.getLogoutTimeout();
+    protected int checkLogonTimeout(long now) {
+        int work = 0;
+        long elapsed = now - state.getSessionStartTime();
+        int timeout = settings.getLogonTimeout();
         if (elapsed >= timeout) {
-            disconnect("Logout timeout");
-            return 1;
+            sendLogout("Logon timeout");
+            disconnect("Logon timeout");
+            work += 1;
         }
 
-        return 0;
+        return work;
+    }
+
+    protected int checkLogoutTimeout(long now) {
+        int work = 0;
+        long elapsed = now - state.getLastSentTime();
+        int timeout = settings.getLogoutTimeout();
+        if (elapsed >= timeout) {
+            sendLogout("Logout timeout");
+            disconnect("Logout timeout");
+            work += 1;
+        }
+
+        return work;
     }
 
     protected boolean connect() {
@@ -274,7 +292,11 @@ public class SessionProcessor implements Worker {
     }
 
     protected void disconnect(CharSequence cause) {
-        if (state.getStatus() != DISCONNECTED) {
+        SessionStatus status = state.getStatus();
+        if (status != DISCONNECTED) {
+            if (status != SOCKET_CONNECTED)
+                setStatus(SOCKET_CONNECTED);
+
             channel.close();
             this.channel = null;
             setStatus(DISCONNECTED);
@@ -443,7 +465,6 @@ public class SessionProcessor implements Worker {
         if (status == APPLICATION_CONNECTED)
             sendLogout("Responding to Logout");
 
-        setStatus(SOCKET_CONNECTED);
         disconnect("Logout");
     }
 

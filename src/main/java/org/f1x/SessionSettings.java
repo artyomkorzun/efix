@@ -21,7 +21,8 @@ public class SessionSettings {
     protected boolean initiator = true;
     protected int heartbeatInterval = 30;
     protected int heartbeatTimeout = 1000 * (heartbeatInterval + 1);
-    protected int logoutTimeout = 1000;
+    protected int logonTimeout = 1000;
+    protected int logoutTimeout = 2000;
     protected boolean resetSeqNumsOnEachLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
@@ -72,6 +73,14 @@ public class SessionSettings {
 
     public int getLogoutTimeout() {
         return logoutTimeout;
+    }
+
+    public int getLogonTimeout() {
+        return logonTimeout;
+    }
+
+    public void setLogonTimeout(int logonTimeout) {
+        this.logonTimeout = logonTimeout;
     }
 
     public boolean resetSeqNumsOnEachLogon() {
