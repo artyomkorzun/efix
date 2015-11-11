@@ -14,7 +14,7 @@
 
 package org.f1x.message.parser;
 
-import org.f1x.util.ByteArrayReference;
+import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.parse.NumbersParser;
 import org.f1x.util.parse.TimeOfDayParser;
@@ -28,7 +28,7 @@ public class DefaultMessageParser implements MessageParser {
 
     private final TimestampParser utcTimestampParser = TimestampParser.createUTCTimestampParser();
     private final TimestampParser localTimestampParser = TimestampParser.createLocalTimestampParser();
-    private final ByteArrayReference charSequenceBuffer = new ByteArrayReference();
+    private final ByteSequence charSequenceBuffer = new ByteSequence();
 
     private Buffer buffer;
     private int start;
@@ -48,7 +48,7 @@ public class DefaultMessageParser implements MessageParser {
     }
 
     public DefaultMessageParser wrap(Buffer buffer, int offset, int length) {
-        buffer.boundsCheck(offset, length);
+        buffer.checkBounds(offset, length);
         this.buffer = buffer;
         this.start = offset;
         this.limit = offset + length;
@@ -137,7 +137,7 @@ public class DefaultMessageParser implements MessageParser {
     }
 
     @Override
-    public void getByteSequence(ByteArrayReference seq) {
+    public void getByteSequence(ByteSequence seq) {
         seq.wrap(buffer, valueOffset, valueLength);
     }
 

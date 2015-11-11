@@ -14,26 +14,21 @@
 
 package org.f1x.message.builder;
 
-
 import org.f1x.message.AppendableValue;
-import org.f1x.message.fields.MsgType;
+import org.f1x.message.Fields;
 import org.f1x.message.types.ByteEnum;
 import org.f1x.message.types.IntEnum;
 import org.f1x.message.types.StringEnum;
-import org.f1x.util.ByteArrayReference;
-import org.f1x.util.Fields;
+import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.format.*;
 
-/**
- * Simple implementation of MessageBuilder that collects all fields in fixed size byte array.
- */
-public final class ByteBufferMessageBuilder implements MessageBuilder {
+public final class UncheckedMessageBuilder implements MessageBuilder {
 
-    private static final byte BYTE_Y = (byte) 'Y';
-    private static final byte BYTE_N = (byte) 'N';
+    private static final byte BYTE_Y = 'Y';
+    private static final byte BYTE_N = 'N';
     private static final byte SOH = 1; // field separator
     public static final String NULL = "null";
 
@@ -46,16 +41,16 @@ public final class ByteBufferMessageBuilder implements MessageBuilder {
     private int offset;
     private int start;
 
-    public ByteBufferMessageBuilder(int maxLength, int doubleFormatterPrecision) {
+    public UncheckedMessageBuilder(int maxLength, int doubleFormatterPrecision) {
         this(new byte[maxLength], doubleFormatterPrecision);
     }
 
-    public ByteBufferMessageBuilder(byte[] buff, int doubleFormatterPrecision) {
+    public UncheckedMessageBuilder(byte[] buff, int doubleFormatterPrecision) {
         buffer = new UnsafeBuffer(buff);
         doubleFormatter = new DoubleFormatter(doubleFormatterPrecision);
     }
 
-    public ByteBufferMessageBuilder(int doubleFormatterPrecision) {
+    public UncheckedMessageBuilder(int doubleFormatterPrecision) {
         doubleFormatter = new DoubleFormatter(doubleFormatterPrecision);
     }
 
@@ -197,7 +192,7 @@ public final class ByteBufferMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public void addRaw(int tagNo, ByteArrayReference bytes) {
+    public void addRaw(int tagNo, ByteSequence bytes) {
         checkValue(bytes);
 
         offset = IntFormatter.format(tagNo, buffer, offset);
@@ -330,8 +325,8 @@ public final class ByteBufferMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public ByteBufferMessageBuilder wrap(MutableBuffer buffer, int offset, int length) {
-        buffer.boundsCheck(offset, length);
+    public UncheckedMessageBuilder wrap(MutableBuffer buffer, int offset, int length) {
+        buffer.checkBounds(offset, length);
         this.buffer = buffer;
         this.offset = offset;
         this.start = offset;
@@ -339,7 +334,7 @@ public final class ByteBufferMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public ByteBufferMessageBuilder wrap(MutableBuffer buffer) {
+    public UncheckedMessageBuilder wrap(MutableBuffer buffer) {
         this.buffer = buffer;
         this.offset = 0;
         this.start = 0;
@@ -384,7 +379,7 @@ public final class ByteBufferMessageBuilder implements MessageBuilder {
             throw new IllegalArgumentException("offset + length > length of buffer");
     }
 
-    private static void checkValue(ByteArrayReference value) {
+    private static void checkValue(ByteSequence value) {
         if (value == null)
             throw new NullPointerException("value is null");
 

@@ -18,7 +18,7 @@ import org.f1x.message.AppendableValue;
 import org.f1x.message.types.ByteEnum;
 import org.f1x.message.types.IntEnum;
 import org.f1x.message.types.StringEnum;
-import org.f1x.util.ByteArrayReference;
+import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.MutableBuffer;
 
 public interface MessageBuilder extends AppendableValue {
@@ -59,7 +59,7 @@ public interface MessageBuilder extends AppendableValue {
 
     void addRaw(int tag, byte[] buffer, int offset, int length);
 
-    void addRaw(int tag, ByteArrayReference bytes);
+    void addRaw(int tag, ByteSequence bytes);
 
     int length();
 

@@ -46,7 +46,7 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
     }
 
     @Override
-    public int read(Reader reader, int messagesLimit) {
+    public int read(MessageHandler handler, int messagesLimit) {
         int messagesRead = 0;
 
         long tail = tailSequence.get();
@@ -64,7 +64,7 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
                     int messageType = buffer.getInt(messageTypeOffset(recordOffset));
 
                     if (messageType != MESSAGE_TYPE_PADDING) {
-                        if (!reader.read(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength)))
+                        if (!handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength)))
                             break;
 
                         messagesRead++;

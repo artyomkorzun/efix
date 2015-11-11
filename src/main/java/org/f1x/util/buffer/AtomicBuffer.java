@@ -3,8 +3,7 @@ package org.f1x.util.buffer;
 
 public interface AtomicBuffer extends MutableBuffer {
 
-    void verifyAlignment();
-
+    void checkAlignment();
 
     long getLongVolatile(int index);
 
@@ -18,7 +17,6 @@ public interface AtomicBuffer extends MutableBuffer {
 
     long getAndAddLong(int index, long delta);
 
-
     int getIntVolatile(int index);
 
     void putIntVolatile(int index, int value);
@@ -31,14 +29,16 @@ public interface AtomicBuffer extends MutableBuffer {
 
     int getAndAddInt(int index, int delta);
 
-
     short getShortVolatile(int index);
 
     void putShortVolatile(int index, short value);
 
-
     byte getByteVolatile(int index);
 
     void putByteVolatile(int index, byte value);
+
+    char getCharVolatile(int index);
+
+    void putCharVolatile(int index, char value);
 
 }

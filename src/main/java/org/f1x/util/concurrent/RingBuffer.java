@@ -13,11 +13,9 @@ public interface RingBuffer {
 
     boolean write(int messageType, Buffer srcBuffer, int srcOffset, int length);
 
-    boolean write(int messageType, Writer writer, int length);
+    int read(MessageHandler messageHandler);
 
-    int read(Reader reader);
-
-    int read(Reader reader, int messagesLimit);
+    int read(MessageHandler messageHandler, int messagesLimit);
 
 }
 

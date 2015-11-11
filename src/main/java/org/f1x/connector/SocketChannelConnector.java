@@ -1,5 +1,6 @@
 package org.f1x.connector;
 
+import org.f1x.connector.channel.NioSocketChannel;
 import org.f1x.connector.channel.SocketOptions;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ public abstract class SocketChannelConnector implements Connector {
     protected final SocketOptions options;
 
     protected SocketChannel channel;
+    protected NioSocketChannel nioChannel;
 
     public SocketChannelConnector(SocketAddress address, SocketOptions options) {
         this.address = address;
@@ -20,15 +22,31 @@ public abstract class SocketChannelConnector implements Connector {
     }
 
     @Override
-    public void disconnect() {
-        closeChannel(channel);
-        channel = null;
+    public org.f1x.connector.channel.Channel connect() throws ConnectionException {
+        if (!isConnected())
+            doConnect();
+
+        return nioChannel;
     }
 
     @Override
-    public boolean connectionPending() {
-        return channel != null && channel.isConnectionPending();
+    public void disconnect() {
+        closeChannel(channel);
+        channel = null;
+        nioChannel = null;
     }
+
+    @Override
+    public boolean isConnectionPending() {
+        return channel != null && nioChannel == null;
+    }
+
+    @Override
+    public boolean isConnected() {
+        return nioChannel != null;
+    }
+
+    protected abstract void doConnect();
 
     protected void configure(SocketChannel channel) throws IOException {
         channel.configureBlocking(false);
@@ -36,11 +54,11 @@ public abstract class SocketChannelConnector implements Connector {
             setOption(options.get(i), channel);
     }
 
-    protected <T> void setOption(SocketOptions.Entry<T> entry, SocketChannel channel) throws IOException {
+    protected static <T> void setOption(SocketOptions.Entry<T> entry, SocketChannel channel) throws IOException {
         channel.setOption(entry.option(), entry.value());
     }
 
-    protected void closeChannel(Channel channel) {
+    protected static void closeChannel(Channel channel) {
         if (channel != null) {
             try {
                 channel.close();

@@ -7,6 +7,4 @@ public interface MessageLog extends SessionComponent {
 
     void log(boolean inbound, Buffer buffer, int offset, int length);
 
-   // void log(boolean inbound, Buffer[] buffers); // TODO: experimental
-
 }

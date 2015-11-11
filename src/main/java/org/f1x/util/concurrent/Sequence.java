@@ -1,13 +1,13 @@
 package org.f1x.util.concurrent;
 
-import org.f1x.util.Bits;
+import org.f1x.util.BitUtil;
 import org.f1x.util.buffer.AtomicBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 
 public final class Sequence {
 
-    private static final int LENGTH_WITH_PADDING = (Bits.CACHE_LINE_LENGTH << 1) - Bits.SIZE_OF_LONG;
-    private static final int VALUE_OFFSET = Bits.CACHE_LINE_LENGTH - Bits.SIZE_OF_LONG;
+    private static final int LENGTH_WITH_PADDING = (BitUtil.CACHE_LINE_LENGTH_PROP_KEY << 1) - BitUtil.SIZE_OF_LONG;
+    private static final int VALUE_OFFSET = BitUtil.CACHE_LINE_LENGTH_PROP_KEY - BitUtil.SIZE_OF_LONG;
     private static final int VALUE_INDEX = 0;
 
     private final AtomicBuffer buffer;
@@ -33,8 +33,8 @@ public final class Sequence {
     }
 
     private static UnsafeBuffer createBuffer(long defaultValue) {
-        UnsafeBuffer buffer = new UnsafeBuffer(new byte[LENGTH_WITH_PADDING], VALUE_OFFSET, Bits.SIZE_OF_LONG);
-        buffer.verifyAlignment();
+        UnsafeBuffer buffer = new UnsafeBuffer(new byte[LENGTH_WITH_PADDING], VALUE_OFFSET, BitUtil.SIZE_OF_LONG);
+        buffer.checkAlignment();
         buffer.putLong(VALUE_OFFSET, defaultValue);
         return buffer;
     }

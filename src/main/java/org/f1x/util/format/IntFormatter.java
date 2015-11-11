@@ -14,7 +14,7 @@
 
 package org.f1x.util.format;
 
-import org.f1x.util.AsciiUtils;
+import org.f1x.util.LangUtil;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -24,7 +24,7 @@ import org.f1x.util.buffer.UnsafeBuffer;
  */
 public class IntFormatter {
 
-    private static final Buffer MIN_VALUE_STRING = new UnsafeBuffer(AsciiUtils.getBytes(Integer.toString(Integer.MIN_VALUE)));
+    private static final Buffer MIN_VALUE_STRING = new UnsafeBuffer(LangUtil.getBytes(Integer.toString(Integer.MIN_VALUE)));
 
     public static int format(int value, MutableBuffer buffer, int offset) {
         if (value == Integer.MIN_VALUE) {

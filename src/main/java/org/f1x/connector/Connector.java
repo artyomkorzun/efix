@@ -12,8 +12,8 @@ public interface Connector extends AutoCloseable {
 
     void disconnect() throws ConnectionException;
 
-   /* boolean connected();*/
+    boolean isConnectionPending();
 
-    boolean connectionPending();
+    boolean isConnected();
 
 }

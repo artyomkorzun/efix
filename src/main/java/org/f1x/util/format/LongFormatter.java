@@ -14,7 +14,7 @@
 
 package org.f1x.util.format;
 
-import org.f1x.util.AsciiUtils;
+import org.f1x.util.LangUtil;
 import org.f1x.util.buffer.MutableBuffer;
 
 /**
@@ -22,7 +22,7 @@ import org.f1x.util.buffer.MutableBuffer;
  */
 public class LongFormatter {
 
-    private static final byte[] MIN_VALUE_REPRESENTATION = AsciiUtils.getBytes(Long.toString(Long.MIN_VALUE));
+    private static final byte[] MIN_VALUE_REPRESENTATION = LangUtil.getBytes(Long.toString(Long.MIN_VALUE));
 
     // I use the "invariant division by multiplication" trick to
     // accelerate Integer.toString.  In particular we want to

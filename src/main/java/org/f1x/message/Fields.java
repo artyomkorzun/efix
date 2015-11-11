@@ -1,6 +1,7 @@
-package org.f1x.util;
+package org.f1x.message;
 
 import org.f1x.message.fields.FixTags;
+import org.f1x.util.ByteSequence;
 import org.f1x.util.format.IntFormatter;
 
 public class Fields {
@@ -33,4 +34,31 @@ public class Fields {
         return sum & 0xFF;
     }
 
+    public static int checkPositive(int field, int value) {
+        if (value <= 0)
+            throw new FieldException(field, String.format("Non positive field %s value %s", field, value));
+
+        return value;
+    }
+
+    public static int checkNonNegative(int field, int value) {
+        if (value < 0)
+            throw new FieldException(field, String.format("Non positive field %s value %s", field, value));
+
+        return value;
+    }
+
+    public static int checkPresent(int field, int value, int nullValue) {
+        if (value == nullValue)
+            throw new FieldException(field, String.format("Missing field %s", field));
+
+        return value;
+    }
+
+    public static ByteSequence checkPresent(int field, ByteSequence value) {
+        if (value.isEmpty())
+            throw new FieldException(field, String.format("Missing field %s", field));
+
+        return value;
+    }
 }

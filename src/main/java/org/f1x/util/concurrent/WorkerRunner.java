@@ -1,6 +1,6 @@
 package org.f1x.util.concurrent;
 
-import org.f1x.util.Exceptions;
+import org.f1x.util.LangUtil;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,7 +60,7 @@ public class WorkerRunner implements Runnable, AutoCloseable {
                     thread.join(1000);
                 }
             } catch (InterruptedException e) {
-                Exceptions.rethrowUnchecked(e);
+                LangUtil.rethrowUnchecked(e);
             }
         }
     }

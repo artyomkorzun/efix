@@ -56,7 +56,7 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
     }
 
     @Override
-    public int read(Reader reader, int messagesLimit) {
+    public int read(MessageHandler handler, int messagesLimit) {
         int messagesRead = 0;
 
         long tail = tailSequence.get();
@@ -80,7 +80,7 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
                     if (messageType == MESSAGE_TYPE_PADDING) {
                         paddingOffset = recordOffset;
                     } else {
-                        if (!reader.read(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength)))
+                        if (!handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength)))
                             break;
 
                         messagesRead++;

@@ -1,29 +1,28 @@
 package org.f1x.util.buffer;
 
-import org.f1x.util.Checker;
 import org.f1x.util.UnsafeAccess;
-import sun.misc.Unsafe;
 
 import java.nio.ByteBuffer;
 
-import static org.f1x.util.Bits.*;
+import static org.f1x.util.BitUtil.*;
+import static org.f1x.util.MemoryAccess.MEMORY;
 
 public class UnsafeBuffer implements AtomicBuffer {
 
     public static final int ALIGNMENT = SIZE_OF_LONG;
     public static final int ALIGNMENT_MASK = ALIGNMENT - 1;
 
-    private static final Unsafe UNSAFE = UnsafeAccess.UNSAFE;
-    private static final long ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset(byte[].class);
+    public static final String DISABLE_BOUNDS_CHECK_PROP_KEY = "f1x.disable.bounds.check";
+    public static final boolean CHECK_BOUNDS = !Boolean.getBoolean(DISABLE_BOUNDS_CHECK_PROP_KEY);
+
+    private static final long ARRAY_BASE_OFFSET = UnsafeAccess.UNSAFE.arrayBaseOffset(byte[].class);
 
     private byte[] byteArray;
     private ByteBuffer byteBuffer;
     private long addressOffset;
 
+    private int offset;
     private int capacity;
-
-    public UnsafeBuffer() {
-    }
 
     public UnsafeBuffer(byte[] buffer) {
         wrap(buffer);
@@ -55,15 +54,17 @@ public class UnsafeBuffer implements AtomicBuffer {
 
     public void wrap(byte[] buffer) {
         addressOffset = ARRAY_BASE_OFFSET;
+        offset = 0;
         capacity = buffer.length;
         byteArray = buffer;
         byteBuffer = null;
     }
 
     public void wrap(byte[] buffer, int offset, int length) {
-        Checker.boundsCheck(buffer, offset, length);
+        checkBounds(buffer, offset, length);
 
         addressOffset = ARRAY_BASE_OFFSET + offset;
+        this.offset = offset;
         capacity = length;
         byteArray = buffer;
         byteBuffer = null;
@@ -80,11 +81,12 @@ public class UnsafeBuffer implements AtomicBuffer {
             addressOffset = ((sun.nio.ch.DirectBuffer) buffer).address();
         }
 
+        offset = 0;
         capacity = buffer.capacity();
     }
 
     public void wrap(ByteBuffer buffer, int offset, int length) {
-        Checker.boundsCheck(buffer, offset, length);
+        checkBounds(buffer, offset, length);
 
         byteBuffer = buffer;
 
@@ -96,34 +98,39 @@ public class UnsafeBuffer implements AtomicBuffer {
             addressOffset = ((sun.nio.ch.DirectBuffer) buffer).address() + offset;
         }
 
+        this.offset = offset;
         capacity = length;
     }
 
     public void wrap(Buffer buffer) {
         addressOffset = buffer.addressOffset();
+        offset = buffer.offset();
         capacity = buffer.capacity();
         byteArray = buffer.byteArray();
         byteBuffer = buffer.byteBuffer();
     }
 
     public void wrap(Buffer buffer, int offset, int length) {
-        Checker.boundsCheck(buffer, offset, length);
+        buffer.checkBounds(offset, length);
 
         addressOffset = buffer.addressOffset() + offset;
+        this.offset = buffer.offset() + offset;
         capacity = length;
         byteArray = buffer.byteArray();
         byteBuffer = buffer.byteBuffer();
     }
 
     public void wrap(long address, int length) {
+        if (CHECK_BOUNDS) {
+            if (address < 0 | length < 0 | address + length < 0)
+                throw new IndexOutOfBoundsException(String.format("address=%d, length=%d", address, length));
+        }
+
         addressOffset = address;
+        offset = 0;
         capacity = length;
         byteArray = null;
         byteBuffer = null;
-    }
-
-    public long addressOffset() {
-        return addressOffset;
     }
 
     public byte[] byteArray() {
@@ -134,245 +141,231 @@ public class UnsafeBuffer implements AtomicBuffer {
         return byteBuffer;
     }
 
-    public void setMemory(int offset, int length, byte value) {
-        boundsCheck(offset, length);
+    public long addressOffset() {
+        return addressOffset;
+    }
 
-        UNSAFE.setMemory(byteArray, addressOffset + offset, length, value);
+    public int offset() {
+        return offset;
     }
 
     public int capacity() {
         return capacity;
     }
 
-    public void verifyAlignment() {
+    public void setMemory(int offset, int length, byte value) {
+        checkBounds(offset, length);
+        MEMORY.setMemory(byteArray, addressOffset + offset, length, value);
+    }
+
+    public void checkAlignment() {
         if ((addressOffset & ALIGNMENT_MASK) != 0) {
-            String msg = String.format("AtomicBuffer is not correctly aligned: addressOffset=%d in not divisible by %d", addressOffset, ALIGNMENT);
-            throw new IllegalStateException(msg);
+            throw new IllegalStateException(String.format(
+                    "AtomicBuffer is not correctly aligned: addressOffset=%d in not divisible by %d", addressOffset, ALIGNMENT)
+            );
         }
     }
 
-    public long getLong(int offset) {
-        boundsCheck(offset, SIZE_OF_LONG);
-
-        return UNSAFE.getLong(byteArray, addressOffset + offset);
+    public long getLong(int index) {
+        checkBounds(index, SIZE_OF_LONG);
+        return MEMORY.getLong(byteArray, addressOffset + index);
     }
 
-    public void putLong(int offset, long value) {
-        boundsCheck(offset, SIZE_OF_LONG);
-
-        UNSAFE.putLong(byteArray, addressOffset + offset, value);
+    public void putLong(int index, long value) {
+        checkBounds(index, SIZE_OF_LONG);
+        MEMORY.putLong(byteArray, addressOffset + index, value);
     }
 
-    public long getLongVolatile(int offset) {
-        boundsCheck(offset, SIZE_OF_LONG);
-
-        return UNSAFE.getLongVolatile(byteArray, addressOffset + offset);
+    public long getLongVolatile(int index) {
+        checkBounds(index, SIZE_OF_LONG);
+        return MEMORY.getLongVolatile(byteArray, addressOffset + index);
     }
 
-    public void putLongVolatile(int offset, long value) {
-        boundsCheck(offset, SIZE_OF_LONG);
-
-        UNSAFE.putLongVolatile(byteArray, addressOffset + offset, value);
+    public void putLongVolatile(int index, long value) {
+        checkBounds(index, SIZE_OF_LONG);
+        MEMORY.putLongVolatile(byteArray, addressOffset + index, value);
     }
 
-    public void putLongOrdered(int offset, long value) {
-        boundsCheck(offset, SIZE_OF_LONG);
-
-        UNSAFE.putOrderedLong(byteArray, addressOffset + offset, value);
+    public void putLongOrdered(int index, long value) {
+        checkBounds(index, SIZE_OF_LONG);
+        MEMORY.putOrderedLong(byteArray, addressOffset + index, value);
     }
 
-    public boolean compareAndSetLong(int offset, long expectedValue, long updateValue) {
-        boundsCheck(offset, SIZE_OF_LONG);
+    public long addLongOrdered(int index, long increment) {
+        checkBounds(index, SIZE_OF_LONG);
 
-        return UNSAFE.compareAndSwapLong(byteArray, addressOffset + offset, expectedValue, updateValue);
-    }
-
-    public long getAndSetLong(int offset, long value) {
-        boundsCheck(offset, SIZE_OF_LONG);
-
+        long offset = addressOffset + index;
         byte[] byteArray = this.byteArray;
-        long address = addressOffset + offset;
-        long current;
+        long value = MEMORY.getLong(byteArray, offset);
+        MEMORY.putOrderedLong(byteArray, offset, value + increment);
 
-        do {
-            current = UNSAFE.getLongVolatile(byteArray, address);
-        } while (!UNSAFE.compareAndSwapLong(byteArray, address, current, value));
-
-        return current;
+        return value;
     }
 
-    public long getAndAddLong(int offset, long delta) {
-        boundsCheck(offset, SIZE_OF_LONG);
+    public boolean compareAndSetLong(int index, long expectedValue, long updateValue) {
+        checkBounds(index, SIZE_OF_LONG);
+        return MEMORY.compareAndSwapLong(byteArray, addressOffset + index, expectedValue, updateValue);
+    }
 
+    public long getAndSetLong(int index, long value) {
+        checkBounds(index, SIZE_OF_LONG);
+        return MEMORY.getAndSetLong(byteArray, addressOffset + index, value);
+    }
+
+    public long getAndAddLong(final int index, final long delta) {
+        checkBounds(index, SIZE_OF_LONG);
+        return MEMORY.getAndAddLong(byteArray, addressOffset + index, delta);
+    }
+
+    public int getInt(int index) {
+        checkBounds(index, SIZE_OF_INT);
+        return MEMORY.getInt(byteArray, addressOffset + index);
+    }
+
+    public void putInt(int index, int value) {
+        checkBounds(index, SIZE_OF_INT);
+        MEMORY.putInt(byteArray, addressOffset + index, value);
+    }
+
+    public int getIntVolatile(int index) {
+        checkBounds(index, SIZE_OF_INT);
+        return MEMORY.getIntVolatile(byteArray, addressOffset + index);
+    }
+
+    public void putIntVolatile(int index, int value) {
+        checkBounds(index, SIZE_OF_INT);
+        MEMORY.putIntVolatile(byteArray, addressOffset + index, value);
+    }
+
+    public void putIntOrdered(int index, int value) {
+        checkBounds(index, SIZE_OF_INT);
+        MEMORY.putOrderedInt(byteArray, addressOffset + index, value);
+    }
+
+    public int addIntOrdered(int index, int increment) {
+        checkBounds(index, SIZE_OF_INT);
+
+        long offset = addressOffset + index;
         byte[] byteArray = this.byteArray;
-        long address = addressOffset + offset;
-        long current;
+        int value = MEMORY.getInt(byteArray, offset);
+        MEMORY.putOrderedInt(byteArray, offset, value + increment);
 
-        do {
-            current = UNSAFE.getLongVolatile(byteArray, address);
-        } while (!UNSAFE.compareAndSwapLong(byteArray, address, current, current + delta));
-
-        return current;
+        return value;
     }
 
-    public int getInt(int offset) {
-        boundsCheck(offset, SIZE_OF_INT);
-
-        return UNSAFE.getInt(byteArray, addressOffset + offset);
+    public boolean compareAndSetInt(int index, int expectedValue, int updateValue) {
+        checkBounds(index, SIZE_OF_INT);
+        return MEMORY.compareAndSwapInt(byteArray, addressOffset + index, expectedValue, updateValue);
     }
 
-    public void putInt(int offset, int value) {
-        boundsCheck(offset, SIZE_OF_INT);
-
-        UNSAFE.putInt(byteArray, addressOffset + offset, value);
+    public int getAndSetInt(int index, int value) {
+        checkBounds(index, SIZE_OF_INT);
+        return MEMORY.getAndSetInt(byteArray, addressOffset + index, value);
     }
 
-    public int getIntVolatile(int offset) {
-        boundsCheck(offset, SIZE_OF_INT);
-
-        return UNSAFE.getIntVolatile(byteArray, addressOffset + offset);
+    public int getAndAddInt(int index, int delta) {
+        checkBounds(index, SIZE_OF_INT);
+        return MEMORY.getAndAddInt(byteArray, addressOffset + index, delta);
     }
 
-    public void putIntVolatile(int offset, int value) {
-        boundsCheck(offset, SIZE_OF_INT);
-
-        UNSAFE.putIntVolatile(byteArray, addressOffset + offset, value);
+    public double getDouble(int index) {
+        checkBounds(index, SIZE_OF_DOUBLE);
+        return MEMORY.getDouble(byteArray, addressOffset + index);
     }
 
-    public void putIntOrdered(int offset, int value) {
-        boundsCheck(offset, SIZE_OF_INT);
-
-        UNSAFE.putOrderedInt(byteArray, addressOffset + offset, value);
+    public void putDouble(int index, double value) {
+        checkBounds(index, SIZE_OF_DOUBLE);
+        MEMORY.putDouble(byteArray, addressOffset + index, value);
     }
 
-
-    public boolean compareAndSetInt(int offset, int expectedValue, int updateValue) {
-        boundsCheck(offset, SIZE_OF_INT);
-
-        return UNSAFE.compareAndSwapInt(byteArray, addressOffset + offset, expectedValue, updateValue);
+    public float getFloat(int index) {
+        checkBounds(index, SIZE_OF_FLOAT);
+        return MEMORY.getFloat(byteArray, addressOffset + index);
     }
 
-    public int getAndSetInt(int offset, int value) {
-        boundsCheck(offset, SIZE_OF_INT);
-
-        byte[] byteArray = this.byteArray;
-        long address = addressOffset + offset;
-        int current;
-
-        do {
-            current = UNSAFE.getIntVolatile(byteArray, address);
-        } while (!UNSAFE.compareAndSwapInt(byteArray, address, current, value));
-
-        return current;
+    public void putFloat(int index, float value) {
+        checkBounds(index, SIZE_OF_FLOAT);
+        MEMORY.putFloat(byteArray, addressOffset + index, value);
     }
 
-    public int getAndAddInt(int offset, int delta) {
-        boundsCheck(offset, SIZE_OF_INT);
-
-        byte[] byteArray = this.byteArray;
-        long address = addressOffset + offset;
-        int current;
-
-        do {
-            current = UNSAFE.getInt(byteArray, address);
-        } while (!UNSAFE.compareAndSwapInt(byteArray, address, current, current + delta));
-
-        return current;
+    public short getShort(int index) {
+        checkBounds(index, SIZE_OF_SHORT);
+        return MEMORY.getShort(byteArray, addressOffset + index);
     }
 
-    public double getDouble(int offset) {
-        boundsCheck(offset, SIZE_OF_DOUBLE);
-
-        return UNSAFE.getDouble(byteArray, addressOffset + offset);
+    public void putShort(int index, short value) {
+        checkBounds(index, SIZE_OF_SHORT);
+        MEMORY.putShort(byteArray, addressOffset + index, value);
     }
 
-    public void putDouble(int offset, double value) {
-        boundsCheck(offset, SIZE_OF_DOUBLE);
-
-        UNSAFE.putDouble(byteArray, addressOffset + offset, value);
+    public short getShortVolatile(int index) {
+        checkBounds(index, SIZE_OF_SHORT);
+        return MEMORY.getShortVolatile(byteArray, addressOffset + index);
     }
 
-    public float getFloat(int offset) {
-        boundsCheck(offset, SIZE_OF_FLOAT);
-
-        return UNSAFE.getFloat(byteArray, addressOffset + offset);
+    public void putShortVolatile(int index, short value) {
+        checkBounds(index, SIZE_OF_SHORT);
+        MEMORY.putShortVolatile(byteArray, addressOffset + index, value);
     }
 
-    public void putFloat(int offset, float value) {
-        boundsCheck(offset, SIZE_OF_FLOAT);
-
-        UNSAFE.putFloat(byteArray, addressOffset + offset, value);
+    public char getChar(int index) {
+        checkBounds(index, SIZE_OF_CHAR);
+        return MEMORY.getChar(byteArray, addressOffset + index);
     }
 
-    public short getShort(int offset) {
-        boundsCheck(offset, SIZE_OF_SHORT);
-
-        return UNSAFE.getShort(byteArray, addressOffset + offset);
+    public void putChar(int index, char value) {
+        checkBounds(index, SIZE_OF_CHAR);
+        MEMORY.putChar(byteArray, addressOffset + index, value);
     }
 
-    public void putShort(int offset, short value) {
-        boundsCheck(offset, SIZE_OF_SHORT);
-
-        UNSAFE.putShort(byteArray, addressOffset + offset, value);
+    public char getCharVolatile(int index) {
+        checkBounds(index, SIZE_OF_CHAR);
+        return MEMORY.getCharVolatile(byteArray, addressOffset + index);
     }
 
-    public short getShortVolatile(int offset) {
-        boundsCheck(offset, SIZE_OF_SHORT);
-
-        return UNSAFE.getShortVolatile(byteArray, addressOffset + offset);
+    public void putCharVolatile(int index, char value) {
+        checkBounds(index, SIZE_OF_CHAR);
+        MEMORY.putCharVolatile(byteArray, addressOffset + index, value);
     }
 
-    public void putShortVolatile(int offset, short value) {
-        boundsCheck(offset, SIZE_OF_SHORT);
-
-        UNSAFE.putShortVolatile(byteArray, addressOffset + offset, value);
+    public byte getByte(int index) {
+        checkBounds(index, SIZE_OF_BYTE);
+        return MEMORY.getByte(byteArray, addressOffset + index);
     }
 
-    public byte getByteVolatile(int offset) {
-        boundsCheck(offset, SIZE_OF_BYTE);
-
-        return UNSAFE.getByteVolatile(byteArray, addressOffset + offset);
+    public void putByte(int index, byte value) {
+        checkBounds(index, SIZE_OF_BYTE);
+        MEMORY.putByte(byteArray, addressOffset + index, value);
     }
 
-    public void putByteVolatile(int offset, byte value) {
-        boundsCheck(offset, SIZE_OF_BYTE);
-
-        UNSAFE.putByteVolatile(byteArray, addressOffset + offset, value);
+    public byte getByteVolatile(int index) {
+        checkBounds(index, SIZE_OF_BYTE);
+        return MEMORY.getByteVolatile(byteArray, addressOffset + index);
     }
 
-    public byte getByte(int offset) {
-        boundsCheck(offset, SIZE_OF_BYTE);
-
-        return UNSAFE.getByte(byteArray, addressOffset + offset);
+    public void putByteVolatile(int index, byte value) {
+        checkBounds(index, SIZE_OF_BYTE);
+        MEMORY.putByteVolatile(byteArray, addressOffset + index, value);
     }
 
-    public void putByte(int offset, byte value) {
-        boundsCheck(offset, SIZE_OF_BYTE);
-
-        UNSAFE.putByte(byteArray, addressOffset + offset, value);
+    public void getBytes(int index, byte[] dst) {
+        getBytes(index, dst, 0, dst.length);
     }
 
-    public void getBytes(int offset, byte[] dst) {
-        boundsCheck(offset, dst.length);
-
-        UNSAFE.copyMemory(byteArray, addressOffset + offset, dst, ARRAY_BASE_OFFSET, dst.length);
+    public void getBytes(int index, byte[] dst, int offset, int length) {
+        checkBounds(index, length);
+        checkBounds(dst, offset, length);
+        MEMORY.copyMemory(byteArray, addressOffset + index, dst, ARRAY_BASE_OFFSET + offset, length);
     }
 
-    public void getBytes(int offset, byte[] dst, int dstOffset, int length) {
-        boundsCheck(offset, length);
-        Checker.boundsCheck(dst, dstOffset, length);
-
-        UNSAFE.copyMemory(byteArray, addressOffset + offset, dst, ARRAY_BASE_OFFSET + dstOffset, length);
+    public void getBytes(int index, MutableBuffer dstBuffer, int dstIndex, int length) {
+        dstBuffer.putBytes(dstIndex, this, index, length);
     }
 
-    public void getBytes(int offset, MutableBuffer dstBuffer, int dstOffset, int length) {
-        dstBuffer.putBytes(dstOffset, this, offset, length);
-    }
-
-    public void getBytes(int offset, ByteBuffer dstBuffer, int length) {
-        boundsCheck(offset, length);
+    public void getBytes(int index, ByteBuffer dstBuffer, int length) {
         int dstOffset = dstBuffer.position();
-        Checker.boundsCheck(dstBuffer, dstOffset, length);
+        checkBounds(index, length);
+        checkBounds(dstBuffer, dstOffset, length);
 
         byte[] dstByteArray;
         long dstBaseOffset;
@@ -384,35 +377,32 @@ public class UnsafeBuffer implements AtomicBuffer {
             dstBaseOffset = ((sun.nio.ch.DirectBuffer) dstBuffer).address();
         }
 
-        UNSAFE.copyMemory(byteArray, addressOffset + offset, dstByteArray, dstBaseOffset + dstOffset, length);
+        MEMORY.copyMemory(byteArray, addressOffset + index, dstByteArray, dstBaseOffset + dstOffset, length);
         dstBuffer.position(dstBuffer.position() + length);
     }
 
-    public void putBytes(int offset, byte[] src) {
-        boundsCheck(offset, src.length);
-
-        UNSAFE.copyMemory(src, ARRAY_BASE_OFFSET, byteArray, addressOffset + offset, src.length);
+    public void putBytes(int index, byte[] src) {
+        putBytes(index, src, 0, src.length);
     }
 
-    public void putBytes(int offset, byte[] src, int srcOffset, int length) {
-        boundsCheck(offset, length);
-        Checker.boundsCheck(src, srcOffset, length);
-
-        UNSAFE.copyMemory(src, ARRAY_BASE_OFFSET + srcOffset, byteArray, addressOffset + offset, length);
+    public void putBytes(int index, byte[] src, int offset, int length) {
+        checkBounds(index, length);
+        checkBounds(src, offset, length);
+        MEMORY.copyMemory(src, ARRAY_BASE_OFFSET + offset, byteArray, addressOffset + index, length);
     }
 
-    public void putBytes(int offset, ByteBuffer srcBuffer, int length) {
-        boundsCheck(offset, length);
+    public void putBytes(int index, ByteBuffer srcBuffer, int length) {
         int srcOffset = srcBuffer.position();
-        Checker.boundsCheck(srcBuffer, srcOffset, length);
+        checkBounds(index, length);
+        checkBounds(srcBuffer, srcOffset, length);
 
-        putBytes(offset, srcBuffer, srcOffset, length);
+        putBytes(index, srcBuffer, srcOffset, length);
         srcBuffer.position(srcOffset + length);
     }
 
-    public void putBytes(int offset, ByteBuffer srcBuffer, int srcOffset, int length) {
-        boundsCheck(offset, length);
-        Checker.boundsCheck(srcBuffer, srcOffset, length);
+    public void putBytes(int index, ByteBuffer srcBuffer, int srcOffset, int length) {
+        checkBounds(index, length);
+        checkBounds(srcBuffer, srcOffset, length);
 
         byte[] srcByteArray;
         long srcBaseOffset;
@@ -424,36 +414,48 @@ public class UnsafeBuffer implements AtomicBuffer {
             srcBaseOffset = ((sun.nio.ch.DirectBuffer) srcBuffer).address();
         }
 
-        UNSAFE.copyMemory(srcByteArray, srcBaseOffset + srcOffset, byteArray, addressOffset + offset, length);
+        MEMORY.copyMemory(srcByteArray, srcBaseOffset + srcOffset, byteArray, addressOffset + index, length);
     }
 
     @Override
-    public void putBytes(int offset, Buffer srcBuffer) {
-        int length = srcBuffer.capacity();
-        boundsCheck(offset, length);
-
-        UNSAFE.copyMemory(
-                srcBuffer.byteArray(),
-                srcBuffer.addressOffset(),
-                byteArray,
-                addressOffset + offset,
-                length);
+    public void putBytes(int index, Buffer srcBuffer) {
+        putBytes(index, srcBuffer, 0, srcBuffer.capacity());
     }
 
-    public void putBytes(int offset, Buffer srcBuffer, int srcOffset, int length) {
-        boundsCheck(offset, length);
-        srcBuffer.boundsCheck(srcOffset, length);
+    public void putBytes(int index, Buffer srcBuffer, int srcOffset, int length) {
+        checkBounds(index, length);
+        srcBuffer.checkBounds(srcOffset, length);
 
-        UNSAFE.copyMemory(
+        MEMORY.copyMemory(
                 srcBuffer.byteArray(),
                 srcBuffer.addressOffset() + srcOffset,
                 byteArray,
-                addressOffset + offset,
+                addressOffset + index,
                 length);
     }
 
-    public void boundsCheck(int offset, int length) {
-        Checker.boundsCheck(offset, length, capacity);
+    public void checkBounds(int offset, int length) {
+        checkBounds(offset, length, capacity);
+    }
+
+    private static void checkBounds(Buffer buffer, int offset, int length) {
+        checkBounds(offset, length, buffer.capacity());
+    }
+
+    private static void checkBounds(byte[] buffer, int offset, int length) {
+        checkBounds(offset, length, buffer.length);
+    }
+
+    private static void checkBounds(ByteBuffer buffer, int offset, int length) {
+        checkBounds(offset, length, buffer.capacity());
+    }
+
+    private static void checkBounds(int offset, int length, int capacity) {
+        if (CHECK_BOUNDS) {
+            int end = offset + length;
+            if (offset < 0 | length < 0 | end < 0 | end > capacity)
+                throw new IndexOutOfBoundsException(String.format("offset=%d, length=%d, capacity=%d", offset, length, capacity));
+        }
     }
 
 }

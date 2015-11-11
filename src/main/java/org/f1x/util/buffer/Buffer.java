@@ -6,32 +6,36 @@ public interface Buffer {
 
     long addressOffset();
 
+    int offset();
+
     int capacity();
 
     byte[] byteArray();
 
     ByteBuffer byteBuffer();
 
-    long getLong(int offset);
+    long getLong(int index);
 
-    int getInt(int offset);
+    int getInt(int index);
 
-    double getDouble(int offset);
+    double getDouble(int index);
 
-    float getFloat(int offset);
+    float getFloat(int index);
 
-    short getShort(int offset);
+    short getShort(int index);
 
-    byte getByte(int offset);
+    char getChar(int index);
 
-    void getBytes(int offset, byte[] dst);
+    byte getByte(int index);
 
-    void getBytes(int offset, byte[] dst, int dstOffset, int length);
+    void getBytes(int index, byte[] dst);
 
-    void getBytes(int offset, MutableBuffer dstBuffer, int dstIndex, int length);
+    void getBytes(int index, byte[] dst, int dstOffset, int length);
 
-    void getBytes(int offset, ByteBuffer dstBuffer, int length);
+    void getBytes(int index, MutableBuffer dstBuffer, int dstIndex, int length);
 
-    void boundsCheck(int offset, int length);
+    void getBytes(int index, ByteBuffer dstBuffer, int length);
+
+    void checkBounds(int offset, int length);
 
 }

@@ -14,7 +14,7 @@
 
 package org.f1x.message.parser;
 
-import org.f1x.util.ByteArrayReference;
+import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.Buffer;
 
 /**
@@ -36,7 +36,7 @@ public interface MessageParser {
 
     CharSequence getCharSequenceValue();
 
-    void getByteSequence(ByteArrayReference seq);
+    void getByteSequence(ByteSequence seq);
 
     String getStringValue();
 

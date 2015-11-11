@@ -1,6 +1,6 @@
 package org.f1x.util.concurrent;
 
-import org.f1x.util.Bits;
+import org.f1x.util.BitUtil;
 import org.f1x.util.buffer.AtomicBuffer;
 import org.f1x.util.buffer.Buffer;
 
@@ -9,9 +9,9 @@ public abstract class AbstractRingBuffer implements RingBuffer {
     protected static final int INSUFFICIENT_CAPACITY = -1;
 
     protected static final int MIN_CAPACITY = 1024;
-    protected static final int ALIGNMENT = Bits.SIZE_OF_LONG;
+    protected static final int ALIGNMENT = BitUtil.SIZE_OF_LONG;
 
-    protected static final int HEADER_LENGTH = 2 * Bits.SIZE_OF_INT;
+    protected static final int HEADER_LENGTH = 2 * BitUtil.SIZE_OF_INT;
 
     protected static final int MESSAGE_TYPE_PADDING = -1;
 
@@ -60,8 +60,7 @@ public abstract class AbstractRingBuffer implements RingBuffer {
         return true;
     }
 
-    @Override
-    public boolean write(int messageType, Writer writer, int length) {
+    public void write(int messageType, Writer writer, int length) {
         checkMessageType(messageType);
         checkMessageLength(length);
 
@@ -82,8 +81,8 @@ public abstract class AbstractRingBuffer implements RingBuffer {
     }
 
     @Override
-    public int read(Reader reader) {
-        return read(reader, Integer.MAX_VALUE);
+    public int read(MessageHandler messageHandler) {
+        return read(messageHandler, Integer.MAX_VALUE);
     }
 
     protected abstract int claim(int recordLength);
@@ -95,7 +94,7 @@ public abstract class AbstractRingBuffer implements RingBuffer {
     }
 
     protected static int messageTypeOffset(int recordOffset) {
-        return recordOffset + Bits.SIZE_OF_INT;
+        return recordOffset + BitUtil.SIZE_OF_INT;
     }
 
     protected static int recordLengthOffset(int recordOffset) {
@@ -119,7 +118,7 @@ public abstract class AbstractRingBuffer implements RingBuffer {
     }
 
     protected static int align(int length) {
-        return Bits.align(length, ALIGNMENT);
+        return BitUtil.align(length, ALIGNMENT);
     }
 
     protected void checkMessageLength(int length) {
@@ -134,10 +133,10 @@ public abstract class AbstractRingBuffer implements RingBuffer {
 
     protected static AtomicBuffer checkBuffer(AtomicBuffer buffer) {
         int capacity = buffer.capacity();
-        if (!Bits.isPowerOfTwo(capacity) || capacity < MIN_CAPACITY)
+        if (!BitUtil.isPowerOfTwo(capacity) || capacity < MIN_CAPACITY)
             throw new IllegalArgumentException(String.format("Capacity: %s must be a power of 2 and not less: %s", capacity, MIN_CAPACITY));
 
-        buffer.verifyAlignment();
+        buffer.checkAlignment();
         return buffer;
     }
 

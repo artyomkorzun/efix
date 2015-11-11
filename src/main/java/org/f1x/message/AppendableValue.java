@@ -27,7 +27,7 @@ public interface AppendableValue extends Appendable {
 
     AppendableValue append(int value);
 
-    AppendableValue append3Digit(int value);
+    AppendableValue append(int value, int minLength);
 
     AppendableValue append(long value);
 

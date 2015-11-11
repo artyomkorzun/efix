@@ -1,12 +1,12 @@
 package org.f1x.message;
 
-import org.f1x.util.ByteArrayReference;
+import org.f1x.util.ByteSequence;
 
 public class TestRequest {
 
-    protected final ByteArrayReference testReqID = new ByteArrayReference();
+    protected final ByteSequence testReqID = new ByteSequence();
 
-    public ByteArrayReference testReqID() {
+    public ByteSequence testReqID() {
         return testReqID;
     }
 

@@ -1,14 +1,14 @@
 package org.f1x.message;
 
-import org.f1x.util.ByteArrayReference;
+import org.f1x.util.ByteSequence;
 
 public class Header {
 
-    protected final ByteArrayReference msgType = new ByteArrayReference();
+    protected final ByteSequence msgType = new ByteSequence();
     protected int msgSeqNum;
     protected boolean possDup;
 
-    public ByteArrayReference getMsgType() {
+    public ByteSequence getMsgType() {
         return msgType;
     }
 
