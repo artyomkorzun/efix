@@ -1,17 +1,3 @@
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.f1x.message.parser;
 
 import org.f1x.util.ByteSequence;
@@ -20,7 +6,7 @@ import org.f1x.util.parse.NumbersParser;
 import org.f1x.util.parse.TimeOfDayParser;
 import org.f1x.util.parse.TimestampParser;
 
-public class DefaultMessageParser implements MessageParser {
+public class FastMessageParser implements MessageParser {
 
     //private static final GFLog LOGGER = GFLogFactory.getLog(DefaultMessageParser.class);
 
@@ -38,7 +24,7 @@ public class DefaultMessageParser implements MessageParser {
     private int valueOffset, valueLength;
 
 
-    public final DefaultMessageParser wrap(Buffer buffer) {
+    public final FastMessageParser wrap(Buffer buffer) {
         this.buffer = buffer;
         this.start = 0;
         this.limit = buffer.capacity();
@@ -47,7 +33,7 @@ public class DefaultMessageParser implements MessageParser {
         return this;
     }
 
-    public DefaultMessageParser wrap(Buffer buffer, int offset, int length) {
+    public FastMessageParser wrap(Buffer buffer, int offset, int length) {
         buffer.checkBounds(offset, length);
         this.buffer = buffer;
         this.start = offset;
@@ -207,7 +193,7 @@ public class DefaultMessageParser implements MessageParser {
     }
 
     @Override
-    public final DefaultMessageParser reset() {
+    public final FastMessageParser reset() {
         tagNum = valueOffset = valueLength = 0;
         offset = start;
 

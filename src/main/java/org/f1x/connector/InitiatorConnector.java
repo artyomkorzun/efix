@@ -13,13 +13,12 @@ public class InitiatorConnector extends SocketChannelConnector {
     protected final EpochClock clock;
     protected final int reconnectInterval;
 
-    protected long errorTime;
+    protected long errorTime = Long.MIN_VALUE;
 
     public InitiatorConnector(int reconnectInterval, EpochClock clock, SocketAddress address, SocketOptions options) {
         super(address, options);
         this.clock = clock;
         this.reconnectInterval = reconnectInterval;
-        this.errorTime = -reconnectInterval;
     }
 
     @Override
@@ -53,7 +52,7 @@ public class InitiatorConnector extends SocketChannelConnector {
     }
 
     protected boolean canConnect(long now) {
-        return now - errorTime >= reconnectInterval;
+        return now >= errorTime + reconnectInterval;
     }
 
 }

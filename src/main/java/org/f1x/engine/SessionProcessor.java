@@ -79,6 +79,7 @@ public class SessionProcessor implements Worker {
 
     @Override
     public void onStart() {
+        // TODO: catch exceptions
         state.open();
         store.open();
         log.open();
