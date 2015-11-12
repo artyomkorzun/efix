@@ -2,8 +2,9 @@ package org.f1x.util;
 
 public final class LangUtil {
 
-    public static void rethrowUnchecked(final Exception ex) {
+    public static RuntimeException rethrowUnchecked(final Exception ex) {
         LangUtil.<RuntimeException>rethrow(ex);
+        throw new AssertionError("Unreachable code");
     }
 
     @SuppressWarnings("unchecked")

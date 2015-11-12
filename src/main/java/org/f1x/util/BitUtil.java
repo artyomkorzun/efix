@@ -33,17 +33,15 @@ public final class BitUtil {
 
     public static int next(int current, int max) {
         int next = current + 1;
-        if (next == max) {
+        if (next == max)
             next = 0;
-        }
 
         return next;
     }
 
     public static int previous(int current, int max) {
-        if (0 == current) {
+        if (0 == current)
             return max - 1;
-        }
 
         return current - 1;
     }

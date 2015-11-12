@@ -38,6 +38,7 @@ public class AsyncSessionEngineFactory implements Factory<AsyncSessionEngine> {
     protected MutableBuffer messageBuffer;
     protected Receiver receiver;
     protected Sender sender;
+    protected MessagePacker packer;
 
     @Override
     public AsyncSessionEngine create() {
@@ -48,7 +49,7 @@ public class AsyncSessionEngineFactory implements Factory<AsyncSessionEngine> {
                 state, store, log,
                 connector, messageQueue, idleStrategy,
                 parser, builder, messageBuffer,
-                receiver, sender
+                receiver, sender, packer
         );
 
         return new AsyncSessionEngine(processor, messageQueue);

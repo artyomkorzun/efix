@@ -1,21 +1,76 @@
 package org.f1x.util.concurrent;
 
-
 import org.f1x.util.buffer.AtomicBuffer;
+import org.f1x.util.buffer.Buffer;
 
-/**
- * Many producers with one consumer.
- */
+
 public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
 
     public MPSCRingBuffer(AtomicBuffer buffer) {
         super(buffer);
     }
 
-    protected int claim(int recordLength) {
-        int required = align(recordLength);
-        long tail = tailSequence.getVolatile();
-        int tailIndex = mask(tail);
+    @Override
+    public boolean write(int messageType, Buffer srcBuffer, int srcOffset, int length) {
+        checkMessageType(messageType);
+        checkMessageLength(length);
+
+        AtomicBuffer buffer = this.buffer;
+        int recordLength = recordLength(length);
+        int alignedRecordLength = align(recordLength);
+        int recordOffset = claim(alignedRecordLength, buffer);
+
+        if (recordOffset == INSUFFICIENT_SPACE)
+            return false;
+
+        buffer.putInt(messageTypeOffset(recordOffset), messageType);
+        buffer.putBytes(messageOffset(recordOffset), srcBuffer, srcOffset, length);
+        buffer.putIntOrdered(recordLengthOffset(recordOffset), recordLength);
+
+        return true;
+    }
+
+    @Override
+    public int read(MessageHandler handler) {
+        int messagesRead = 0;
+
+        AtomicBuffer buffer = this.buffer;
+        int capacity = this.capacity;
+        long tail = tailSequence.get();
+
+        int bytesRead = 0;
+
+        while (bytesRead < capacity) {
+            int recordOffset = mask(tail + bytesRead);
+            int recordLength = buffer.getIntVolatile(recordLengthOffset(recordOffset));
+            if (recordLength == 0)
+                break;
+
+            int alignedLength = align(recordLength);
+            bytesRead += alignedLength;
+            int messageType = buffer.getInt(messageTypeOffset(recordOffset));
+            int zeroingLength = 0;
+
+            try {
+                if (messageType == MESSAGE_TYPE_PADDING) {
+                    zeroingLength = HEADER_LENGTH;
+                } else {
+                    zeroingLength = alignedLength;
+                    handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength));
+                    messagesRead++;
+                }
+            } finally {
+                buffer.setMemory(recordOffset, zeroingLength, (byte) 0);
+                tailSequence.setOrdered(tail + bytesRead);
+            }
+        }
+
+        return messagesRead;
+    }
+
+    private int claim(int required, AtomicBuffer buffer) {
+        int capacity = this.capacity;
+        long tail = tailCacheSequence.getVolatile();
 
         long head;
         int headIndex;
@@ -23,18 +78,23 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
 
         do {
             head = headSequence.getVolatile();
-            int free = capacity - (int) (head - tail);
 
-            if (required > free)
-                return INSUFFICIENT_CAPACITY;
+            if (required > freeSpace(head, tail, capacity)) {
+                tail = tailSequence.getVolatile();
+                if (required > freeSpace(head, tail, capacity))
+                    return INSUFFICIENT_SPACE;
+
+                tailCacheSequence.setOrdered(tail);
+            }
 
             padding = 0;
             headIndex = mask(head);
             int continuous = capacity - headIndex;
 
             if (required > continuous) {
+                int tailIndex = mask(tail);
                 if (required > tailIndex)
-                    return INSUFFICIENT_CAPACITY;
+                    return INSUFFICIENT_SPACE;
 
                 padding = continuous;
             }
@@ -48,59 +108,6 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
         }
 
         return headIndex;
-    }
-
-    @Override
-    protected void publish(int recordOffset, int recordLength) {
-        buffer.putIntOrdered(recordLengthOffset(recordOffset), recordLength);
-    }
-
-    @Override
-    public int read(MessageHandler handler, int messagesLimit) {
-        int messagesRead = 0;
-
-        long tail = tailSequence.get();
-        long head = headSequence.getVolatile();
-        int available = (int) (head - tail);
-
-        if (available > 0) {
-            int bytesRead = 0;
-
-            int paddingOffset = -1;
-            int tailIndex = mask(tail);
-
-            try {
-                while (bytesRead < available && messagesRead < messagesLimit) {
-                    int recordOffset = mask(tailIndex + bytesRead);
-                    int recordLength = buffer.getIntVolatile(recordLengthOffset(recordOffset));
-                    if (recordLength <= 0)
-                        break;
-
-                    int messageType = buffer.getInt(messageTypeOffset(recordOffset));
-                    if (messageType == MESSAGE_TYPE_PADDING) {
-                        paddingOffset = recordOffset;
-                    } else {
-                        if (!handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength)))
-                            break;
-
-                        messagesRead++;
-                    }
-
-                    bytesRead += align(recordLength);
-                }
-            } finally {
-                if (paddingOffset == -1) {
-                    buffer.setMemory(tailIndex, bytesRead, (byte) 0);
-                } else {
-                    buffer.setMemory(tailIndex, messageOffset(paddingOffset) - tailIndex, (byte) 0);
-                    buffer.setMemory(0, bytesRead - (capacity - tailIndex), (byte) 0);
-                }
-
-                tailSequence.setOrdered(tail + bytesRead);
-            }
-        }
-
-        return messagesRead;
     }
 
 }

@@ -1,42 +1,54 @@
 package org.f1x.util.concurrent;
 
-import org.f1x.util.BitUtil;
-import org.f1x.util.buffer.AtomicBuffer;
-import org.f1x.util.buffer.UnsafeBuffer;
+import org.f1x.util.LangUtil;
+import sun.misc.Contended;
+
+import static org.f1x.util.UnsafeAccess.UNSAFE;
 
 public final class Sequence {
 
-    private static final int LENGTH_WITH_PADDING = (BitUtil.CACHE_LINE_LENGTH_PROP_KEY << 1) - BitUtil.SIZE_OF_LONG;
-    private static final int VALUE_OFFSET = BitUtil.CACHE_LINE_LENGTH_PROP_KEY - BitUtil.SIZE_OF_LONG;
-    private static final int VALUE_INDEX = 0;
+    private static final long VALUE_FIELD_OFFSET;
 
-    private final AtomicBuffer buffer;
+    static {
+        try {
+            VALUE_FIELD_OFFSET = UNSAFE.objectFieldOffset(Sequence.class.getField("value"));
+        } catch (NoSuchFieldException e) {
+            throw LangUtil.rethrowUnchecked(e);
+        }
+    }
 
-    public Sequence(long defaultValue) {
-        this.buffer = createBuffer(defaultValue);
+    @Contended
+    private long value;
+
+    public Sequence() {
+    }
+
+    public Sequence(long value) {
+        this.value = value;
     }
 
     public long get() {
-        return buffer.getLong(VALUE_INDEX);
+        return value;
     }
 
-    public long getVolatile() {
-        return buffer.getLongVolatile(VALUE_INDEX);
+    public void set(long value) {
+        this.value = value;
     }
 
     public void setOrdered(long value) {
-        buffer.putLongOrdered(VALUE_INDEX, value);
+        UNSAFE.putOrderedLong(this, VALUE_FIELD_OFFSET, value);
     }
 
-    public boolean compareAndSwap(long expected, long value) {
-        return buffer.compareAndSetLong(VALUE_INDEX, expected, value);
+    public long getVolatile() {
+        return UNSAFE.getLongVolatile(this, VALUE_FIELD_OFFSET);
     }
 
-    private static UnsafeBuffer createBuffer(long defaultValue) {
-        UnsafeBuffer buffer = new UnsafeBuffer(new byte[LENGTH_WITH_PADDING], VALUE_OFFSET, BitUtil.SIZE_OF_LONG);
-        buffer.checkAlignment();
-        buffer.putLong(VALUE_OFFSET, defaultValue);
-        return buffer;
+    public void setVolitile() {
+        UNSAFE.putLongVolatile(this, VALUE_FIELD_OFFSET, value);
+    }
+
+    public boolean compareAndSwap(long expected, long updated) {
+        return UNSAFE.compareAndSwapLong(this, VALUE_FIELD_OFFSET, expected, updated);
     }
 
 }

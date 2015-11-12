@@ -2,25 +2,24 @@ package org.f1x.util.concurrent;
 
 import org.f1x.util.BitUtil;
 import org.f1x.util.buffer.AtomicBuffer;
-import org.f1x.util.buffer.Buffer;
 
 public abstract class AbstractRingBuffer implements RingBuffer {
 
-    protected static final int INSUFFICIENT_CAPACITY = -1;
+    protected static final int MESSAGE_TYPE_PADDING = -1;
+    protected static final int INSUFFICIENT_SPACE = -2;
 
     protected static final int MIN_CAPACITY = 1024;
     protected static final int ALIGNMENT = BitUtil.SIZE_OF_LONG;
 
     protected static final int HEADER_LENGTH = 2 * BitUtil.SIZE_OF_INT;
 
-    protected static final int MESSAGE_TYPE_PADDING = -1;
-
-    protected final Sequence headSequence = new Sequence(0);
-    protected final Sequence tailSequence = new Sequence(0);
+    protected final Sequence headSequence = new Sequence();
+    protected final Sequence tailSequence = new Sequence();
     protected final AtomicBuffer buffer;
     protected final int capacity;
     protected final int mask;
     protected final int maxMessageLength;
+    protected final Sequence tailCacheSequence = new Sequence();
 
     public AbstractRingBuffer(AtomicBuffer buffer) {
         this.buffer = checkBuffer(buffer);
@@ -38,56 +37,6 @@ public abstract class AbstractRingBuffer implements RingBuffer {
     public int maxMessageLength() {
         return maxMessageLength;
     }
-
-    @Override
-    public boolean write(int messageType, Buffer srcBuffer, int srcOffset, int length) {
-        checkMessageType(messageType);
-        checkMessageLength(length);
-
-        int recordLength = recordLength(length);
-        int recordOffset = claim(recordLength);
-
-        if (recordOffset == INSUFFICIENT_CAPACITY)
-            return false;
-
-        try {
-            buffer.putInt(messageTypeOffset(recordOffset), messageType);
-            buffer.putBytes(messageOffset(recordOffset), srcBuffer, srcOffset, length);
-        } finally {
-            publish(recordOffset, recordLength);
-        }
-
-        return true;
-    }
-
-    public void write(int messageType, Writer writer, int length) {
-        checkMessageType(messageType);
-        checkMessageLength(length);
-
-        int recordLength = recordLength(length);
-        int recordOffset = claim(recordLength);
-
-        if (recordOffset == INSUFFICIENT_CAPACITY)
-            return false;
-
-        try {
-            buffer.putInt(messageTypeOffset(recordOffset), messageType);
-            writer.write(buffer, messageOffset(recordOffset), length);
-        } finally {
-            publish(recordOffset, recordLength);
-        }
-
-        return true;
-    }
-
-    @Override
-    public int read(MessageHandler messageHandler) {
-        return read(messageHandler, Integer.MAX_VALUE);
-    }
-
-    protected abstract int claim(int recordLength);
-
-    protected abstract void publish(int recordOffset, int recordLength);
 
     protected static int recordLength(int messageLength) {
         return messageLength + HEADER_LENGTH;
@@ -107,6 +56,10 @@ public abstract class AbstractRingBuffer implements RingBuffer {
 
     protected static int messageLength(int recordLength) {
         return recordLength - HEADER_LENGTH;
+    }
+
+    protected static int freeSpace(long head, long tail, int capacity) {
+        return capacity - (int) (head - tail);
     }
 
     protected int mask(long index) {

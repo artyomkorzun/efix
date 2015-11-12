@@ -1,7 +1,6 @@
 package org.f1x.message;
 
 import org.f1x.message.fields.FixTags;
-import org.f1x.util.ByteSequence;
 import org.f1x.util.format.IntFormatter;
 
 public class Fields {
@@ -55,8 +54,8 @@ public class Fields {
         return value;
     }
 
-    public static ByteSequence checkPresent(int field, ByteSequence value) {
-        if (value.isEmpty())
+    public static <T extends CharSequence> T checkPresent(int field, T value) {
+        if (value.length() == 0)
             throw new FieldException(field, String.format("Missing field %s", field));
 
         return value;

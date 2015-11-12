@@ -14,15 +14,18 @@
 
 package org.f1x.util.format;
 
-import org.f1x.util.LangUtil;
+import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
+import org.f1x.util.buffer.UnsafeBuffer;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Adaptation of java.lang.Long.toString() to format long number into byte array.
  */
 public class LongFormatter {
 
-    private static final byte[] MIN_VALUE_REPRESENTATION = LangUtil.getBytes(Long.toString(Long.MIN_VALUE));
+    private static final Buffer MIN_VALUE_REPRESENTATION = new UnsafeBuffer(Long.toString(Long.MIN_VALUE).getBytes(StandardCharsets.US_ASCII));
 
     // I use the "invariant division by multiplication" trick to
     // accelerate Integer.toString.  In particular we want to
@@ -46,7 +49,7 @@ public class LongFormatter {
     public static int format(long value, MutableBuffer buffer, int offset) {
         if (value == Long.MIN_VALUE) {
             buffer.putBytes(offset, MIN_VALUE_REPRESENTATION);
-            return offset + MIN_VALUE_REPRESENTATION.length;
+            return offset + MIN_VALUE_REPRESENTATION.capacity();
         } else {
             int stringSize = (value < 0) ? stringSize(-value) + 1 : stringSize(value);
             int endIndex = offset + stringSize;
@@ -62,7 +65,7 @@ public class LongFormatter {
      * the buffer backwards starting with the least significant
      * digit at the specified index (exclusive), and working
      * backwards from there.
-     * <p/>
+     * <p>
      * Will fail if value == Long.MIN_VALUE
      */
     static void getBytes(long value, MutableBuffer buffer, int stringSize) {

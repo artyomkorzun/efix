@@ -25,7 +25,7 @@ import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.format.*;
 
-public final class UncheckedMessageBuilder implements MessageBuilder {
+public final class FastMessageBuilder implements MessageBuilder {
 
     private static final byte BYTE_Y = 'Y';
     private static final byte BYTE_N = 'N';
@@ -41,16 +41,16 @@ public final class UncheckedMessageBuilder implements MessageBuilder {
     private int offset;
     private int start;
 
-    public UncheckedMessageBuilder(int maxLength, int doubleFormatterPrecision) {
+    public FastMessageBuilder(int maxLength, int doubleFormatterPrecision) {
         this(new byte[maxLength], doubleFormatterPrecision);
     }
 
-    public UncheckedMessageBuilder(byte[] buff, int doubleFormatterPrecision) {
+    public FastMessageBuilder(byte[] buff, int doubleFormatterPrecision) {
         buffer = new UnsafeBuffer(buff);
         doubleFormatter = new DoubleFormatter(doubleFormatterPrecision);
     }
 
-    public UncheckedMessageBuilder(int doubleFormatterPrecision) {
+    public FastMessageBuilder(int doubleFormatterPrecision) {
         doubleFormatter = new DoubleFormatter(doubleFormatterPrecision);
     }
 
@@ -192,12 +192,12 @@ public final class UncheckedMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public void addRaw(int tagNo, ByteSequence bytes) {
-        checkValue(bytes);
+    public void addRaw(int tagNo, ByteSequence sequence) {
+        checkValue(sequence);
 
         offset = IntFormatter.format(tagNo, buffer, offset);
         addTagValueSeparator();
-        offset += bytes.copyTo(buffer, offset);
+        append(sequence.wrapper());
         addFieldSeparator();
     }
 
@@ -274,6 +274,12 @@ public final class UncheckedMessageBuilder implements MessageBuilder {
     }
 
     @Override
+    public AppendableValue append(int value, int minLength) {
+        offset = IntFormatter.format3digits(value, buffer, offset);
+        return this;
+    }
+
+    @Override
     public AppendableValue append(long value) {
         offset = LongFormatter.format(value, buffer, offset);
         return this;
@@ -306,12 +312,6 @@ public final class UncheckedMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public AppendableValue append3Digit(int value) {
-        offset = IntFormatter.format3digits(value, buffer, offset);
-        return this;
-    }
-
-    @Override
     public void end() {
         addFieldSeparator();
     }
@@ -325,7 +325,7 @@ public final class UncheckedMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public UncheckedMessageBuilder wrap(MutableBuffer buffer, int offset, int length) {
+    public FastMessageBuilder wrap(MutableBuffer buffer, int offset, int length) {
         buffer.checkBounds(offset, length);
         this.buffer = buffer;
         this.offset = offset;
@@ -334,7 +334,7 @@ public final class UncheckedMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public UncheckedMessageBuilder wrap(MutableBuffer buffer) {
+    public FastMessageBuilder wrap(MutableBuffer buffer) {
         this.buffer = buffer;
         this.offset = 0;
         this.start = 0;

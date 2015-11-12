@@ -5,9 +5,9 @@ import org.f1x.util.UnsafeAccess;
 import java.nio.ByteBuffer;
 
 import static org.f1x.util.BitUtil.*;
-import static org.f1x.util.MemoryAccess.MEMORY;
+import static org.f1x.util.UnsafeAccess.UNSAFE;
 
-public class UnsafeBuffer implements AtomicBuffer {
+public final class UnsafeBuffer implements AtomicBuffer {
 
     public static final int ALIGNMENT = SIZE_OF_LONG;
     public static final int ALIGNMENT_MASK = ALIGNMENT - 1;
@@ -155,7 +155,7 @@ public class UnsafeBuffer implements AtomicBuffer {
 
     public void setMemory(int offset, int length, byte value) {
         checkBounds(offset, length);
-        MEMORY.setMemory(byteArray, addressOffset + offset, length, value);
+        UNSAFE.setMemory(byteArray, addressOffset + offset, length, value);
     }
 
     public void checkAlignment() {
@@ -168,27 +168,27 @@ public class UnsafeBuffer implements AtomicBuffer {
 
     public long getLong(int index) {
         checkBounds(index, SIZE_OF_LONG);
-        return MEMORY.getLong(byteArray, addressOffset + index);
+        return UNSAFE.getLong(byteArray, addressOffset + index);
     }
 
     public void putLong(int index, long value) {
         checkBounds(index, SIZE_OF_LONG);
-        MEMORY.putLong(byteArray, addressOffset + index, value);
+        UNSAFE.putLong(byteArray, addressOffset + index, value);
     }
 
     public long getLongVolatile(int index) {
         checkBounds(index, SIZE_OF_LONG);
-        return MEMORY.getLongVolatile(byteArray, addressOffset + index);
+        return UNSAFE.getLongVolatile(byteArray, addressOffset + index);
     }
 
     public void putLongVolatile(int index, long value) {
         checkBounds(index, SIZE_OF_LONG);
-        MEMORY.putLongVolatile(byteArray, addressOffset + index, value);
+        UNSAFE.putLongVolatile(byteArray, addressOffset + index, value);
     }
 
     public void putLongOrdered(int index, long value) {
         checkBounds(index, SIZE_OF_LONG);
-        MEMORY.putOrderedLong(byteArray, addressOffset + index, value);
+        UNSAFE.putOrderedLong(byteArray, addressOffset + index, value);
     }
 
     public long addLongOrdered(int index, long increment) {
@@ -196,50 +196,50 @@ public class UnsafeBuffer implements AtomicBuffer {
 
         long offset = addressOffset + index;
         byte[] byteArray = this.byteArray;
-        long value = MEMORY.getLong(byteArray, offset);
-        MEMORY.putOrderedLong(byteArray, offset, value + increment);
+        long value = UNSAFE.getLong(byteArray, offset);
+        UNSAFE.putOrderedLong(byteArray, offset, value + increment);
 
         return value;
     }
 
     public boolean compareAndSetLong(int index, long expectedValue, long updateValue) {
         checkBounds(index, SIZE_OF_LONG);
-        return MEMORY.compareAndSwapLong(byteArray, addressOffset + index, expectedValue, updateValue);
+        return UNSAFE.compareAndSwapLong(byteArray, addressOffset + index, expectedValue, updateValue);
     }
 
     public long getAndSetLong(int index, long value) {
         checkBounds(index, SIZE_OF_LONG);
-        return MEMORY.getAndSetLong(byteArray, addressOffset + index, value);
+        return UNSAFE.getAndSetLong(byteArray, addressOffset + index, value);
     }
 
     public long getAndAddLong(final int index, final long delta) {
         checkBounds(index, SIZE_OF_LONG);
-        return MEMORY.getAndAddLong(byteArray, addressOffset + index, delta);
+        return UNSAFE.getAndAddLong(byteArray, addressOffset + index, delta);
     }
 
     public int getInt(int index) {
         checkBounds(index, SIZE_OF_INT);
-        return MEMORY.getInt(byteArray, addressOffset + index);
+        return UNSAFE.getInt(byteArray, addressOffset + index);
     }
 
     public void putInt(int index, int value) {
         checkBounds(index, SIZE_OF_INT);
-        MEMORY.putInt(byteArray, addressOffset + index, value);
+        UNSAFE.putInt(byteArray, addressOffset + index, value);
     }
 
     public int getIntVolatile(int index) {
         checkBounds(index, SIZE_OF_INT);
-        return MEMORY.getIntVolatile(byteArray, addressOffset + index);
+        return UNSAFE.getIntVolatile(byteArray, addressOffset + index);
     }
 
     public void putIntVolatile(int index, int value) {
         checkBounds(index, SIZE_OF_INT);
-        MEMORY.putIntVolatile(byteArray, addressOffset + index, value);
+        UNSAFE.putIntVolatile(byteArray, addressOffset + index, value);
     }
 
     public void putIntOrdered(int index, int value) {
         checkBounds(index, SIZE_OF_INT);
-        MEMORY.putOrderedInt(byteArray, addressOffset + index, value);
+        UNSAFE.putOrderedInt(byteArray, addressOffset + index, value);
     }
 
     public int addIntOrdered(int index, int increment) {
@@ -247,105 +247,105 @@ public class UnsafeBuffer implements AtomicBuffer {
 
         long offset = addressOffset + index;
         byte[] byteArray = this.byteArray;
-        int value = MEMORY.getInt(byteArray, offset);
-        MEMORY.putOrderedInt(byteArray, offset, value + increment);
+        int value = UNSAFE.getInt(byteArray, offset);
+        UNSAFE.putOrderedInt(byteArray, offset, value + increment);
 
         return value;
     }
 
     public boolean compareAndSetInt(int index, int expectedValue, int updateValue) {
         checkBounds(index, SIZE_OF_INT);
-        return MEMORY.compareAndSwapInt(byteArray, addressOffset + index, expectedValue, updateValue);
+        return UNSAFE.compareAndSwapInt(byteArray, addressOffset + index, expectedValue, updateValue);
     }
 
     public int getAndSetInt(int index, int value) {
         checkBounds(index, SIZE_OF_INT);
-        return MEMORY.getAndSetInt(byteArray, addressOffset + index, value);
+        return UNSAFE.getAndSetInt(byteArray, addressOffset + index, value);
     }
 
     public int getAndAddInt(int index, int delta) {
         checkBounds(index, SIZE_OF_INT);
-        return MEMORY.getAndAddInt(byteArray, addressOffset + index, delta);
+        return UNSAFE.getAndAddInt(byteArray, addressOffset + index, delta);
     }
 
     public double getDouble(int index) {
         checkBounds(index, SIZE_OF_DOUBLE);
-        return MEMORY.getDouble(byteArray, addressOffset + index);
+        return UNSAFE.getDouble(byteArray, addressOffset + index);
     }
 
     public void putDouble(int index, double value) {
         checkBounds(index, SIZE_OF_DOUBLE);
-        MEMORY.putDouble(byteArray, addressOffset + index, value);
+        UNSAFE.putDouble(byteArray, addressOffset + index, value);
     }
 
     public float getFloat(int index) {
         checkBounds(index, SIZE_OF_FLOAT);
-        return MEMORY.getFloat(byteArray, addressOffset + index);
+        return UNSAFE.getFloat(byteArray, addressOffset + index);
     }
 
     public void putFloat(int index, float value) {
         checkBounds(index, SIZE_OF_FLOAT);
-        MEMORY.putFloat(byteArray, addressOffset + index, value);
+        UNSAFE.putFloat(byteArray, addressOffset + index, value);
     }
 
     public short getShort(int index) {
         checkBounds(index, SIZE_OF_SHORT);
-        return MEMORY.getShort(byteArray, addressOffset + index);
+        return UNSAFE.getShort(byteArray, addressOffset + index);
     }
 
     public void putShort(int index, short value) {
         checkBounds(index, SIZE_OF_SHORT);
-        MEMORY.putShort(byteArray, addressOffset + index, value);
+        UNSAFE.putShort(byteArray, addressOffset + index, value);
     }
 
     public short getShortVolatile(int index) {
         checkBounds(index, SIZE_OF_SHORT);
-        return MEMORY.getShortVolatile(byteArray, addressOffset + index);
+        return UNSAFE.getShortVolatile(byteArray, addressOffset + index);
     }
 
     public void putShortVolatile(int index, short value) {
         checkBounds(index, SIZE_OF_SHORT);
-        MEMORY.putShortVolatile(byteArray, addressOffset + index, value);
+        UNSAFE.putShortVolatile(byteArray, addressOffset + index, value);
     }
 
     public char getChar(int index) {
         checkBounds(index, SIZE_OF_CHAR);
-        return MEMORY.getChar(byteArray, addressOffset + index);
+        return UNSAFE.getChar(byteArray, addressOffset + index);
     }
 
     public void putChar(int index, char value) {
         checkBounds(index, SIZE_OF_CHAR);
-        MEMORY.putChar(byteArray, addressOffset + index, value);
+        UNSAFE.putChar(byteArray, addressOffset + index, value);
     }
 
     public char getCharVolatile(int index) {
         checkBounds(index, SIZE_OF_CHAR);
-        return MEMORY.getCharVolatile(byteArray, addressOffset + index);
+        return UNSAFE.getCharVolatile(byteArray, addressOffset + index);
     }
 
     public void putCharVolatile(int index, char value) {
         checkBounds(index, SIZE_OF_CHAR);
-        MEMORY.putCharVolatile(byteArray, addressOffset + index, value);
+        UNSAFE.putCharVolatile(byteArray, addressOffset + index, value);
     }
 
     public byte getByte(int index) {
         checkBounds(index, SIZE_OF_BYTE);
-        return MEMORY.getByte(byteArray, addressOffset + index);
+        return UNSAFE.getByte(byteArray, addressOffset + index);
     }
 
     public void putByte(int index, byte value) {
         checkBounds(index, SIZE_OF_BYTE);
-        MEMORY.putByte(byteArray, addressOffset + index, value);
+        UNSAFE.putByte(byteArray, addressOffset + index, value);
     }
 
     public byte getByteVolatile(int index) {
         checkBounds(index, SIZE_OF_BYTE);
-        return MEMORY.getByteVolatile(byteArray, addressOffset + index);
+        return UNSAFE.getByteVolatile(byteArray, addressOffset + index);
     }
 
     public void putByteVolatile(int index, byte value) {
         checkBounds(index, SIZE_OF_BYTE);
-        MEMORY.putByteVolatile(byteArray, addressOffset + index, value);
+        UNSAFE.putByteVolatile(byteArray, addressOffset + index, value);
     }
 
     public void getBytes(int index, byte[] dst) {
@@ -355,7 +355,7 @@ public class UnsafeBuffer implements AtomicBuffer {
     public void getBytes(int index, byte[] dst, int offset, int length) {
         checkBounds(index, length);
         checkBounds(dst, offset, length);
-        MEMORY.copyMemory(byteArray, addressOffset + index, dst, ARRAY_BASE_OFFSET + offset, length);
+        UNSAFE.copyMemory(byteArray, addressOffset + index, dst, ARRAY_BASE_OFFSET + offset, length);
     }
 
     public void getBytes(int index, MutableBuffer dstBuffer, int dstIndex, int length) {
@@ -377,7 +377,7 @@ public class UnsafeBuffer implements AtomicBuffer {
             dstBaseOffset = ((sun.nio.ch.DirectBuffer) dstBuffer).address();
         }
 
-        MEMORY.copyMemory(byteArray, addressOffset + index, dstByteArray, dstBaseOffset + dstOffset, length);
+        UNSAFE.copyMemory(byteArray, addressOffset + index, dstByteArray, dstBaseOffset + dstOffset, length);
         dstBuffer.position(dstBuffer.position() + length);
     }
 
@@ -388,7 +388,7 @@ public class UnsafeBuffer implements AtomicBuffer {
     public void putBytes(int index, byte[] src, int offset, int length) {
         checkBounds(index, length);
         checkBounds(src, offset, length);
-        MEMORY.copyMemory(src, ARRAY_BASE_OFFSET + offset, byteArray, addressOffset + index, length);
+        UNSAFE.copyMemory(src, ARRAY_BASE_OFFSET + offset, byteArray, addressOffset + index, length);
     }
 
     public void putBytes(int index, ByteBuffer srcBuffer, int length) {
@@ -414,7 +414,7 @@ public class UnsafeBuffer implements AtomicBuffer {
             srcBaseOffset = ((sun.nio.ch.DirectBuffer) srcBuffer).address();
         }
 
-        MEMORY.copyMemory(srcByteArray, srcBaseOffset + srcOffset, byteArray, addressOffset + index, length);
+        UNSAFE.copyMemory(srcByteArray, srcBaseOffset + srcOffset, byteArray, addressOffset + index, length);
     }
 
     @Override
@@ -426,7 +426,7 @@ public class UnsafeBuffer implements AtomicBuffer {
         checkBounds(index, length);
         srcBuffer.checkBounds(srcOffset, length);
 
-        MEMORY.copyMemory(
+        UNSAFE.copyMemory(
                 srcBuffer.byteArray(),
                 srcBuffer.addressOffset() + srcOffset,
                 byteArray,

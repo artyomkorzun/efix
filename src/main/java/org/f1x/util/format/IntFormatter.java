@@ -1,30 +1,15 @@
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.f1x.util.format;
 
-import org.f1x.util.LangUtil;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 
-/**
- * Adaptation of java.lang.Integer.toString() to format integer number into byte array.
- */
+import java.nio.charset.StandardCharsets;
+
+
 public class IntFormatter {
 
-    private static final Buffer MIN_VALUE_STRING = new UnsafeBuffer(LangUtil.getBytes(Integer.toString(Integer.MIN_VALUE)));
+    private static final Buffer MIN_VALUE_STRING = new UnsafeBuffer(Integer.toString(Integer.MIN_VALUE).getBytes(StandardCharsets.US_ASCII));
 
     public static int format(int value, MutableBuffer buffer, int offset) {
         if (value == Integer.MIN_VALUE) {
@@ -93,7 +78,7 @@ public class IntFormatter {
      * the buffer backwards starting with the least significant
      * digit at the specified index (exclusive), and working
      * backwards from there.
-     * <p/>
+     * <p>
      * Will fail if i == Integer.MIN_VALUE
      */
     static void getChars(int i, int index, MutableBuffer buf) {
