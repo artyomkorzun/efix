@@ -2,7 +2,7 @@ package org.f1x.state;
 
 public class MemorySessionState extends AbstractSessionState {
 
-    protected long sessionStartTime;
+    protected long sessionStartTime = Long.MIN_VALUE;
     protected int senderSeqNum = 1;
     protected int targetSeqNum = 1;
 

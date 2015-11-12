@@ -2,11 +2,11 @@ package org.f1x.store;
 
 import org.f1x.util.buffer.Buffer;
 
-public final class NullMessageStore implements MessageStore {
+public final class EmptyMessageStore implements MessageStore {
 
-    public static final NullMessageStore INSTANCE = new NullMessageStore();
+    public static final EmptyMessageStore INSTANCE = new EmptyMessageStore();
 
-    private NullMessageStore() {
+    private EmptyMessageStore() {
     }
 
     @Override

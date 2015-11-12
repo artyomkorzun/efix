@@ -72,7 +72,7 @@ public class FileMappedSessionState extends AbstractSessionState {
         if (justCreated) {
             setNextSenderSeqNum(1);
             setNextTargetSeqNum(1);
-            setSessionStartTime(0);
+            setSessionStartTime(Long.MIN_VALUE);
         }
     }
 

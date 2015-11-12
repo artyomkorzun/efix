@@ -3,8 +3,8 @@ package org.f1x.state;
 public abstract class AbstractSessionState implements SessionState {
 
     protected SessionStatus status = SessionStatus.DISCONNECTED;
-    protected long lastReceivedTime;
-    protected long lastSentTime;
+    protected long lastReceivedTime = Long.MIN_VALUE;
+    protected long lastSentTime = Long.MIN_VALUE;
     protected boolean seqNumsSynchronized;
     protected boolean isTestRequestSent;
 
