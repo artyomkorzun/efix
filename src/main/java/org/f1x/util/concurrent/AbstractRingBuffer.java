@@ -83,7 +83,7 @@ public abstract class AbstractRingBuffer implements RingBuffer {
 
     protected void checkMessageLength(int length) {
         if (length > maxMessageLength)
-            throw new IllegalArgumentException(String.format("Message length: %s is more than max: %d", length, maxMessageLength));
+            throw new IllegalArgumentException(String.format("Message length %s is more than max %d", length, maxMessageLength));
     }
 
     protected void checkMessageType(int messageType) {

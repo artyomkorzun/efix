@@ -46,4 +46,13 @@ public final class BitUtil {
         return current - 1;
     }
 
+    public static int calculateShift(int scale) {
+        if (scale == 4)
+            return 2;
+        else if (scale == 8)
+            return 3;
+
+        throw new IllegalArgumentException("Unknown pointer size");
+    }
+
 }
