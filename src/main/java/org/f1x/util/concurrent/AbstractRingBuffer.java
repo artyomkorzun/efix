@@ -38,6 +38,13 @@ public abstract class AbstractRingBuffer implements RingBuffer {
         return maxMessageLength;
     }
 
+    @Override
+    public int size() {
+        long tail = tailSequence.getVolatile();
+        long head = headSequence.getVolatile();
+        return (int) (head - tail);
+    }
+
     protected static int recordLength(int messageLength) {
         return messageLength + HEADER_LENGTH;
     }

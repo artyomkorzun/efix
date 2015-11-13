@@ -2,6 +2,7 @@ package org.f1x.connector;
 
 import org.f1x.connector.channel.NioSocketChannel;
 import org.f1x.connector.channel.SocketOptions;
+import org.f1x.util.CloseHelper;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -32,7 +33,7 @@ public class AcceptorConnector extends SocketChannelConnector {
     @Override
     public void close() {
         disconnect();
-        closeChannel(acceptor);
+        CloseHelper.close(acceptor);
         acceptor = null;
     }
 

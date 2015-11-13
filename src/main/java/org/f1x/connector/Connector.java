@@ -6,7 +6,7 @@ public interface Connector extends AutoCloseable {
 
     void open() throws ConnectionException;
 
-    void close() throws ConnectionException;
+    void close();
 
     Channel connect() throws ConnectionException;
 

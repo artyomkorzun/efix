@@ -12,5 +12,7 @@ public interface RingBuffer {
 
     int read(MessageHandler messageHandler);
 
+    int size();
+
 }
 
