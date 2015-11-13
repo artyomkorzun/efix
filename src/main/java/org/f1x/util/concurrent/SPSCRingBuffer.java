@@ -14,20 +14,16 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
         checkMessageType(messageType);
         checkMessageLength(length);
 
-        AtomicBuffer buffer = this.buffer;
         int recordLength = recordLength(length);
         int alignedRecordLength = align(recordLength);
+        long head = claim(alignedRecordLength);
 
-        long head = headSequence.get();
-        int recordOffset = claim(alignedRecordLength, head, buffer);
-
-        if (recordOffset == INSUFFICIENT_SPACE)
+        if (head == INSUFFICIENT_SPACE)
             return false;
 
-        buffer.putInt(recordLengthOffset(recordOffset), recordLength);
-        buffer.putInt(messageTypeOffset(recordOffset), messageType);
+        int recordOffset = mask(head);
+        putHeader(recordOffset, recordLength, messageType, buffer);
         buffer.putBytes(messageOffset(recordOffset), srcBuffer, srcOffset, length);
-
         headSequence.setOrdered(head + alignedRecordLength);
 
         return true;
@@ -37,39 +33,34 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
     public int read(MessageHandler handler) {
         int messagesRead = 0;
 
-        AtomicBuffer buffer = this.buffer;
-
         long tail = tailSequence.get();
         long head = headSequence.getVolatile();
 
         int available = (int) (head - tail);
+        int bytesRead = 0;
 
-        if (available > 0) {
-            int bytesRead = 0;
+        while (bytesRead < available) {
+            int recordOffset = mask(tail + bytesRead);
+            int recordLength = buffer.getInt(recordLengthOffset(recordOffset));
+            int messageType = buffer.getInt(messageTypeOffset(recordOffset));
 
-            while (bytesRead < available) {
-                int recordOffset = mask(tail + bytesRead);
-                int recordLength = buffer.getInt(recordLengthOffset(recordOffset));
-                int messageType = buffer.getInt(messageTypeOffset(recordOffset));
+            bytesRead += align(recordLength);
 
-                bytesRead += align(recordLength);
-
-                try {
-                    if (messageType != MESSAGE_TYPE_PADDING) {
-                        handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength));
-                        messagesRead++;
-                    }
-                } finally {
-                    tailSequence.setOrdered(tail + bytesRead);
+            try {
+                if (messageType != MESSAGE_TYPE_PADDING) {
+                    handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength));
+                    messagesRead++;
                 }
+            } finally {
+                tailSequence.setOrdered(tail + bytesRead);
             }
         }
 
         return messagesRead;
     }
 
-    private int claim(int required, long head, AtomicBuffer buffer) {
-        int capacity = this.capacity;
+    private long claim(int required) {
+        long head = headSequence.get();
         long tail = tailCacheSequence.get();
 
         if (required > freeSpace(head, tail, capacity)) {
@@ -80,21 +71,30 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
             tailCacheSequence.set(tail);
         }
 
+        int padding = 0;
         int headIndex = mask(head);
-        int tailIndex = mask(tail);
         int continuous = capacity - headIndex;
 
         if (required > continuous) {
-            if (required > tailIndex)
-                return INSUFFICIENT_SPACE;
+            if (required > mask(tail)) {
+                tail = tailSequence.getVolatile();
+                if (required > mask(tail))
+                    return INSUFFICIENT_SPACE;
 
-            buffer.putInt(recordLengthOffset(headIndex), continuous);
-            buffer.putInt(messageTypeOffset(headIndex), MESSAGE_TYPE_PADDING);
-            headSequence.setOrdered(head + continuous);
-            headIndex = 0;
+                tailCacheSequence.set(tail);
+            }
+
+            padding = continuous;
+            putHeader(headIndex, padding, MESSAGE_TYPE_PADDING, buffer);
+            headSequence.setOrdered(head + padding);
         }
 
-        return headIndex;
+        return head + padding;
+    }
+
+    private static void putHeader(int recordOffset, int recordLength, int messageType, AtomicBuffer buffer) {
+        buffer.putInt(recordLengthOffset(recordOffset), recordLength);
+        buffer.putInt(messageTypeOffset(recordOffset), messageType);
     }
 
 }

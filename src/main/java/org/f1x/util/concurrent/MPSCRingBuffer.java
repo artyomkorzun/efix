@@ -15,10 +15,9 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
         checkMessageType(messageType);
         checkMessageLength(length);
 
-        AtomicBuffer buffer = this.buffer;
         int recordLength = recordLength(length);
         int alignedRecordLength = align(recordLength);
-        int recordOffset = claim(alignedRecordLength, buffer);
+        int recordOffset = claim(alignedRecordLength);
 
         if (recordOffset == INSUFFICIENT_SPACE)
             return false;
@@ -68,10 +67,8 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
         return messagesRead;
     }
 
-    private int claim(int required, AtomicBuffer buffer) {
-        int capacity = this.capacity;
+    private int claim(int required) {
         long tail = tailCacheSequence.getVolatile();
-
         long head;
         int headIndex;
         int padding;
@@ -92,9 +89,13 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
             int continuous = capacity - headIndex;
 
             if (required > continuous) {
-                int tailIndex = mask(tail);
-                if (required > tailIndex)
-                    return INSUFFICIENT_SPACE;
+                if (required > mask(tail)) {
+                    tail = tailSequence.getVolatile();
+                    if (required > mask(tail))
+                        return INSUFFICIENT_SPACE;
+
+                    tailCacheSequence.setOrdered(tail);
+                }
 
                 padding = continuous;
             }
