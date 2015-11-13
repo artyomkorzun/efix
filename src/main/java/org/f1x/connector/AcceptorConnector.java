@@ -32,9 +32,13 @@ public class AcceptorConnector extends SocketChannelConnector {
 
     @Override
     public void close() {
-        disconnect();
-        CloseHelper.close(acceptor);
-        acceptor = null;
+        try {
+            disconnect();
+        } finally {
+            ServerSocketChannel acceptor = this.acceptor;
+            this.acceptor = null;
+            CloseHelper.close(acceptor);
+        }
     }
 
     @Override

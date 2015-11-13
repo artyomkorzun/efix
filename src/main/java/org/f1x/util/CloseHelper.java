@@ -6,6 +6,7 @@ public class CloseHelper {
         try {
             if (closeable != null)
                 closeable.close();
+
         } catch (Exception ignore) {
         }
     }
@@ -16,7 +17,7 @@ public class CloseHelper {
             if (closeable != null)
                 closeable.close();
         } catch (Exception e) {
-            LangUtil.rethrowUnchecked(e);
+            throw LangUtil.rethrowUnchecked(e);
         }
     }
 

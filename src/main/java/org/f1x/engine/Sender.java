@@ -30,18 +30,10 @@ public class Sender {
         this.channel = channel;
     }
 
-    public void send(Buffer buffer) {
-        send(buffer, 0, buffer.capacity());
-    }
-
     public void send(Buffer buffer, int offset, int length) {
-        try {
-            int written = 0;
-            while ((written += channel.write(buffer, offset + written, length - written)) < length)
-                Thread.yield();
-        } finally {
-            log.log(false, buffer, offset, length);
-        }
+        int written = 0;
+        while ((written += channel.write(buffer, offset + written, length - written)) < length)
+            Thread.yield();
     }
 
 }

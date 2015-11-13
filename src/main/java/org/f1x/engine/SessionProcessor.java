@@ -303,15 +303,14 @@ public class SessionProcessor implements Worker {
     }
 
     protected void processMessage(Buffer buffer, int offset, int length) {
+        long time = clock.time();
+        state.setLastReceivedTime(time);
+        log.log(true, time, buffer, offset, length);
+
         parser.wrap(buffer, offset, length);
         parseHeader(parser, FIXVersion.FIX44, header);
         validateHeader(header);
-        processMessage(header, parser.reset());
-    }
-
-    protected void processMessage(Header header, MessageParser parser) {
-        long time = clock.time();
-        state.setLastReceivedTime(time);
+        parser.reset();
 
         if (AdminMessageTypes.isAdmin(header.getMsgType()))
             processAdminMessage(header, parser);
@@ -509,34 +508,34 @@ public class SessionProcessor implements Worker {
 
         builder.wrap(buffer);
         makeLogon(resetSeqNums, builder);
-        sendMessage(buffer, 0, builder.length());
+        sendMessage(true, buffer, 0, builder.length());
         setStatus(LOGON_SENT);
     }
 
     protected void sendLogout(CharSequence text) {
         builder.wrap(buffer);
         makeLogout(text, builder);
-        sendMessage(buffer, 0, builder.length());
+        sendMessage(true, buffer, 0, builder.length());
         setStatus(LOGOUT_SENT);
     }
 
     protected void sendHeartbeat(CharSequence testReqID) {
         builder.wrap(buffer);
         makeHeartbeat(testReqID, builder);
-        sendMessage(buffer, 0, builder.length());
+        sendMessage(true, buffer, 0, builder.length());
     }
 
     protected void sendTestRequest(CharSequence testReqID) {
         state.setTestRequestSent(true);
         builder.wrap(buffer);
         makeTestRequest(testReqID, builder);
-        sendMessage(buffer, 0, builder.length());
+        sendMessage(true, buffer, 0, builder.length());
     }
 
     protected void sendResendRequest(int beginSeqNo, int endSeqNo) {
         builder.wrap(buffer);
         makeResendRequest(beginSeqNo, endSeqNo, builder);
-        sendMessage(buffer, 0, builder.length());
+        sendMessage(true, buffer, 0, builder.length());
     }
 
     protected void sendReject(Buffer buffer, int offset, int length) {
@@ -557,10 +556,6 @@ public class SessionProcessor implements Worker {
         sendMessage(send, buffer, offset, length);
     }
 
-    protected void sendMessage(Buffer buffer, int offset, int length) {
-        sendMessage(true, buffer, offset, length);
-    }
-
     protected void sendMessage(boolean send, Buffer buffer, int offset, int length) {
         int seqNum = state.getNextSenderSeqNum();
         state.setNextSenderSeqNum(seqNum + 1);
@@ -571,30 +566,37 @@ public class SessionProcessor implements Worker {
         resender.resendMessages(beginSeqNo, endSeqNo, store);
     }
 
-    protected void resendMessage(int seqNum, long origSendingTime, CharSequence msgType, Buffer buffer, int offset, int length) {
+    protected void resendMessage(int seqNum, long origSendingTime, CharSequence msgType, Buffer body, int offset, int length) {
         long time = clock.time();
-        state.setLastSentTime(time);
-        Buffer message = packer.pack(seqNum, time, origSendingTime, msgType, buffer, offset, length);
-        sender.send(message);
+        Buffer message = packer.pack(seqNum, time, origSendingTime, msgType, body, offset, length);
+        sendMessage(time, message);
     }
 
     protected void sendMessage(boolean send, int seqNum, Buffer buffer, int offset, int length) {
         parser.wrap(buffer, offset, length);
         CharSequence msgType = parseMessageType(parser, outMsgType);
+
         length -= parser.fieldLength();
         offset += parser.fieldLength();
 
         long time = clock.time();
         try {
             if (send) {
-                state.setLastSentTime(time);
                 Buffer message = packer.pack(seqNum, time, msgType, buffer, offset, length);
-                sender.send(message);
+                sendMessage(time, message);
             }
         } finally {
             if (onStoreMessage(seqNum, time, msgType, buffer, offset, length))
                 store.write(seqNum, time, msgType, buffer, offset, length);
         }
+    }
+
+    protected void sendMessage(long time, Buffer message) {
+        state.setLastSentTime(time);
+        int length = message.capacity();
+
+        sender.send(message, 0, length);
+        log.log(false, time, message, 0, length);
     }
 
     protected void makeLogon(boolean resetSeqNum, MessageBuilder builder) {

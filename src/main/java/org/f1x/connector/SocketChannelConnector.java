@@ -6,7 +6,6 @@ import org.f1x.util.CloseHelper;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.nio.channels.Channel;
 import java.nio.channels.SocketChannel;
 
 public abstract class SocketChannelConnector implements Connector {
@@ -32,9 +31,12 @@ public abstract class SocketChannelConnector implements Connector {
 
     @Override
     public void disconnect() {
-        CloseHelper.close(channel);
-        channel = null;
-        nioChannel = null;
+        try {
+            CloseHelper.close(channel);
+        } finally {
+            channel = null;
+            nioChannel = null;
+        }
     }
 
     @Override
@@ -57,16 +59,6 @@ public abstract class SocketChannelConnector implements Connector {
 
     protected static <T> void setOption(SocketOptions.Entry<T> entry, SocketChannel channel) throws IOException {
         channel.setOption(entry.option(), entry.value());
-    }
-
-    protected static void closeChannel(Channel channel) {
-        if (channel != null) {
-            try {
-                channel.close();
-            } catch (IOException e) {
-                throw new ConnectionException(e);
-            }
-        }
     }
 
 }

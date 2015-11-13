@@ -1,7 +1,6 @@
 package org.f1x.engine;
 
 import org.f1x.connector.channel.Channel;
-import org.f1x.log.MessageLog;
 import org.f1x.message.Fields;
 import org.f1x.message.parser.MessageParser;
 import org.f1x.util.buffer.Buffer;
@@ -13,16 +12,14 @@ import static org.f1x.engine.SessionUtil.parseBodyLength;
 
 public class Receiver {
 
-    protected final MessageLog log;
     protected final MessageParser parser;
     protected final MutableBuffer buffer;
 
     protected Channel channel;
     protected int offset;
 
-    public Receiver(MessageLog log, MessageParser parser, MutableBuffer buffer) {
+    public Receiver(MessageParser parser, MutableBuffer buffer) {
         this.parser = parser;
-        this.log = log;
         this.buffer = buffer;
     }
 
@@ -57,21 +54,13 @@ public class Receiver {
             if (messageLength > remaining)
                 break;
 
-            onMessage(handler, buffer, offset, messageLength);
+            handler.onMessage(EventTypes.INBOUND_MESSAGE, buffer, offset, messageLength);
 
             offset += messageLength;
             remaining -= messageLength;
         }
 
         return length - remaining;
-    }
-
-    protected void onMessage(MessageHandler handler, Buffer buffer, int offset, int messageLength) {
-        try {
-            handler.onMessage(EventTypes.INBOUND_MESSAGE, buffer, offset, messageLength);
-        } finally {
-            log.log(true, buffer, offset, messageLength);
-        }
     }
 
     protected int parseMessageLength(Buffer buffer, int offset, int length) {
