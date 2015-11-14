@@ -3,7 +3,7 @@ package org.f1x.util.concurrent;
 import java.util.function.Consumer;
 
 
-public interface Pipe<E> {
+public interface Queue<E> {
 
     boolean offer(E e);
 

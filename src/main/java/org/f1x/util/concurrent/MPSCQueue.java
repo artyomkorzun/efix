@@ -3,9 +3,9 @@ package org.f1x.util.concurrent;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class MPSCPipe<E> extends AbstractPipe<E> {
+public class MPSCQueue<E> extends AbstractQueue<E> {
 
-    public MPSCPipe(int requestedCapacity) {
+    public MPSCQueue(int requestedCapacity) {
         super(requestedCapacity);
     }
 

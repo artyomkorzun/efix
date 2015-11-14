@@ -3,9 +3,9 @@ package org.f1x.util.concurrent;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class SPSCPipe<E> extends AbstractPipe<E> {
+public class SPSCQueue<E> extends AbstractQueue<E> {
 
-    public SPSCPipe(int requestedCapacity) {
+    public SPSCQueue(int requestedCapacity) {
         super(requestedCapacity);
     }
 

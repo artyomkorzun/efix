@@ -2,7 +2,7 @@ package org.f1x.util.concurrent;
 
 import org.f1x.util.BitUtil;
 
-public abstract class AbstractPipe<E> implements Pipe<E> {
+public abstract class AbstractQueue<E> implements Queue<E> {
 
     protected final Sequence headSequence = new Sequence();
     protected final Sequence tailSequence = new Sequence();
@@ -11,7 +11,7 @@ public abstract class AbstractPipe<E> implements Pipe<E> {
     protected final int mask;
     protected final int capacity;
 
-    public AbstractPipe(int requestedCapacity) {
+    public AbstractQueue(int requestedCapacity) {
         capacity = BitUtil.findNextPositivePowerOfTwo(requestedCapacity);
         mask = capacity - 1;
         array = new UnsafeArray<>(capacity);
