@@ -6,91 +6,65 @@ import org.f1x.util.parse.NumbersParser;
 import org.f1x.util.parse.TimeOfDayParser;
 import org.f1x.util.parse.TimestampParser;
 
-public class FastMessageParser implements MessageParser {
+public class OptimizedMessageParser implements MessageParser {
 
-    private static final char SOH = 1;
+    private static final byte TAG_VALUE_SEPARATOR = '=';
+    private static final byte FIELD_SEPARATOR = 1;
 
     private final TimestampParser utcTimestampParser = TimestampParser.createUTCTimestampParser();
     private final TimestampParser localTimestampParser = TimestampParser.createLocalTimestampParser();
-    private final ByteSequence charSequenceBuffer = new ByteSequence();
+    private final ByteSequence byteSequence = new ByteSequence();
 
     private Buffer buffer;
+    private int offset;
     private int start;
-    private int offset; // next byte to read
-    private int limit;
-    private int tagNum;
-    private int valueOffset, valueLength;
+    private int end;
+    private int tag;
+    private int fieldOffset;
+    private int valueOffset;
+    private int valueLength;
 
-
-    public final FastMessageParser wrap(Buffer buffer) {
-        this.buffer = buffer;
-        this.start = 0;
-        this.limit = buffer.capacity();
-        reset();
-
-        return this;
-    }
-
-    public FastMessageParser wrap(Buffer buffer, int offset, int length) {
-        buffer.checkBounds(offset, length);
+    public OptimizedMessageParser wrap(Buffer buffer, int offset, int length) {
         this.buffer = buffer;
         this.start = offset;
-        this.limit = offset + length;
-        reset();
+        this.end = offset + length;
+        this.offset = offset;
+        this.tag = 0;
+        this.fieldOffset = offset;
+        this.valueOffset = 0;
+        this.valueLength = 0;
 
         return this;
     }
 
     @Override
-    public final boolean next() {
-        try {
-            final boolean result = _next();
-            if (result) {
-                if (valueLength == 0)
-                    throw new FixParserException("Tag " + tagNum + " has empty value at position " + offset);
+    public boolean next() {
+        if (offset == end)
+            return false;
 
-            }
-            return result;
+        fieldOffset = offset;
+        offset = findByte(TAG_VALUE_SEPARATOR, buffer, offset, end);
+        int tagLength = offset - fieldOffset;
+        if (tagLength == 0)
+            throw new FixParserException("Tag is empty");
 
-        } catch (FixParserException e) {
-            throw new FixParserException("Parser error (at " + offset + "): " + e.getMessage());
-        }
+        tag = NumbersParser.parsePositiveInt(buffer, fieldOffset, tagLength);
+
+        valueOffset = offset + 1;
+        offset = findByte(FIELD_SEPARATOR, buffer, valueOffset, end);
+        valueLength = offset - valueOffset;
+        offset++;
+
+        if (valueLength == 0)
+            throw new FixParserException("Value is empty");
+
+        return true;
+
     }
-
-
-    // terrible cycle eats 40% performance
-    private boolean _next() {
-        boolean isParsingTagNum = true;
-        tagNum = 0;
-        while (offset < limit) {
-            byte ch = buffer.getByte(offset++);
-            if (isParsingTagNum) {
-                if (ch >= '0' && ch <= '9') {
-                    tagNum = 10 * tagNum + (ch - '0');
-                } else if (ch == '=') {
-                    if (tagNum == 0)
-                        throw new FixParserException("Unexpected '=' character instead of a tag number digit");
-                    isParsingTagNum = false;
-                    valueOffset = offset;
-                    valueLength = 0;
-                } else {
-                    throw new FixParserException("Unexpected character (0x" + Integer.toHexString(ch) + " where a tag number digit or '=' is expected");
-                }
-
-            } else {
-                if (ch == SOH)
-                    return true;
-
-                valueLength++;
-            }
-        }
-        return false;
-    }
-
 
     @Override
     public int tag() {
-        return tagNum;
+        return tag;
     }
 
     @Override
@@ -118,8 +92,7 @@ public class FastMessageParser implements MessageParser {
 
     @Override
     public CharSequence charSequence() {
-        charSequenceBuffer.wrap(buffer, valueOffset, valueLength);
-        return charSequenceBuffer;
+        return byteSequence.wrap(buffer, valueOffset, valueLength);
     }
 
     @Override
@@ -169,8 +142,8 @@ public class FastMessageParser implements MessageParser {
     }
 
     @Override
-    public final FastMessageParser reset() {
-        tagNum = valueOffset = valueLength = 0;
+    public OptimizedMessageParser reset() {
+        tag = valueOffset = valueLength = 0;
         offset = start;
 
         return this;
@@ -178,12 +151,21 @@ public class FastMessageParser implements MessageParser {
 
     @Override
     public int fieldOffset() {
-        return offset;
+        return fieldOffset;
     }
 
     @Override
     public int fieldLength() {
-        return valueOffset;
+        return valueLength;
+    }
+
+    protected static int findByte(byte b, Buffer buffer, int offset, int end) {
+        for (; offset < end; offset++) {
+            if (b == buffer.getByte(offset))
+                return offset;
+        }
+
+        throw new FixParserException(String.format("%s not found", (char) b));
     }
 
 }

@@ -114,13 +114,13 @@ public class SessionUtil {
         boolean resetSeqNum = false;
 
         while (parser.next()) {
-            int tagNum = parser.getTagNum();
+            int tagNum = parser.tag();
             switch (tagNum) {
                 case FixTags.HeartBtInt:
-                    heartBtInt = parser.getIntValue();
+                    heartBtInt = parser.intValue();
                     break;
                 case FixTags.ResetSeqNumFlag:
-                    resetSeqNum = parser.getBooleanValue();
+                    resetSeqNum = parser.booleanValue();
                     break;
             }
         }
@@ -135,8 +135,8 @@ public class SessionUtil {
         ByteSequence testReqID = request.testReqID().clear();
 
         while (parser.next()) {
-            if (parser.getTagNum() == FixTags.TestReqID) {
-                parser.getByteSequence(testReqID);
+            if (parser.tag() == FixTags.TestReqID) {
+                parser.byteSequence(testReqID);
                 break;
             }
         }
@@ -148,13 +148,13 @@ public class SessionUtil {
         int beginSeqNo = -1;
         int endSeqNo = -1;
         while (parser.next()) {
-            int tagNum = parser.getTagNum();
+            int tagNum = parser.tag();
             switch (tagNum) {
                 case FixTags.BeginSeqNo:
-                    beginSeqNo = parser.getIntValue();
+                    beginSeqNo = parser.intValue();
                     break;
                 case FixTags.EndSeqNo:
-                    endSeqNo = parser.getIntValue();
+                    endSeqNo = parser.intValue();
                     break;
             }
         }
@@ -170,13 +170,13 @@ public class SessionUtil {
         boolean gapFillFlag = false;
 
         while (parser.next()) {
-            int tagNum = parser.getTagNum();
+            int tagNum = parser.tag();
             switch (tagNum) {
                 case FixTags.NewSeqNo:
-                    newSeqNo = checkPositive(tagNum, parser.getIntValue());
+                    newSeqNo = checkPositive(tagNum, parser.intValue());
                     break;
                 case FixTags.GapFillFlag:
-                    gapFillFlag = parser.getBooleanValue();
+                    gapFillFlag = parser.booleanValue();
                     break;
             }
         }
@@ -197,23 +197,23 @@ public class SessionUtil {
     }
 
     public static void parseBeginString(MessageParser parser) {
-        if (!parser.next() || parser.getTagNum() != FixTags.BeginString)
+        if (!parser.next() || parser.tag() != FixTags.BeginString)
             throw new FieldException(FixTags.BeginString, "Missing BeginString(8)");
     }
 
     public static CharSequence parseMessageType(MessageParser parser, ByteSequence out) {
-        if (!parser.next() || parser.getTagNum() != FixTags.MsgType)
+        if (!parser.next() || parser.tag() != FixTags.MsgType)
             throw new FieldException(FixTags.MsgType, "Missing MsgType(35)");
 
-        parser.getByteSequence(out);
+        parser.byteSequence(out);
         return out;
     }
 
     public static int parseBodyLength(MessageParser parser) {
-        if (!parser.next() || parser.getTagNum() != FixTags.BodyLength)
+        if (!parser.next() || parser.tag() != FixTags.BodyLength)
             throw new FieldException(FixTags.BodyLength, "Missing BodyLength(9)");
 
-        return checkPositive(FixTags.BodyLength, parser.getIntValue());
+        return checkPositive(FixTags.BodyLength, parser.intValue());
     }
 
     // TODO: optimize
@@ -221,16 +221,16 @@ public class SessionUtil {
         Boolean possDupFlag = null;
         int msgSeqNum = 0;
         while (parser.next()) {
-            final int tagNum = parser.getTagNum();
+            final int tagNum = parser.tag();
             if (tagNum == FixTags.MsgSeqNum) {
-                msgSeqNum = parser.getIntValue();
+                msgSeqNum = parser.intValue();
                 if (msgSeqNum < 1)
                     throw InvalidFixMessageException.MSG_SEQ_NUM_MUST_BE_POSITIVE;
                 if (possDupFlag != null)
                     break; // we are done
 
             } else if (tagNum == FixTags.PossDupFlag) {
-                possDupFlag = parser.getBooleanValue() ? Boolean.TRUE : Boolean.FALSE;
+                possDupFlag = parser.booleanValue() ? Boolean.TRUE : Boolean.FALSE;
                 if (msgSeqNum != 0)
                     break; // we are done
             }
