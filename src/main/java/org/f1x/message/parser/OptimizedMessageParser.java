@@ -39,24 +39,36 @@ public class OptimizedMessageParser implements MessageParser {
 
     @Override
     public boolean next() {
+        int offset = this.offset;
+        int end = this.end;
         if (offset == end)
             return false;
 
-        fieldOffset = offset;
-        offset = findByte(TAG_VALUE_SEPARATOR, buffer, offset, end);
-        int tagLength = offset - fieldOffset;
+        Buffer buffer = this.buffer;
+        int fieldOffset = offset;
+        int tag = 0;
+        while (offset < end) {
+            byte b = buffer.getByte(offset++);
+            if (b == TAG_VALUE_SEPARATOR)
+                break;
+
+            tag = (tag << 3) + (tag << 1) + (b - '0');
+        }
+
+        int tagLength = offset - fieldOffset - 1;
         if (tagLength == 0)
             throw new FixParserException("Tag is empty");
 
-        tag = NumbersParser.parsePositiveInt(buffer, fieldOffset, tagLength);
-
-        valueOffset = offset + 1;
+        /*int valueOffset = offset;
         offset = findByte(FIELD_SEPARATOR, buffer, valueOffset, end);
-        valueLength = offset - valueOffset;
-        offset++;
 
+        int valueLength = offset - valueOffset;
         if (valueLength == 0)
-            throw new FixParserException("Value is empty");
+            throw new FixParserException("Value is empty");*/
+
+        this.tag = tag;
+        this.offset = offset;
+        this.fieldOffset = fieldOffset;
 
         return true;
 
@@ -77,7 +89,20 @@ public class OptimizedMessageParser implements MessageParser {
 
     @Override
     public int intValue() {
-        return NumbersParser.parseInt(buffer, valueOffset, valueLength);
+        int offset = this.offset;
+        int end = this.end;
+        int value = 0;
+        while (offset < end) {
+            byte b = buffer.getByte(offset++);
+            if (b == FIELD_SEPARATOR)
+                break;
+
+            value = (value << 3) + (value << 1) + b - '0';
+        }
+
+        this.offset = offset;
+
+        return value;
     }
 
     @Override

@@ -23,17 +23,20 @@ compileJava {
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
+}
 
+jmhJar {
+    outputs.upToDateWhen { false }
 }
 
 jmh {
     jmhVersion = '1.11.2'
-    include = 'Benchmark'
+    include = 'Benchmark.*IntFields'
     benchmarkMode = 'sample'
     timeUnit = 'ns'
     warmup = '2s'
-    warmupIterations = 2
-    timeOnIteration = '3s'
+    warmupIterations = 1
+    timeOnIteration = '2s'
     iterations = 3
     threads = 1
     fork = 1

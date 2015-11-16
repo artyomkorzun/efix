@@ -1,8 +1,5 @@
 package org.f1x.message.parser;
 
-import org.f1x.util.StringUtil;
-import org.f1x.util.buffer.Buffer;
-import org.f1x.util.buffer.UnsafeBuffer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -48,7 +45,7 @@ public class MessageParserTest {
     public void testFieldTypes() {
         String message = "1=ABC|2=123|3=3.14159|4=x|5=Y|6=N|7=20121009-13:44:49.421|8=20121009|9=13:44:49.421|10=20121122|";
         int tags = 0;
-        parser.wrap(buffer(message));
+        parser.wrap(makeMessage(message));
         while (parser.next()) {
             tags++;
             switch (parser.tag()) {
@@ -92,8 +89,7 @@ public class MessageParserTest {
     }
 
     protected void assertParser(String message) {
-        Buffer buffer = buffer(message);
-        parser.wrap(buffer);
+        parser.wrap(makeMessage(message));
 
         StringBuilder builder = new StringBuilder(message.length());
         while (parser.next()) {
@@ -104,11 +100,6 @@ public class MessageParserTest {
         }
 
         assertEquals(message, builder.toString());
-    }
-
-    protected static Buffer buffer(String message) {
-        message = message.replace('|', '\u0001');
-        return new UnsafeBuffer(StringUtil.asciiBytes(message));
     }
 
 }

@@ -1,6 +1,8 @@
 package org.f1x.util;
 
 import junit.framework.AssertionFailedError;
+import org.f1x.util.buffer.Buffer;
+import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.format.TimeOfDayFormatter;
 import org.f1x.util.format.TimestampFormatter;
 
@@ -55,6 +57,11 @@ public class TestUtil {
         dateFormat.setTimeZone(timeZone);
         dateFormat.setDateFormatSymbols(new DateFormatSymbols(Locale.US));
         return dateFormat;
+    }
+
+    public static Buffer makeMessage(String message) {
+        message = message.replace('|', '\u0001');
+        return new UnsafeBuffer(StringUtil.asciiBytes(message));
     }
 
 }

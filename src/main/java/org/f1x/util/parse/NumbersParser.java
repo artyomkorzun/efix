@@ -43,7 +43,7 @@ public class NumbersParser {
             byte b = buffer.getByte(offset++);
             if (b < '0' || b > '9')
                 throw new FixParserException("Expecting digit");
-            result = 10*result + (b - '0');
+            result = (result << 3) + (result << 1) + (b - '0');
         }
         return result;
     }
