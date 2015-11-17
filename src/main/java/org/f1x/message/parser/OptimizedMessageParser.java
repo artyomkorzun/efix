@@ -1,10 +1,12 @@
 package org.f1x.message.parser;
 
 import org.f1x.util.ByteSequence;
+import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.parse.NumbersParser;
 import org.f1x.util.parse.TimeOfDayParser;
 import org.f1x.util.parse.TimestampParser;
+import org.f1x.util.parse.newOne.IntParser;
 
 public class OptimizedMessageParser implements MessageParser {
 
@@ -17,6 +19,7 @@ public class OptimizedMessageParser implements MessageParser {
 
     private Buffer buffer;
     private int offset;
+    private MutableInt mutableOffset = new MutableInt();
     private int start;
     private int end;
     private int tag;
@@ -28,7 +31,7 @@ public class OptimizedMessageParser implements MessageParser {
         this.buffer = buffer;
         this.start = offset;
         this.end = offset + length;
-        this.offset = offset;
+        this.mutableOffset.value(offset);
         this.tag = 0;
         this.fieldOffset = offset;
         this.valueOffset = 0;
@@ -39,7 +42,7 @@ public class OptimizedMessageParser implements MessageParser {
 
     @Override
     public boolean next() {
-        int offset = this.offset;
+        int offset = mutableOffset.value();
         int end = this.end;
         if (offset == end)
             return false;
@@ -67,7 +70,7 @@ public class OptimizedMessageParser implements MessageParser {
             throw new FixParserException("Value is empty");*/
 
         this.tag = tag;
-        this.offset = offset;
+        this.mutableOffset.value(offset);
         this.fieldOffset = fieldOffset;
 
         return true;
@@ -89,20 +92,7 @@ public class OptimizedMessageParser implements MessageParser {
 
     @Override
     public int intValue() {
-        int offset = this.offset;
-        int end = this.end;
-        int value = 0;
-        while (offset < end) {
-            byte b = buffer.getByte(offset++);
-            if (b == FIELD_SEPARATOR)
-                break;
-
-            value = (value << 3) + (value << 1) + b - '0';
-        }
-
-        this.offset = offset;
-
-        return value;
+        return IntParser.parseInt(FIELD_SEPARATOR, buffer, mutableOffset, end);
     }
 
     @Override

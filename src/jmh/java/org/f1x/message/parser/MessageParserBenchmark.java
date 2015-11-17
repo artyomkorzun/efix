@@ -41,9 +41,46 @@ public class MessageParserBenchmark {
     public void decodeIntFields() {
         parser.wrap(INT_FIELDS);
         while (parser.next()) {
-            parser.tag();
-            parser.intValue();
+            int tag = parser.tag();
+            int value = parser.intValue();
+            switch (tag) {
+                case 1:
+                    assertV(1, value);
+                    break;
+                case 2:
+                    assertV(12, value);
+                    break;
+                case 3:
+                    assertV(123, value);
+                    break;
+                case 4:
+                    assertV(1234, value);
+                    break;
+                case 5:
+                    assertV(12345, value);
+                    break;
+                case 6:
+                    assertV(123456, value);
+                    break;
+                case 7:
+                    assertV(1234567, value);
+                    break;
+                case 8:
+                    assertV(12345678, value);
+                    break;
+                case 9:
+                    assertV(123456789, value);
+                    break;
+                default:
+                    throw new AssertionError();
+            }
+
         }
+    }
+
+    private static void assertV(int expected, int actual) {
+        if (expected != actual)
+            throw new AssertionError("expected: " + expected + " actual: "+ actual);
     }
 
     /*@Benchmark

@@ -31,7 +31,7 @@ jmhJar {
 
 jmh {
     jmhVersion = '1.11.2'
-    include = 'Benchmark.*IntFields'
+    include = 'MessageParser*.*Int'
     benchmarkMode = 'sample'
     timeUnit = 'ns'
     warmup = '2s'

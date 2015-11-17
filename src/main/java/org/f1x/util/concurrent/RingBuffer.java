@@ -10,7 +10,7 @@ public interface RingBuffer {
 
     boolean write(int messageType, Buffer srcBuffer, int srcOffset, int length);
 
-    int read(MessageHandler messageHandler);
+    int read(MessageHandler handler);
 
     int size();
 
