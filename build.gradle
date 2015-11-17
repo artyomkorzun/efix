@@ -40,5 +40,5 @@ jmh {
     iterations = 3
     threads = 1
     fork = 1
-    jvmArgsAppend = '-Df1x.disable.bounds.check=true'
+    /*jvmArgsAppend = '-Df1x.disable.bounds.check=true'*/
 }

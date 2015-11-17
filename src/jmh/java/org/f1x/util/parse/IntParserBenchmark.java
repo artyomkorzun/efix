@@ -117,4 +117,10 @@ public class IntParserBenchmark {
         }
     }
 
+    public static void main(String[] args) {
+        Buffer buffer = makeMessage("1=");
+        IntParser.parseInt(SEPARATOR, buffer, new MutableInt(), buffer.capacity());
+
+    }
+
 }

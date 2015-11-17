@@ -2,9 +2,15 @@ package org.f1x.util.parse.newOne;
 
 public class ParserUtil {
 
-    static void ensureSize(int required, int offset, int end) {
-        if (required > end - offset)
-            throw new ParserException(String.format("No available size %s, offset %s, end %s", required, offset, end));
+    public static final int MIN_LENGTH = 2;
+
+    public static void checkMinLength(int length) {
+        checkMinLength(length, MIN_LENGTH);
+    }
+
+    public static void checkMinLength(int length, int min) {
+        if (length < min)
+            throw new ParserException(String.format("length %s < min %s", length, min));
     }
 
     public static boolean isDigit(byte b) {
@@ -22,4 +28,5 @@ public class ParserUtil {
     public static ParserException throwSeparatorNotFound(byte separator) {
         throw new ParserException(String.format("Separator %s is not found", (char) separator));
     }
+
 }

@@ -5,10 +5,10 @@ import org.f1x.util.buffer.Buffer;
 
 import static org.f1x.util.parse.newOne.ParserUtil.*;
 
-public class IntParser {
+public class LongParser {
 
-    protected static final int MAX_POSITIVE_INT_LENGTH = 10;
-    protected static final int MAX_NEGATIVE_INT_LENGTH = 11;
+    protected static final int MAX_POSITIVE_LONG_LENGTH = 18;
+    protected static final int MAX_NEGATIVE_LONG_LENGTH = 19;
 
     public static int parseInt(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
@@ -91,12 +91,12 @@ public class IntParser {
     }
 
     protected static void checkPositiveValue(long value, int length) {
-        if (length > (MAX_POSITIVE_INT_LENGTH + 1) | value > Integer.MAX_VALUE)
+        if (length > (MAX_POSITIVE_LONG_LENGTH + 1))
             throw new ParserException(String.format("number is too big, length %s", length - 1));
     }
 
     protected static void checkNegativeValue(long value, int length) {
-        if (length > (MAX_NEGATIVE_INT_LENGTH + 1) | value < Integer.MIN_VALUE)
+        if (length > (MAX_NEGATIVE_LONG_LENGTH + 1))
             throw new ParserException(String.format("number is too small, length %s", length - 1));
     }
 
