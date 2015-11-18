@@ -7,10 +7,10 @@ import static org.f1x.util.parse.newOne.ParserUtil.*;
 
 public class LongParser {
 
-    protected static final int MAX_POSITIVE_LONG_LENGTH = 18;
-    protected static final int MAX_NEGATIVE_LONG_LENGTH = 19;
+    protected static final int MAX_POSITIVE_LENGTH = 18;
+    protected static final int MAX_NEGATIVE_LENGTH = MAX_POSITIVE_LENGTH + 1;
 
-    public static int parseInt(byte separator, Buffer buffer, MutableInt offset, int end) {
+    public static long parseLong(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
         int off = start;
 
@@ -25,9 +25,9 @@ public class LongParser {
                 if (isDigit(b)) {
                     value = (value << 3) + (value << 1) + digit(b);
                 } else if (b == separator) {
-                    checkPositiveValue(value, off - start);
+                    checkValueLength(off - start - 1, MAX_POSITIVE_LENGTH);
                     offset.value(off);
-                    return (int) value;
+                    return value;
                 } else {
                     throwInvalidChar(b);
                 }
@@ -36,16 +36,16 @@ public class LongParser {
         } else if (b == '-') {
             b = buffer.getByte(off++);
             if (isDigit(b)) {
-                long value = -digit(b);
+                long value = digit(b);
 
                 while (off < end) {
                     b = buffer.getByte(off++);
                     if (isDigit(b)) {
-                        value = (value << 3) + (value << 1) - digit(b);
+                        value = (value << 3) + (value << 1) + digit(b);
                     } else if (b == separator) {
-                        checkNegativeValue(value, off - start);
+                        checkValueLength(off - start - 1, MAX_NEGATIVE_LENGTH);
                         offset.value(off);
-                        return (int) value;
+                        return -value;
                     } else {
                         throwInvalidChar(b);
                     }
@@ -61,7 +61,7 @@ public class LongParser {
         throw throwSeparatorNotFound(separator);
     }
 
-    public static int parsePositiveInt(byte separator, Buffer buffer, MutableInt offset, int end) {
+    public static long parsePositiveLong(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
         int off = start;
 
@@ -79,9 +79,9 @@ public class LongParser {
             if (isDigit(b)) {
                 value = (value << 3) + (value << 1) + digit(b);
             } else if (b == separator) {
-                checkPositiveValue(value, off - start);
+                checkValueLength(off - start - 1, MAX_POSITIVE_LENGTH);
                 offset.value(off);
-                return (int) value;
+                return value;
             } else {
                 throwInvalidChar(b);
             }
@@ -90,14 +90,9 @@ public class LongParser {
         throw throwSeparatorNotFound(separator);
     }
 
-    protected static void checkPositiveValue(long value, int length) {
-        if (length > (MAX_POSITIVE_LONG_LENGTH + 1))
-            throw new ParserException(String.format("number is too big, length %s", length - 1));
-    }
-
-    protected static void checkNegativeValue(long value, int length) {
-        if (length > (MAX_NEGATIVE_LONG_LENGTH + 1))
-            throw new ParserException(String.format("number is too small, length %s", length - 1));
+    protected static void checkValueLength(int length, int max) {
+        if (length > max)
+            throw new ParserException(String.format("number is too long, length %s, max %s", length, max));
     }
 
 }

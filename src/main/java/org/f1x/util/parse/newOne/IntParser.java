@@ -7,8 +7,8 @@ import static org.f1x.util.parse.newOne.ParserUtil.*;
 
 public class IntParser {
 
-    protected static final int MAX_POSITIVE_INT_LENGTH = 10;
-    protected static final int MAX_NEGATIVE_INT_LENGTH = 11;
+    protected static final int MAX_POSITIVE_LENGTH = 10;
+    protected static final int MAX_NEGATIVE_LENGTH = MAX_POSITIVE_LENGTH + 1;
 
     public static int parseInt(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
@@ -25,7 +25,7 @@ public class IntParser {
                 if (isDigit(b)) {
                     value = (value << 3) + (value << 1) + digit(b);
                 } else if (b == separator) {
-                    checkPositiveValue(value, off - start);
+                    checkPositiveValue(value, off - start - 1);
                     offset.value(off);
                     return (int) value;
                 } else {
@@ -36,14 +36,15 @@ public class IntParser {
         } else if (b == '-') {
             b = buffer.getByte(off++);
             if (isDigit(b)) {
-                long value = -digit(b);
+                long value = digit(b);
 
                 while (off < end) {
                     b = buffer.getByte(off++);
                     if (isDigit(b)) {
-                        value = (value << 3) + (value << 1) - digit(b);
+                        value = (value << 3) + (value << 1) + digit(b);
                     } else if (b == separator) {
-                        checkNegativeValue(value, off - start);
+                        value = -value;
+                        checkNegativeValue(value, off - start - 1);
                         offset.value(off);
                         return (int) value;
                     } else {
@@ -79,7 +80,7 @@ public class IntParser {
             if (isDigit(b)) {
                 value = (value << 3) + (value << 1) + digit(b);
             } else if (b == separator) {
-                checkPositiveValue(value, off - start);
+                checkPositiveValue(value, off - start - 1);
                 offset.value(off);
                 return (int) value;
             } else {
@@ -91,13 +92,13 @@ public class IntParser {
     }
 
     protected static void checkPositiveValue(long value, int length) {
-        if (length > (MAX_POSITIVE_INT_LENGTH + 1) | value > Integer.MAX_VALUE)
-            throw new ParserException(String.format("number is too big, length %s", length - 1));
+        if (length > MAX_POSITIVE_LENGTH | value > Integer.MAX_VALUE)
+            throw new ParserException(String.format("number is too big, length %s", length));
     }
 
     protected static void checkNegativeValue(long value, int length) {
-        if (length > (MAX_NEGATIVE_INT_LENGTH + 1) | value < Integer.MIN_VALUE)
-            throw new ParserException(String.format("number is too small, length %s", length - 1));
+        if (length > MAX_NEGATIVE_LENGTH | value < Integer.MIN_VALUE)
+            throw new ParserException(String.format("number is too small, length %s", length));
     }
 
 }

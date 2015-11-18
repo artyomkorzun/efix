@@ -62,15 +62,15 @@ public class OptimizedMessageParser implements MessageParser {
         if (tagLength == 0)
             throw new FixParserException("Tag is empty");
 
-        /*int valueOffset = offset;
+        int valueOffset = offset;
         offset = findByte(FIELD_SEPARATOR, buffer, valueOffset, end);
 
         int valueLength = offset - valueOffset;
         if (valueLength == 0)
-            throw new FixParserException("Value is empty");*/
+            throw new FixParserException("Value is empty");
 
         this.tag = tag;
-        this.mutableOffset.value(offset);
+        this.mutableOffset.value(offset + 1);
         this.fieldOffset = fieldOffset;
 
         return true;
