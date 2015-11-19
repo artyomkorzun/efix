@@ -12,13 +12,13 @@ public class DoubleParser {
     protected static final int MAX_POSITIVE_FRACTIONAL_LENGTH = 16;
     protected static final int MAX_NEGATIVE_FRACTIONAL_LENGTH = 17;
 
-    private static final double[] POW_10 = {1E0, 1E1, 1E2, 1E3, 1E4, 1E5, 1E6, 1E7, 1E8, 1E9, 1E10, 1E11, 1E12, 1E13, 1E14};
+    private static final double[] INVERSE_POW_10 = {1E0, 1E-1, 1E-2, 1E-3, 1E-4, 1E-5, 1E-6, 1E-7, 1E-8, 1E-9, 1E-10, 1E-11, 1E-12, 1E-13, 1E-14};
 
     public static double parseDouble(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
         int off = start;
 
-        checkMinLength(off - end);
+        checkMinLength(end - off);
 
         byte b = buffer.getByte(off++);
         if (isDigit(b)) {
@@ -98,7 +98,7 @@ public class DoubleParser {
     }
 
     protected static double computeDouble(long value, int fractionalLength) {
-        return value / POW_10[fractionalLength]; // TODO: one can multiply by inverse, with bad accuracy?
+        return value * INVERSE_POW_10[fractionalLength];
     }
 
     protected static void checkValueLength(int length, int max) {

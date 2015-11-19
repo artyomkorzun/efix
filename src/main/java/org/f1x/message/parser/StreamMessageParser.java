@@ -3,10 +3,22 @@ package org.f1x.message.parser;
 import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.Buffer;
 
-public interface NewMessageParser {
+/**
+ * Streaming parser. Example:
+ * while(parser.hasRemaining()){
+ * int tag = parser.parseTag();
+ * switch(tag) {
+ * case 55:
+ * CharSequence symbol = parser.parseCharSequence();
+ * break;
+ * default:
+ * parser.parseValue();
+ * }
+ * }
+ */
+public interface StreamMessageParser {
 
     int parseTag();
-
 
     byte parseByte();
 
@@ -32,6 +44,7 @@ public interface NewMessageParser {
 
     long parseLocalDate();
 
+    void parseValue();
 
     int offset();
 
@@ -41,14 +54,13 @@ public interface NewMessageParser {
 
     boolean hasRemaining();
 
-
-    default NewMessageParser wrap(Buffer buffer){
+    default StreamMessageParser wrap(Buffer buffer){
         return wrap(buffer, 0, buffer.capacity());
     }
 
-    NewMessageParser wrap(Buffer buffer, int offset, int length);
+    StreamMessageParser wrap(Buffer buffer, int offset, int length);
 
-    NewMessageParser reset();
+    StreamMessageParser reset();
 
 
 }

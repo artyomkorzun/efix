@@ -71,7 +71,7 @@ public class IntParserBenchmark {
     }
 
     @Benchmark
-     public void oldParseNegativeInt() {
+    public void oldParseNegativeInt() {
         oldParse(NEGATIVE_NUMBERS);
     }
 
