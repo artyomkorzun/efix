@@ -14,7 +14,7 @@ public class IntParser {
         int start = offset.value();
         int off = start;
 
-        checkMinLength(end - off);
+        checkMinLength(end - off, MIN_LENGTH);
 
         byte b = buffer.getByte(off++);
         if (isDigit(b)) { // fast path
@@ -66,7 +66,7 @@ public class IntParser {
         int start = offset.value();
         int off = start;
 
-        checkMinLength(end - off);
+        checkMinLength(end - off, MIN_LENGTH);
 
         long value = 0;
         byte b = buffer.getByte(off++);

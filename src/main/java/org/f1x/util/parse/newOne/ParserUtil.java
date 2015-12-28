@@ -4,25 +4,39 @@ public class ParserUtil {
 
     public static final int MIN_LENGTH = 2;
 
-    public static void checkMinLength(int length) {
-        checkMinLength(length, MIN_LENGTH);
-    }
-
     public static void checkMinLength(int length, int min) {
         if (length < min)
             throw new ParserException(String.format("length %s < min %s", length, min));
     }
 
-    public static boolean isDigit(byte b) {
-        return b >= '0' & b <= '9';
+    public static int checkDigit(byte b) {
+        if (!isDigit(b))
+            throwInvalidChar(b);
+
+        return digit(b);
+    }
+
+    public static int checkDigitInRange(byte b, char from, char to) {
+        if (!byteInRange(b, from, to))
+            throwInvalidChar(b);
+
+        return digit(b);
     }
 
     public static int digit(byte b) {
         return b - '0';
     }
 
+    public static boolean isDigit(byte b) {
+        return byteInRange(b, '0', '9');
+    }
+
+    public static boolean byteInRange(byte b, char from, char to) {
+        return b >= from && b <= to;
+    }
+
     public static ParserException throwInvalidChar(byte b) {
-        throw new ParserException("invalid character: " + (char) b);
+        throw new ParserException("invalid character " + (char) b);
     }
 
     public static ParserException throwSeparatorNotFound(byte separator) {

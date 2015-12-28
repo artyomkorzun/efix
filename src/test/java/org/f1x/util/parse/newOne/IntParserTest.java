@@ -121,7 +121,7 @@ public class IntParserTest {
 
             try {
                 parser.parse(SEPARATOR, buffer, offset, end);
-                fail("should fail parse");
+                fail("should fail to parse");
             } catch (ParserException e) {
             }
         }
