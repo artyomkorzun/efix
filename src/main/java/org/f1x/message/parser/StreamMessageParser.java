@@ -12,7 +12,7 @@ import org.f1x.util.buffer.Buffer;
  * CharSequence symbol = parser.parseCharSequence();
  * break;
  * default:
- * parser.parseValue();
+ * parser.skipValue();
  * }
  * }
  */
@@ -34,17 +34,13 @@ public interface StreamMessageParser {
 
     void parseByteSequence(ByteSequence sequence);
 
-    String parseString();
+    long parseTimestamp();
 
-    long parseUTCTimestamp();
+    int parseTime();
 
-    int parseUTCTime();
+    long parseDate();
 
-    long parseUTCDate();
-
-    long parseLocalDate();
-
-    void parseValue();
+    void skipValue();
 
     int offset();
 

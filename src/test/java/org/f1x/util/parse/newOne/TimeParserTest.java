@@ -28,6 +28,8 @@ public class TimeParserTest extends AbstractParserTest {
         shouldFailParse("24:10:10=");
         shouldFailParse("01:60:10=");
         shouldFailParse("01:10:61=");
+        shouldFailParse("=");
+        shouldFailParse("");
     }
 
 

@@ -2,7 +2,7 @@ package org.f1x.engine;
 
 import org.f1x.FIXVersion;
 import org.f1x.SessionID;
-import org.f1x.message.Fields;
+import org.f1x.message.FieldUtil;
 import org.f1x.message.builder.MessageBuilder;
 import org.f1x.message.fields.FixTags;
 import org.f1x.util.buffer.Buffer;
@@ -115,7 +115,7 @@ public class MessagePacker {
         return 3 + beginString.length() +
                 3 + IntFormatter.stringSize(bodyLength) +
                 bodyLength +
-                Fields.CHECK_SUM_FIELD_LENGTH;
+                FieldUtil.CHECK_SUM_FIELD_LENGTH;
     }
 
     protected int computeCheckSum(Buffer buffer, int offset, int length) {
@@ -123,7 +123,7 @@ public class MessagePacker {
         for (int i = offset, end = offset + length; i < end; i++)
             sum += buffer.getByte(i);
 
-        return Fields.checkSum(sum);
+        return FieldUtil.checkSum(sum);
     }
 
     protected void checkMessageLength(int length) {

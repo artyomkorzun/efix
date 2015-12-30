@@ -15,7 +15,7 @@
 package org.f1x.message.builder;
 
 import org.f1x.message.AppendableValue;
-import org.f1x.message.Fields;
+import org.f1x.message.FieldUtil;
 import org.f1x.message.types.ByteEnum;
 import org.f1x.message.types.IntEnum;
 import org.f1x.message.types.StringEnum;
@@ -317,11 +317,11 @@ public final class FastMessageBuilder implements MessageBuilder {
     }
 
     protected void addTagValueSeparator() {
-        buffer.putByte(offset++, Fields.TAG_VALUE_SEPARATOR);
+        buffer.putByte(offset++, FieldUtil.TAG_VALUE_SEPARATOR);
     }
 
     protected void addFieldSeparator() {
-        buffer.putByte(offset++, Fields.FIELD_SEPARATOR);
+        buffer.putByte(offset++, FieldUtil.FIELD_SEPARATOR);
     }
 
     @Override

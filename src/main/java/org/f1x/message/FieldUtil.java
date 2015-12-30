@@ -3,7 +3,7 @@ package org.f1x.message;
 import org.f1x.message.fields.FixTags;
 import org.f1x.util.format.IntFormatter;
 
-public class Fields {
+public class FieldUtil {
 
     public static final int MIN_MESSAGE_LENGTH = 63;
     public static final byte TAG_VALUE_SEPARATOR = '=';

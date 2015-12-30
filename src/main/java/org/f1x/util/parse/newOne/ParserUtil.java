@@ -16,8 +16,15 @@ public class ParserUtil {
         return digit(b);
     }
 
-    public static int checkByte(byte b, byte expected) {
+    public static byte checkByte(byte b, byte expected) {
         if (b != expected)
+            throwInvalidChar(b);
+
+        return b;
+    }
+
+    public static byte checkByteNotEqual(byte b, byte notExpected) {
+        if (b == notExpected)
             throwInvalidChar(b);
 
         return b;

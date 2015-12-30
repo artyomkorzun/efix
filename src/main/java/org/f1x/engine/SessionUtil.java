@@ -10,8 +10,8 @@ import org.f1x.message.parser.MessageParser;
 import org.f1x.state.SessionStatus;
 import org.f1x.util.ByteSequence;
 
-import static org.f1x.message.Fields.checkPositive;
-import static org.f1x.message.Fields.checkPresent;
+import static org.f1x.message.FieldUtil.checkPositive;
+import static org.f1x.message.FieldUtil.checkPresent;
 
 public class SessionUtil {
 
@@ -19,7 +19,7 @@ public class SessionUtil {
     }
 
     public static void validateLogon(int heartBtInt, Logon logon) {
-        int actual = Fields.checkPresent(FixTags.HeartBtInt, logon.heartBtInt(), -1);
+        int actual = FieldUtil.checkPresent(FixTags.HeartBtInt, logon.heartBtInt(), -1);
         if (actual != heartBtInt)
             throw new FieldException(FixTags.HeartBtInt, String.format("HeartBtInt does not match, expected %s but received %s", heartBtInt, actual));
     }

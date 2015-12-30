@@ -29,6 +29,8 @@ public class TimestampParserTest extends AbstractParserTest {
     @Test
     public void shouldFailParse() {
         shouldFailParse("00010101x00:00:01=");
+        shouldFailParse("=");
+        shouldFailParse("");
     }
 
     protected static void shouldParse(String string) {

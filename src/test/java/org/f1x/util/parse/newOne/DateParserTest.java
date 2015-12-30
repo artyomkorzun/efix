@@ -36,6 +36,8 @@ public class DateParserTest extends AbstractParserTest {
         shouldFailParse("11110001=");
         shouldFailParse("11111000=");
         shouldFailParse("00010229=");
+        shouldFailParse("=");
+        shouldFailParse("");
     }
 
     protected static void shouldParse(String string) {

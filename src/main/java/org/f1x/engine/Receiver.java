@@ -1,7 +1,7 @@
 package org.f1x.engine;
 
 import org.f1x.connector.channel.Channel;
-import org.f1x.message.Fields;
+import org.f1x.message.FieldUtil;
 import org.f1x.message.parser.MessageParser;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
@@ -49,7 +49,7 @@ public class Receiver {
     protected int processMessages(MessageHandler handler, Buffer buffer, int length) {
         int offset = 0;
         int remaining = length;
-        while (remaining >= Fields.MIN_MESSAGE_LENGTH) {
+        while (remaining >= FieldUtil.MIN_MESSAGE_LENGTH) {
             int messageLength = parseMessageLength(buffer, offset, remaining);
             if (messageLength > remaining)
                 break;
@@ -68,7 +68,7 @@ public class Receiver {
         parseBeginString(parser);
         int bodyLength = parseBodyLength(parser);
         int headerLength = parser.fieldOffset() + parser.fieldLength() - offset;
-        return headerLength + bodyLength + Fields.CHECK_SUM_FIELD_LENGTH;
+        return headerLength + bodyLength + FieldUtil.CHECK_SUM_FIELD_LENGTH;
     }
 
 }
