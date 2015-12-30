@@ -69,17 +69,17 @@ public class MessageParserTest {
                     assertFalse(parser.booleanValue());
                     break;
                 case 7:
-                    assertEquals(parseUTCTimestamp("20121009-13:44:49.421"), parser.utcTimestamp());
+                    assertEquals(parseTimestamp("20121009-13:44:49.421"), parser.utcTimestamp());
                     break;
                 case 8:
-                    assertEquals(parseUTCDate("20121009"), parser.utcDate());
+                    assertEquals(parseDate("20121009"), parser.utcDate());
                     break;
                 case 9:
-                    assertEquals(parseUTCTime("13:44:49.421"), parser.utcTime());
+                    assertEquals(parseTime("13:44:49.421"), parser.utcTime());
                     break;
-                case 10:
+               /* case 10:
                     assertEquals(parseLocalDate("20121122"), parser.localDate());
-                    break;
+                    break;*/
                 default:
                     fail("unexpected field:" + parser.tag());
             }

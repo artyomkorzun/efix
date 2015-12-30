@@ -30,12 +30,12 @@ public class DateParser {
         int off = offset.value();
 
         checkMinLength(end - off, DATE_LENGTH + 1);
-        long date = parseDate(buffer, off);
+        long time = parseDate(buffer, off);
 
         checkByte(buffer.getByte(off + DATE_LENGTH), separator);
         offset.value(off + DATE_LENGTH + 1);
 
-        return date;
+        return time;
     }
 
     protected static long parseDate(Buffer buffer, int offset) {
@@ -50,7 +50,7 @@ public class DateParser {
         int years400 = years100 >> 2;    // year / 400
 
         int days = DAYS_IN_YEAR * year + years4 - years100 + years400;   // 365 * year + year / 4 - year / 100 + year / 400
-        boolean leapYear = (year & 0b11) == 0 && (year - 100 * years100 != 0 || (year & 0b1111) == 0); // year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+        boolean leapYear = (year & 0b11) == 0 && (year - ((years100 << 6) + (years100 << 5) + (years100 << 2)) != 0 || (year & 0b1111) == 0); // year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 
         int daysInMonth;
         int daysToNewYear;
@@ -63,9 +63,9 @@ public class DateParser {
         }
 
         checkDay(day, daysInMonth);
-        days += (day - 1) - daysToNewYear;
+        days += day - 1 - daysToNewYear - DAYS_TO_EPOCH;
 
-        return (days - DAYS_TO_EPOCH) * DAY_IN_MILLIS;
+        return days * DAY_IN_MILLIS; // TODO: optimize multiplication
     }
 
     private static int checkDay(int day, int daysInMonth) {

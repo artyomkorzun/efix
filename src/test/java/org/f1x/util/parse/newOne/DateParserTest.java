@@ -1,14 +1,12 @@
 package org.f1x.util.parse.newOne;
 
-import org.f1x.util.MutableInt;
 import org.f1x.util.TestUtil;
-import org.f1x.util.buffer.Buffer;
 import org.junit.Test;
 
-import static org.f1x.util.TestUtil.makeMessage;
-import static org.junit.Assert.assertEquals;
-
 public class DateParserTest extends AbstractParserTest {
+
+    protected static final ParserVerifier<Long> VERIFIER = TestUtil::parseDate;
+    protected static final Parser<Long> PARSER = DateParser::parseDate;
 
     protected static final int[] DAYS_IN_MONTH = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     protected static final int[] DAYS_IN_MONTH_LEAP = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -40,23 +38,12 @@ public class DateParserTest extends AbstractParserTest {
         shouldFailParse("00010229=");
     }
 
-    protected static void shouldParse(String date) {
-        Buffer buffer = makeMessage(date + (char) SEPARATOR);
-        MutableInt offset = new MutableInt();
-        int end = buffer.capacity();
-
-        long actual = DateParser.parseDate(SEPARATOR, buffer, offset, end);
-        long expected = TestUtil.parseUTCDate(date);
-
-        assertEquals(end, offset.value());
-        assertEquals(date, expected, actual);
+    protected static void shouldParse(String string) {
+        shouldParse(string, VERIFIER, PARSER);
     }
 
     protected static void shouldFailParse(String string) {
-        Buffer buffer = makeMessage(string);
-        MutableInt offset = new MutableInt();
-        int end = buffer.capacity();
-        failIfParsed(string, () -> DateParser.parseDate(SEPARATOR, buffer, offset, end));
+        shouldFailParse(string, PARSER);
     }
 
 }

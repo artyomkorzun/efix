@@ -12,6 +12,8 @@ import static org.junit.Assert.assertEquals;
 
 public class DoubleParserTest extends AbstractParserTest {
 
+    protected static final Parser<Double> PARSER = DoubleParser::parseDouble;
+
     protected static final double[] PRECISION = {
             1E-1, 1E-2, 1E-3, 1E-4, 1E-5, 1E-5, 1E-6, 1E-7, 1E-8, 1E-9, 1E-10, 1E-11, 1E-12, 1E-13, 1E-14
     };
@@ -241,10 +243,7 @@ public class DoubleParserTest extends AbstractParserTest {
     }
 
     protected static void shouldFailParse(String string) {
-        Buffer buffer = makeMessage(string);
-        MutableInt offset = new MutableInt();
-        int end = buffer.capacity();
-        failIfParsed(string, () -> DoubleParser.parseDouble(SEPARATOR, buffer, offset, end));
+        shouldFailParse(string, PARSER);
     }
 
     protected static double guessPrecision(String number) {

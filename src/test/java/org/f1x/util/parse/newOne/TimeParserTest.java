@@ -1,14 +1,12 @@
 package org.f1x.util.parse.newOne;
 
-import org.f1x.util.MutableInt;
 import org.f1x.util.TestUtil;
-import org.f1x.util.buffer.Buffer;
 import org.junit.Test;
 
-import static org.f1x.util.TestUtil.makeMessage;
-import static org.junit.Assert.assertEquals;
-
 public class TimeParserTest extends AbstractParserTest {
+
+    protected static final ParserVerifier<Integer> VERIFIER = TestUtil::parseTime;
+    protected static final Parser<Integer> PARSER = TimeParser::parseTime;
 
     @Test
     public void shouldParseTimes() {
@@ -32,23 +30,13 @@ public class TimeParserTest extends AbstractParserTest {
         shouldFailParse("01:10:61=");
     }
 
-    protected static void shouldParse(String time) {
-        Buffer buffer = makeMessage(time + (char) SEPARATOR);
-        MutableInt offset = new MutableInt();
-        int end = buffer.capacity();
 
-        int actual = TimeParser.parseTime(SEPARATOR, buffer, offset, end);
-        int expected = TestUtil.parseUTCTime(time);
-
-        assertEquals(end, offset.value());
-        assertEquals(time, expected, actual);
+    protected static void shouldParse(String string) {
+        shouldParse(string, VERIFIER, PARSER);
     }
 
     protected static void shouldFailParse(String string) {
-        Buffer buffer = makeMessage(string);
-        MutableInt offset = new MutableInt();
-        int end = buffer.capacity();
-        failIfParsed(string, () -> TimeParser.parseTime(SEPARATOR, buffer, offset, end));
+        shouldFailParse(string, PARSER);
     }
 
 }

@@ -1,19 +1,17 @@
 package org.f1x.util.parse.newOne;
 
-import org.f1x.util.MutableInt;
-import org.f1x.util.buffer.Buffer;
 import org.junit.Test;
 
 import java.util.Random;
 
-import static org.f1x.util.TestUtil.makeMessage;
-import static org.junit.Assert.assertEquals;
+import static org.f1x.util.TestUtil.arrayOf;
 
 public class LongParserTest extends AbstractParserTest {
 
-    protected static final Parser INTEGER_PARSER = LongParser::parseLong;
-    protected static final Parser POSITIVE_PARSER = LongParser::parsePositiveLong;
-    protected static final Parser[] ALL_PARSERS = {INTEGER_PARSER, POSITIVE_PARSER};
+    protected static final ParserVerifier<Long> VERIFIER = Long::parseLong;
+    protected static final Parser<Long> INTEGER_PARSER = LongParser::parseLong;
+    protected static final Parser<Long> POSITIVE_PARSER = LongParser::parsePositiveLong;
+    protected static final Parser<Long>[] ALL_PARSERS = arrayOf(INTEGER_PARSER, POSITIVE_PARSER);
 
     @Test
     public void shouldParseNumbers() {
@@ -106,50 +104,18 @@ public class LongParserTest extends AbstractParserTest {
         shouldFailParse("-0105=", POSITIVE_PARSER);
     }
 
-    protected static void shouldParse(long number, Parser... parsers) {
-        shouldFailParse("" + number, parsers);
+    @SafeVarargs
+    protected static void shouldParse(long number, Parser<Long>... parsers) {
+        shouldParse("" + number, parsers);
     }
 
-    protected static void shouldParse(String number, Parser... parsers) {
-        Buffer buffer = makeMessage(number + (char) SEPARATOR);
-        MutableInt offset = new MutableInt();
-        int end = buffer.capacity();
-
-        for (Parser parser : parsers) {
-            offset.value(0);
-
-            long expected = Long.parseLong(number);
-            long actual = parser.parse(SEPARATOR, buffer, offset, end);
-
-            assertEquals(end, offset.value());
-            assertEquals(expected, actual);
-        }
+    @SafeVarargs
+    protected static void shouldParse(String string, Parser<Long>... parsers) {
+        shouldParse(string, VERIFIER, parsers);
     }
 
-    protected static void shouldFailParse(long number, Parser... parsers) {
-        shouldFailParse(makeString(number), parsers);
-    }
-
-    protected static void shouldFailParse(String string, Parser... parsers) {
-        Buffer buffer = makeMessage(string);
-        MutableInt offset = new MutableInt();
-        int end = buffer.capacity();
-
-        for (Parser parser : parsers) {
-            offset.value(0);
-            failIfParsed(string, () -> parser.parse(SEPARATOR, buffer, offset, end));
-        }
-    }
-
-    protected static String makeString(long value) {
-        return "" + value + (char) SEPARATOR;
-    }
-
-    @FunctionalInterface
-    protected interface Parser {
-
-        long parse(byte separator, Buffer buffer, MutableInt offset, int end);
-
+    protected static void shouldFailParse(long number, Parser<?>... parsers) {
+        shouldFailParse("" + number + (char) SEPARATOR, parsers);
     }
 
 }

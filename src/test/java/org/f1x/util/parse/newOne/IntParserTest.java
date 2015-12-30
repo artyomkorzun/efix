@@ -1,20 +1,17 @@
 package org.f1x.util.parse.newOne;
 
-import org.f1x.util.MutableInt;
-import org.f1x.util.buffer.Buffer;
 import org.junit.Test;
 
 import java.util.Random;
 
-import static org.f1x.util.TestUtil.makeMessage;
-import static org.junit.Assert.assertEquals;
-
+import static org.f1x.util.TestUtil.arrayOf;
 
 public class IntParserTest extends AbstractParserTest {
 
-    protected static final Parser INTEGER_PARSER = IntParser::parseInt;
-    protected static final Parser POSITIVE_PARSER = IntParser::parsePositiveInt;
-    protected static final Parser[] ALL_PARSERS = {INTEGER_PARSER, POSITIVE_PARSER};
+    protected static final ParserVerifier<Integer> VERIFIER = Integer::parseInt;
+    protected static final Parser<Integer> INTEGER_PARSER = IntParser::parseInt;
+    protected static final Parser<Integer> POSITIVE_PARSER = IntParser::parsePositiveInt;
+    protected static final Parser<Integer>[] ALL_PARSERS = arrayOf(INTEGER_PARSER, POSITIVE_PARSER);
 
     @Test
     public void shouldParseNumbers() {
@@ -88,46 +85,18 @@ public class IntParserTest extends AbstractParserTest {
         shouldFailParse("-0105=", POSITIVE_PARSER);
     }
 
-    protected static void shouldParse(int number, Parser... parsers) {
+    @SafeVarargs
+    protected static void shouldParse(int number, Parser<Integer>... parsers) {
         shouldParse("" + number, parsers);
     }
 
-    protected static void shouldParse(String number, Parser... parsers) {
-        Buffer buffer = makeMessage(number + (char) SEPARATOR);
-        MutableInt offset = new MutableInt();
-        int end = buffer.capacity();
-
-        for (Parser parser : parsers) {
-            offset.value(0);
-
-            int expected = Integer.parseInt(number);
-            int actual = parser.parse(SEPARATOR, buffer, offset, end);
-
-            assertEquals(end, offset.value());
-            assertEquals(expected, actual);
-        }
-    }
-
-    protected static void shouldFailParse(String string, Parser... parsers) {
-        Buffer buffer = makeMessage(string);
-        MutableInt offset = new MutableInt();
-        int end = buffer.capacity();
-
-        for (Parser parser : parsers) {
-            offset.value(0);
-            failIfParsed(string, () -> parser.parse(SEPARATOR, buffer, offset, end));
-        }
+    @SafeVarargs
+    protected static void shouldParse(String string, Parser<Integer>... parsers) {
+        shouldParse(string, VERIFIER, parsers);
     }
 
     protected static String makeString(long value) {
         return "" + value + (char) SEPARATOR;
-    }
-
-    @FunctionalInterface
-    protected interface Parser {
-
-        int parse(byte separator, Buffer buffer, MutableInt offset, int end);
-
     }
 
 }

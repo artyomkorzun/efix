@@ -28,14 +28,14 @@ public class TimeParser {
      */
     public static int parseTime(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.value();
-        int available = end - off;
+        int length = end - off;
 
-        checkMinLength(available, SECOND_TIME_LENGTH + 1);
+        checkMinLength(length, SECOND_TIME_LENGTH + 1);
         int time = parseSecondTime(buffer, off);
 
         byte b = buffer.getByte(off + DOT_OFFSET);
         if (b == '.') {
-            checkMinLength(available, MILLISECOND_TIME_LENGTH + 1);
+            checkMinLength(length, MILLISECOND_TIME_LENGTH + 1);
             time += parse3DigitInt(buffer, off + MILLISECOND_OFFSET);
             b = buffer.getByte(off + MILLISECOND_TIME_LENGTH);
             off += MILLISECOND_TIME_LENGTH + 1;
@@ -61,10 +61,10 @@ public class TimeParser {
         int second = parse2DigitInt(buffer, offset + SECOND_OFFSET);
         checkSecond(second);
 
-        return ((hour * 60 + minute) * 60 + second) * 1000;
-        /*int minutes = (hour << 6) - (hour << 2) + minute;
+        //return ((hour * 60 + minute) * 60 + second) * 1000;
+        int minutes = (hour << 6) - (hour << 2) + minute;
         int seconds = (minutes << 6) - (minutes << 2) + second;
-        return (seconds << 10) - ((seconds << 4) + (seconds << 3));*/
+        return (seconds << 10) - ((seconds << 4) + (seconds << 3));
     }
 
     protected static int checkHour(int hour) {
