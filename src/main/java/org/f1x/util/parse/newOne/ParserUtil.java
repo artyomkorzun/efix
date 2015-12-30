@@ -16,11 +16,11 @@ public class ParserUtil {
         return digit(b);
     }
 
-    public static int checkDigitInRange(byte b, char from, char to) {
-        if (!byteInRange(b, from, to))
+    public static int checkByte(byte b, byte expected) {
+        if (b != expected)
             throwInvalidChar(b);
 
-        return digit(b);
+        return b;
     }
 
     public static int digit(byte b) {

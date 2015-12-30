@@ -8,12 +8,9 @@ import java.util.Random;
 
 import static org.f1x.util.TestUtil.makeMessage;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 
-public class IntParserTest {
-
-    protected static final byte SEPARATOR = '=';
+public class IntParserTest extends AbstractParserTest {
 
     protected static final Parser INTEGER_PARSER = IntParser::parseInt;
     protected static final Parser POSITIVE_PARSER = IntParser::parsePositiveInt;
@@ -118,12 +115,7 @@ public class IntParserTest {
 
         for (Parser parser : parsers) {
             offset.value(0);
-
-            try {
-                parser.parse(SEPARATOR, buffer, offset, end);
-                fail("should fail to parse");
-            } catch (ParserException e) {
-            }
+            failIfParsed(string, () -> parser.parse(SEPARATOR, buffer, offset, end));
         }
     }
 

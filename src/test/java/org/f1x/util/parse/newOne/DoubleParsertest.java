@@ -8,11 +8,9 @@ import java.math.BigDecimal;
 import java.util.Random;
 
 import static org.f1x.util.TestUtil.makeMessage;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-public class DoubleParserTest {
-
-    protected static final byte SEPARATOR = '=';
+public class DoubleParserTest extends AbstractParserTest {
 
     protected static final double[] PRECISION = {
             1E-1, 1E-2, 1E-3, 1E-4, 1E-5, 1E-5, 1E-6, 1E-7, 1E-8, 1E-9, 1E-10, 1E-11, 1E-12, 1E-13, 1E-14
@@ -246,14 +244,7 @@ public class DoubleParserTest {
         Buffer buffer = makeMessage(string);
         MutableInt offset = new MutableInt();
         int end = buffer.capacity();
-        offset.value(0);
-
-        try {
-            DoubleParser.parseDouble(SEPARATOR, buffer, offset, end);
-            fail("should fail to parse");
-        } catch (ParserException e) {
-            assertTrue(true);
-        }
+        failIfParsed(string, () -> DoubleParser.parseDouble(SEPARATOR, buffer, offset, end));
     }
 
     protected static double guessPrecision(String number) {

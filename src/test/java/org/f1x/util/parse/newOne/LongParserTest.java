@@ -8,11 +8,8 @@ import java.util.Random;
 
 import static org.f1x.util.TestUtil.makeMessage;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
-public class LongParserTest {
-
-    protected static final byte SEPARATOR = '=';
+public class LongParserTest extends AbstractParserTest {
 
     protected static final Parser INTEGER_PARSER = LongParser::parseLong;
     protected static final Parser POSITIVE_PARSER = LongParser::parsePositiveLong;
@@ -140,12 +137,7 @@ public class LongParserTest {
 
         for (Parser parser : parsers) {
             offset.value(0);
-
-            try {
-                parser.parse(SEPARATOR, buffer, offset, end);
-                fail("should fail parse");
-            } catch (ParserException e) {
-            }
+            failIfParsed(string, () -> parser.parse(SEPARATOR, buffer, offset, end));
         }
     }
 

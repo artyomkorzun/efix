@@ -91,6 +91,27 @@ public class IntParser {
         throw throwSeparatorNotFound(separator);
     }
 
+    protected static int parse2DigitInt(Buffer buffer, int offset) {
+        int value = checkDigit(buffer.getByte(offset));
+        value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 1));
+        return value;
+    }
+
+    protected static int parse3DigitInt(Buffer buffer, int offset) {
+        int value = checkDigit(buffer.getByte(offset));
+        value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 1));
+        value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 2));
+        return value;
+    }
+
+    protected static int parse4DigitInt(Buffer buffer, int offset) {
+        int value = checkDigit(buffer.getByte(offset));
+        value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 1));
+        value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 2));
+        value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 3));
+        return value;
+    }
+
     protected static void checkPositiveValue(long value, int length) {
         if (length > MAX_POSITIVE_LENGTH | value > Integer.MAX_VALUE)
             throw new ParserException(String.format("number is too big, length %s", length));
