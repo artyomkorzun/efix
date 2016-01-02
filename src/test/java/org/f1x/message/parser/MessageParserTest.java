@@ -1,105 +1,118 @@
 package org.f1x.message.parser;
 
+import org.f1x.message.StreamMessageParserImpl;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 import static org.f1x.util.TestUtil.*;
 import static org.junit.Assert.*;
 
-
-@RunWith(Parameterized.class)
 public class MessageParserTest {
 
-    @Parameters(name = "{0}")
-    public static Collection<MessageParser> parameters() {
-        return Arrays.asList(new FastMessageParser(), new OptimizedMessageParser());
-    }
-
-    protected final MessageParser parser;
-
-    public MessageParserTest(MessageParser parser) {
-        this.parser = parser;
-    }
-
     @Test
-    public void testLogon() {
+    public void shouldParseLogon() {
         assertParser("8=FIX.4.4|9=116|35=A|34=1|49=DEMO2Kweoj_DEMOFIX|52=20121009-13:14:57.089|56=DUKASCOPYFIX|98=0|108=30|141=Y|553=DEMO2Kweoj|554=**********|10=202|");
     }
 
     @Test
-    public void testNewOrderSingle() {
+    public void shouldParseNewOrderSingle() {
         assertParser("8=FIX.4.4|9=144|35=D|34=6|49=DEMO2Kweoj_DEMOFIX|52=20121009-13:59:01.666|56=DUKASCOPYFIX|11=512|21=1|38=1000|40=1|54=1|55=EUR/USD|59=1|60=20121009-13:59:01.666|10=000|");
     }
 
     @Test
-    public void testExecutionReport() {
+    public void shouldParseExecutionReport() {
         assertParser("8=FIX.4.4|9=251|35=8|34=7|49=DUKASCOPYFIX|52=20121009-13:59:21.158|56=DEMO2Kweoj_DEMOFIX|6=0|11=506|14=0|17=506|37=506|38=0|39=8|54=7|55=UNKNOWN|58=Your order has been rejected due to validation failure.  Order amount can't be less than <MIN_OPEN_AMOUNT>|150=8|151=0|10=196|");
     }
 
     @Test
-    public void testFieldTypes() {
-        String message = "1=ABC|2=123|3=3.14159|4=x|5=Y|6=N|7=20121009-13:44:49.421|8=20121009|9=13:44:49.421|10=20121122|";
-        int tags = 0;
+    public void shouldParseFields() {
+        String message = "1=sequence|2=12345|3=123456789012345|4=3.14159|5=b|6=Y|7=20121009-13:44:49.421|8=20121009|9=13:44:49.421|10=skipped value|";
+        StreamMessageParser parser = new StreamMessageParserImpl();
         parser.wrap(makeMessage(message));
-        while (parser.next()) {
-            tags++;
-            switch (parser.tag()) {
+
+        int tags = 0;
+        while (parser.hasRemaining()) {
+            int tag = parser.parseTag();
+            switch (tag) {
                 case 1:
-                    assertEquals("ABC", parser.string());
+                    assertEquals("sequence", parser.parseCharSequence().toString());
                     break;
                 case 2:
-                    assertEquals(123, parser.longValue());
-                    assertEquals(123, parser.intValue());
+                    assertEquals(12345, parser.parseInt());
                     break;
                 case 3:
-                    assertEquals(3.14159, parser.doubleValue(), 0.000001);
+                    assertEquals(123456789012345L, parser.parseLong());
                     break;
                 case 4:
-                    assertEquals('x', parser.byteValue());
+                    assertEquals(3.14159, parser.parseDouble(), 0.0000000001);
                     break;
                 case 5:
-                    assertTrue(parser.booleanValue());
+                    assertEquals('b', parser.parseByte());
                     break;
                 case 6:
-                    assertFalse(parser.booleanValue());
+                    assertTrue(parser.parseBoolean());
                     break;
                 case 7:
-                    assertEquals(parseTimestamp("20121009-13:44:49.421"), parser.utcTimestamp());
+                    assertEquals(parseTimestamp("20121009-13:44:49.421"), parser.parseTimestamp());
                     break;
                 case 8:
-                    assertEquals(parseDate("20121009"), parser.utcDate());
+                    assertEquals(parseDate("20121009"), parser.parseDate());
                     break;
                 case 9:
-                    assertEquals(parseTime("13:44:49.421"), parser.utcTime());
+                    assertEquals(parseTime("13:44:49.421"), parser.parseTime());
                     break;
-               /* case 10:
-                    assertEquals(parseLocalDate("20121122"), parser.localDate());
-                    break;*/
+                case 10:
+                    parser.skipValue();
+                    break;
                 default:
-                    fail("unexpected field:" + parser.tag());
+                    fail("unexpected field " + tag);
             }
+
+            tags++;
         }
 
         assertEquals(10, tags);
     }
 
-    protected void assertParser(String message) {
+    @Test
+    public void shouldParseAfterReset() {
+        String message = "1=ABC|2=12345|3=123456789012345|";
+        StreamMessageParser parser = new StreamMessageParserImpl();
         parser.wrap(makeMessage(message));
 
-        StringBuilder builder = new StringBuilder(message.length());
-        while (parser.next()) {
-            builder.append(parser.tag());
+        assertParser(message, parser);
+        parser.reset();
+        assertParser(message, parser);
+    }
+
+    @Test
+    public void shouldParseMiddleOfMessage() {
+        String expected = "3=3|4=4|";
+        String message = "1=1|2=2|" + expected + "5=5|6=6|";
+
+        StreamMessageParser parser = new StreamMessageParserImpl();
+        parser.wrap(makeMessage(message), 8, 8);
+
+        assertParser(expected, parser);
+        parser.reset();
+        assertParser(expected, parser);
+    }
+
+    protected void assertParser(String message) {
+        StreamMessageParser parser = new StreamMessageParserImpl();
+        parser.wrap(makeMessage(message));
+        assertParser(message, parser);
+    }
+
+    private void assertParser(String expected, StreamMessageParser parser) {
+        StringBuilder builder = new StringBuilder(expected.length());
+        while (parser.hasRemaining()) {
+            builder.append(parser.parseTag());
             builder.append('=');
-            builder.append(parser.charSequence());
+            builder.append(parser.parseCharSequence());
             builder.append('|');
         }
 
-        assertEquals(message, builder.toString());
+        assertEquals(expected, builder.toString());
     }
 
 }
