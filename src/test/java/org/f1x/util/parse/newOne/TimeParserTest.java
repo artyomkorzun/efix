@@ -1,6 +1,7 @@
 package org.f1x.util.parse.newOne;
 
 import org.f1x.util.TestUtil;
+import org.f1x.util.parse.TimeParser;
 import org.junit.Test;
 
 public class TimeParserTest extends AbstractParserTest {

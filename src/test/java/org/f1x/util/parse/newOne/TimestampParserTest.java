@@ -1,6 +1,7 @@
 package org.f1x.util.parse.newOne;
 
 import org.f1x.util.TestUtil;
+import org.f1x.util.parse.TimestampParser;
 import org.junit.Test;
 
 import static org.f1x.util.TestUtil.generateInt;

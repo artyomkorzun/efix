@@ -1,12 +1,7 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
-
-import static org.f1x.util.parse.newOne.IntParser.parse2DigitInt;
-import static org.f1x.util.parse.newOne.IntParser.parse4DigitInt;
-import static org.f1x.util.parse.newOne.ParserUtil.checkByte;
-import static org.f1x.util.parse.newOne.ParserUtil.checkMinLength;
 
 public class DateParser {
 
@@ -29,19 +24,19 @@ public class DateParser {
     public static long parseDate(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.value();
 
-        checkMinLength(end - off, DATE_LENGTH + 1);
+        ParserUtil.checkMinLength(end - off, DATE_LENGTH + 1);
         long time = parseDate(buffer, off);
 
-        checkByte(buffer.getByte(off + DATE_LENGTH), separator);
+        ParserUtil.checkByte(buffer.getByte(off + DATE_LENGTH), separator);
         offset.value(off + DATE_LENGTH + 1);
 
         return time;
     }
 
     protected static long parseDate(Buffer buffer, int offset) {
-        int year = parse4DigitInt(buffer, offset + YEAR_OFFSET);
-        int month = parse2DigitInt(buffer, offset + MONTH_OFFSET);
-        int day = parse2DigitInt(buffer, offset + DAY_OFFSET);
+        int year = IntParser.parse4DigitInt(buffer, offset + YEAR_OFFSET);
+        int month = IntParser.parse2DigitInt(buffer, offset + MONTH_OFFSET);
+        int day = IntParser.parse2DigitInt(buffer, offset + DAY_OFFSET);
 
         checkMonth(month);
 

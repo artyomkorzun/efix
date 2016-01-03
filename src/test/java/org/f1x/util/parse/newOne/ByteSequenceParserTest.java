@@ -3,6 +3,7 @@ package org.f1x.util.parse.newOne;
 import org.f1x.util.ByteSequence;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
+import org.f1x.util.parse.ByteSequenceParser;
 import org.junit.Test;
 
 import static org.f1x.util.TestUtil.makeMessage;

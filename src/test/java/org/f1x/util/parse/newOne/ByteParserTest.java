@@ -1,5 +1,6 @@
 package org.f1x.util.parse.newOne;
 
+import org.f1x.util.parse.ByteParser;
 import org.junit.Test;
 
 public class ByteParserTest extends AbstractParserTest {

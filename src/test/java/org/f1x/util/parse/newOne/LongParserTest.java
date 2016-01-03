@@ -1,5 +1,6 @@
 package org.f1x.util.parse.newOne;
 
+import org.f1x.util.parse.LongParser;
 import org.junit.Test;
 
 import java.util.Random;

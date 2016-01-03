@@ -1,9 +1,7 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
-
-import static org.f1x.util.parse.newOne.ParserUtil.*;
 
 public class LongParser {
 
@@ -14,80 +12,80 @@ public class LongParser {
         int start = offset.value();
         int off = start;
 
-        checkMinLength(end - off, MIN_LENGTH);
+        ParserUtil.checkMinLength(end - off, ParserUtil.MIN_LENGTH);
 
         byte b = buffer.getByte(off++);
-        if (isDigit(b)) { // fast path
-            long value = digit(b);
+        if (ParserUtil.isDigit(b)) { // fast path
+            long value = ParserUtil.digit(b);
 
             do {
                 b = buffer.getByte(off++);
-                if (isDigit(b)) {
-                    value = (value << 3) + (value << 1) + digit(b);
+                if (ParserUtil.isDigit(b)) {
+                    value = (value << 3) + (value << 1) + ParserUtil.digit(b);
                 } else if (b == separator) {
                     checkValueLength(off - start - 1, MAX_POSITIVE_LENGTH);
                     offset.value(off);
                     return value;
                 } else {
-                    throwInvalidChar(b);
+                    ParserUtil.throwInvalidChar(b);
                 }
             } while (off < end);
 
         } else if (b == '-') {
             b = buffer.getByte(off++);
-            if (isDigit(b)) {
-                long value = digit(b);
+            if (ParserUtil.isDigit(b)) {
+                long value = ParserUtil.digit(b);
 
                 while (off < end) {
                     b = buffer.getByte(off++);
-                    if (isDigit(b)) {
-                        value = (value << 3) + (value << 1) + digit(b);
+                    if (ParserUtil.isDigit(b)) {
+                        value = (value << 3) + (value << 1) + ParserUtil.digit(b);
                     } else if (b == separator) {
                         checkValueLength(off - start - 1, MAX_NEGATIVE_LENGTH);
                         offset.value(off);
                         return -value;
                     } else {
-                        throwInvalidChar(b);
+                        ParserUtil.throwInvalidChar(b);
                     }
                 }
 
             } else {
-                throwInvalidChar(b);
+                ParserUtil.throwInvalidChar(b);
             }
         } else {
-            throwInvalidChar(b);
+            ParserUtil.throwInvalidChar(b);
         }
 
-        throw throwSeparatorNotFound(separator);
+        throw ParserUtil.throwSeparatorNotFound(separator);
     }
 
     public static long parsePositiveLong(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
         int off = start;
 
-        checkMinLength(end - off, MIN_LENGTH);
+        ParserUtil.checkMinLength(end - off, ParserUtil.MIN_LENGTH);
 
         long value = 0;
         byte b = buffer.getByte(off++);
-        if (isDigit(b))
-            value = digit(b);
+        if (ParserUtil.isDigit(b))
+            value = ParserUtil.digit(b);
         else
-            throwInvalidChar(b);
+            ParserUtil.throwInvalidChar(b);
 
         do {
             b = buffer.getByte(off++);
-            if (isDigit(b)) {
-                value = (value << 3) + (value << 1) + digit(b);
+            if (ParserUtil.isDigit(b)) {
+                value = (value << 3) + (value << 1) + ParserUtil.digit(b);
             } else if (b == separator) {
                 checkValueLength(off - start - 1, MAX_POSITIVE_LENGTH);
                 offset.value(off);
                 return value;
             } else {
-                throwInvalidChar(b);
+                ParserUtil.throwInvalidChar(b);
             }
         } while (off < end);
 
-        throw throwSeparatorNotFound(separator);
+        throw ParserUtil.throwSeparatorNotFound(separator);
     }
 
     protected static void checkValueLength(int length, int max) {

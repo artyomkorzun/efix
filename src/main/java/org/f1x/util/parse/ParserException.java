@@ -1,4 +1,4 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
 public class ParserException extends RuntimeException {
 

@@ -67,7 +67,7 @@ public class Receiver {
         parser.wrap(buffer, offset, length);
         parseBeginString(parser);
         int bodyLength = parseBodyLength(parser);
-        int headerLength = parser.fieldOffset() + parser.fieldLength() - offset;
+        int headerLength = parser.offset() - offset;
         return headerLength + bodyLength + FieldUtil.CHECK_SUM_FIELD_LENGTH;
     }
 

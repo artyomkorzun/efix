@@ -576,8 +576,9 @@ public class SessionProcessor implements Worker {
         parser.wrap(buffer, offset, length);
         CharSequence msgType = parseMessageType(parser, outMsgType);
 
-        length -= parser.fieldLength();
-        offset += parser.fieldLength();
+        int fieldLength = parser.length();
+        length -= fieldLength;
+        offset += fieldLength;
 
         long time = clock.time();
         try {

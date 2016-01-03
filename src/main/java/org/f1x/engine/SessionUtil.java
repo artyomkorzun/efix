@@ -15,9 +15,6 @@ import static org.f1x.message.FieldUtil.checkPresent;
 
 public class SessionUtil {
 
-    protected SessionUtil() {
-    }
-
     public static void validateLogon(int heartBtInt, Logon logon) {
         int actual = FieldUtil.checkPresent(FixTags.HeartBtInt, logon.heartBtInt(), -1);
         if (actual != heartBtInt)
@@ -113,15 +110,17 @@ public class SessionUtil {
         int heartBtInt = -1;
         boolean resetSeqNum = false;
 
-        while (parser.next()) {
-            int tagNum = parser.tag();
-            switch (tagNum) {
+        while (parser.hasRemaining()) {
+            int tag = parser.parseTag();
+            switch (tag) {
                 case FixTags.HeartBtInt:
-                    heartBtInt = parser.intValue();
+                    heartBtInt = parser.parseInt();
                     break;
                 case FixTags.ResetSeqNumFlag:
-                    resetSeqNum = parser.booleanValue();
+                    resetSeqNum = parser.parseBoolean();
                     break;
+                default:
+                    parser.parseValue();
             }
         }
 
@@ -134,11 +133,12 @@ public class SessionUtil {
     public static TestRequest parseTestRequest(MessageParser parser, TestRequest request) {
         ByteSequence testReqID = request.testReqID().clear();
 
-        while (parser.next()) {
-            if (parser.tag() == FixTags.TestReqID) {
-                parser.byteSequence(testReqID);
-                break;
-            }
+        while (parser.hasRemaining()) {
+            int tag = parser.parseTag();
+            if (tag == FixTags.TestReqID)
+                parser.parseByteSequence(testReqID);
+            else
+                parser.parseValue();
         }
 
         return request;
@@ -147,15 +147,17 @@ public class SessionUtil {
     public static ResendRequest parseResendRequest(MessageParser parser, ResendRequest request) {
         int beginSeqNo = -1;
         int endSeqNo = -1;
-        while (parser.next()) {
-            int tagNum = parser.tag();
-            switch (tagNum) {
+        while (parser.hasRemaining()) {
+            int tag = parser.parseTag();
+            switch (tag) {
                 case FixTags.BeginSeqNo:
-                    beginSeqNo = parser.intValue();
+                    beginSeqNo = parser.parseInt();
                     break;
                 case FixTags.EndSeqNo:
-                    endSeqNo = parser.intValue();
+                    endSeqNo = parser.parseInt();
                     break;
+                default:
+                    parser.parseValue();
             }
         }
 
@@ -169,15 +171,17 @@ public class SessionUtil {
         int newSeqNo = -1;
         boolean gapFillFlag = false;
 
-        while (parser.next()) {
-            int tagNum = parser.tag();
-            switch (tagNum) {
+        while (parser.hasRemaining()) {
+            int tag = parser.parseTag();
+            switch (tag) {
                 case FixTags.NewSeqNo:
-                    newSeqNo = checkPositive(tagNum, parser.intValue());
+                    newSeqNo = checkPositive(tag, parser.parseInt());
                     break;
                 case FixTags.GapFillFlag:
-                    gapFillFlag = parser.booleanValue();
+                    gapFillFlag = parser.parseBoolean();
                     break;
+                default:
+                    parser.parseValue();
             }
         }
 
@@ -197,28 +201,33 @@ public class SessionUtil {
     }
 
     public static void parseBeginString(MessageParser parser) {
-        if (!parser.next() || parser.tag() != FixTags.BeginString)
+        int tag = parser.parseTag();
+        if (tag != FixTags.BeginString)
             throw new FieldException(FixTags.BeginString, "Missing BeginString(8)");
+
+        parser.parseValue();
     }
 
     public static CharSequence parseMessageType(MessageParser parser, ByteSequence out) {
-        if (!parser.next() || parser.tag() != FixTags.MsgType)
+        int tag = parser.parseTag();
+        if (tag != FixTags.MsgType)
             throw new FieldException(FixTags.MsgType, "Missing MsgType(35)");
 
-        parser.byteSequence(out);
+        parser.parseByteSequence(out);
         return out;
     }
 
     public static int parseBodyLength(MessageParser parser) {
-        if (!parser.next() || parser.tag() != FixTags.BodyLength)
+        int tag = parser.parseTag();
+        if (tag != FixTags.BodyLength)
             throw new FieldException(FixTags.BodyLength, "Missing BodyLength(9)");
 
-        return checkPositive(FixTags.BodyLength, parser.intValue());
+        return checkPositive(FixTags.BodyLength, parser.parseInt());
     }
 
     // TODO: optimize
     public static void parseMsgSeqNumWithPossDup(MessageParser parser, Header header) throws InvalidFixMessageException {
-        Boolean possDupFlag = null;
+       /* Boolean possDupFlag = null;
         int msgSeqNum = 0;
         while (parser.next()) {
             final int tagNum = parser.tag();
@@ -240,6 +249,6 @@ public class SessionUtil {
             throw InvalidFixMessageException.NO_MSG_SEQ_NUM;
 
         header.msgSeqNum(msgSeqNum);
-        header.possDup(possDupFlag == null ? false : possDupFlag);
+        header.possDup(possDupFlag == null ? false : possDupFlag);*/
     }
 }

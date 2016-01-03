@@ -1,12 +1,12 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
-import static org.f1x.util.parse.newOne.IntParser.parse2DigitInt;
-import static org.f1x.util.parse.newOne.IntParser.parse3DigitInt;
-import static org.f1x.util.parse.newOne.ParserUtil.checkByte;
-import static org.f1x.util.parse.newOne.ParserUtil.checkMinLength;
+import static org.f1x.util.parse.IntParser.parse2DigitInt;
+import static org.f1x.util.parse.IntParser.parse3DigitInt;
+import static org.f1x.util.parse.ParserUtil.checkByte;
+import static org.f1x.util.parse.ParserUtil.checkMinLength;
 
 public class TimeParser {
 

@@ -2,6 +2,7 @@ package org.f1x.util.parse.newOne;
 
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
+import org.f1x.util.parse.ParserException;
 
 import static org.f1x.util.TestUtil.makeMessage;
 import static org.junit.Assert.*;

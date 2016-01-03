@@ -1,6 +1,5 @@
 package org.f1x.message.parser;
 
-import org.f1x.message.StreamMessageParserImpl;
 import org.junit.Test;
 
 import static org.f1x.util.TestUtil.*;
@@ -26,7 +25,7 @@ public class MessageParserTest {
     @Test
     public void shouldParseFields() {
         String message = "1=sequence|2=12345|3=123456789012345|4=3.14159|5=b|6=Y|7=20121009-13:44:49.421|8=20121009|9=13:44:49.421|10=skipped value|";
-        StreamMessageParser parser = new StreamMessageParserImpl();
+        MessageParser parser = new FastMessageParser();
         parser.wrap(makeMessage(message));
 
         int tags = 0;
@@ -61,7 +60,7 @@ public class MessageParserTest {
                     assertEquals(parseTime("13:44:49.421"), parser.parseTime());
                     break;
                 case 10:
-                    parser.skipValue();
+                    parser.parseValue();
                     break;
                 default:
                     fail("unexpected field " + tag);
@@ -76,7 +75,7 @@ public class MessageParserTest {
     @Test
     public void shouldParseAfterReset() {
         String message = "1=ABC|2=12345|3=123456789012345|";
-        StreamMessageParser parser = new StreamMessageParserImpl();
+        MessageParser parser = new FastMessageParser();
         parser.wrap(makeMessage(message));
 
         assertParser(message, parser);
@@ -89,7 +88,7 @@ public class MessageParserTest {
         String expected = "3=3|4=4|";
         String message = "1=1|2=2|" + expected + "5=5|6=6|";
 
-        StreamMessageParser parser = new StreamMessageParserImpl();
+        MessageParser parser = new FastMessageParser();
         parser.wrap(makeMessage(message), 8, 8);
 
         assertParser(expected, parser);
@@ -98,12 +97,12 @@ public class MessageParserTest {
     }
 
     protected void assertParser(String message) {
-        StreamMessageParser parser = new StreamMessageParserImpl();
+        MessageParser parser = new FastMessageParser();
         parser.wrap(makeMessage(message));
         assertParser(message, parser);
     }
 
-    private void assertParser(String expected, StreamMessageParser parser) {
+    private void assertParser(String expected, MessageParser parser) {
         StringBuilder builder = new StringBuilder(expected.length());
         while (parser.hasRemaining()) {
             builder.append(parser.parseTag());

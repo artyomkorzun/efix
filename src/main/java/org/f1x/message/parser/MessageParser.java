@@ -5,37 +5,37 @@ import org.f1x.util.buffer.Buffer;
 
 public interface MessageParser {
 
-    boolean next();
+    int parseTag();
 
-    int tag();
+    byte parseByte();
 
-    byte byteValue();
+    int parseInt();
 
-    int intValue();
+    long parseLong();
 
-    long longValue();
+    double parseDouble();
 
-    double doubleValue();
+    boolean parseBoolean();
 
-    boolean booleanValue();
+    CharSequence parseCharSequence();
 
-    CharSequence charSequence();
+    void parseByteSequence(ByteSequence sequence);
 
-    void byteSequence(ByteSequence sequence);
+    int parseTime();
 
-    String string();
+    long parseDate();
 
-    long utcTimestamp();
+    long parseTimestamp();
 
-    int utcTime();
+    void parseValue();
 
-    long utcDate();
+    int offset();
 
-    long localDate();
+    int length();
 
-    int fieldOffset();
+    int remaining();
 
-    int fieldLength();
+    boolean hasRemaining();
 
     default MessageParser wrap(Buffer buffer){
         return wrap(buffer, 0, buffer.capacity());
