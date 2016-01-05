@@ -5,7 +5,7 @@ import org.f1x.util.buffer.Buffer;
 
 import static org.f1x.util.parse.IntParser.parse3DigitInt;
 import static org.f1x.util.parse.ParserUtil.checkByte;
-import static org.f1x.util.parse.ParserUtil.checkMinLength;
+import static org.f1x.util.parse.ParserUtil.checkFreeSpace;
 
 public class TimestampParser {
 
@@ -24,7 +24,7 @@ public class TimestampParser {
         int off = offset.value();
         int length = end - off;
 
-        checkMinLength(length, SECOND_TIMESTAMP_LENGTH + 1);
+        checkFreeSpace(length, SECOND_TIMESTAMP_LENGTH + 1);
         long time = DateParser.parseDate(buffer, off);
 
         checkByte(buffer.getByte(off + DASH_OFFSET), DASH);
@@ -33,7 +33,7 @@ public class TimestampParser {
 
         byte b = buffer.getByte(off + TimeParser.DOT_OFFSET);
         if (b == '.') {
-            checkMinLength(length, MILLISECOND_TIMESTAMP_LENGTH + 1);
+            checkFreeSpace(length, MILLISECOND_TIMESTAMP_LENGTH + 1);
             time += parse3DigitInt(buffer, off + TimeParser.MILLISECOND_OFFSET);
             b = buffer.getByte(off + TimeParser.MILLISECOND_TIME_LENGTH);
             off += TimeParser.MILLISECOND_TIME_LENGTH + 1;

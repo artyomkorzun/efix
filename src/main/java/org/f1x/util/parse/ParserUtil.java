@@ -4,9 +4,9 @@ public class ParserUtil {
 
     public static final int MIN_LENGTH = 2;
 
-    public static void checkMinLength(int length, int min) {
-        if (length < min)
-            throw new ParserException(String.format("length %s < min %s", length, min));
+    public static void checkFreeSpace(int free, int required) {
+        if (free < required)
+            throw new ParserException(String.format("free %s < required %s", free, required));
     }
 
     public static int checkDigit(byte b) {

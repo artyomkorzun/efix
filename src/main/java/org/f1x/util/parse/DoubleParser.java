@@ -3,6 +3,9 @@ package org.f1x.util.parse;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
+import static org.f1x.util.parse.ParserUtil.*;
+
+@SuppressWarnings("Duplicates")
 public class DoubleParser {
 
     protected static final int MAX_POSITIVE_INTEGER_LENGTH = 15;
@@ -16,29 +19,29 @@ public class DoubleParser {
         int start = offset.value();
         int off = start;
 
-        ParserUtil.checkMinLength(end - off, ParserUtil.MIN_LENGTH);
+        checkFreeSpace(end - off, ParserUtil.MIN_LENGTH);
 
         byte b = buffer.getByte(off++);
-        if (ParserUtil.isDigit(b)) {
-            long value = ParserUtil.digit(b);
+        if (isDigit(b)) {
+            long value = digit(b);
 
             do {
                 b = buffer.getByte(off++);
-                if (ParserUtil.isDigit(b)) {
-                    value = (value << 3) + (value << 1) + ParserUtil.digit(b);
+                if (isDigit(b)) {
+                    value = (value << 3) + (value << 1) + digit(b);
                 } else if (b == '.') {
                     int fractionalOffset = off;
 
                     while (off < end) {
                         b = buffer.getByte(off++);
-                        if (ParserUtil.isDigit(b)) {
-                            value = (value << 3) + (value << 1) + ParserUtil.digit(b);
+                        if (isDigit(b)) {
+                            value = (value << 3) + (value << 1) + digit(b);
                         } else if (b == separator) {
                             checkValueLength(off - start - 1, MAX_POSITIVE_FRACTIONAL_LENGTH);
                             offset.value(off);
                             return computeDouble(value, off - fractionalOffset - 1);
                         } else {
-                            ParserUtil.throwInvalidChar(b);
+                            throwInvalidChar(b);
                         }
                     }
 
@@ -47,32 +50,32 @@ public class DoubleParser {
                     offset.value(off);
                     return value;
                 } else {
-                    ParserUtil.throwInvalidChar(b);
+                    throwInvalidChar(b);
                 }
             } while (off < end);
 
         } else if (b == '-') {
             b = buffer.getByte(off++);
-            if (ParserUtil.isDigit(b)) {
-                long value = ParserUtil.digit(b);
+            if (isDigit(b)) {
+                long value = digit(b);
 
                 while (off < end) {
                     b = buffer.getByte(off++);
-                    if (ParserUtil.isDigit(b)) {
-                        value = (value << 3) + (value << 1) + ParserUtil.digit(b);
+                    if (isDigit(b)) {
+                        value = (value << 3) + (value << 1) + digit(b);
                     } else if (b == '.') {
                         int fractionalOffset = off;
 
                         while (off < end) {
                             b = buffer.getByte(off++);
-                            if (ParserUtil.isDigit(b)) {
-                                value = (value << 3) + (value << 1) + ParserUtil.digit(b);
+                            if (isDigit(b)) {
+                                value = (value << 3) + (value << 1) + digit(b);
                             } else if (b == separator) {
                                 checkValueLength(off - start - 1, MAX_NEGATIVE_FRACTIONAL_LENGTH);
                                 offset.value(off);
                                 return -computeDouble(value, off - fractionalOffset - 1);
                             } else {
-                                ParserUtil.throwInvalidChar(b);
+                                throwInvalidChar(b);
                             }
                         }
 
@@ -81,18 +84,18 @@ public class DoubleParser {
                         offset.value(off);
                         return -((double) value);
                     } else {
-                        ParserUtil.throwInvalidChar(b);
+                        throwInvalidChar(b);
                     }
                 }
 
             } else {
-                ParserUtil.throwInvalidChar(b);
+                throwInvalidChar(b);
             }
         } else {
-            ParserUtil.throwInvalidChar(b);
+            throwInvalidChar(b);
         }
 
-        throw ParserUtil.throwSeparatorNotFound(separator);
+        throw throwSeparatorNotFound(separator);
     }
 
     protected static double computeDouble(long value, int fractionalLength) {

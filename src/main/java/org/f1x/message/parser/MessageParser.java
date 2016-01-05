@@ -7,6 +7,7 @@ public interface MessageParser {
 
     int parseTag();
 
+
     byte parseByte();
 
     int parseInt();
@@ -29,6 +30,7 @@ public interface MessageParser {
 
     void parseValue();
 
+
     int offset();
 
     int length();
@@ -36,6 +38,7 @@ public interface MessageParser {
     int remaining();
 
     boolean hasRemaining();
+
 
     default MessageParser wrap(Buffer buffer){
         return wrap(buffer, 0, buffer.capacity());

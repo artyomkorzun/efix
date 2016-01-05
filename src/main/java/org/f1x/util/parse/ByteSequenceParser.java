@@ -4,13 +4,15 @@ import org.f1x.util.ByteSequence;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
+import static org.f1x.util.parse.ParserUtil.*;
+
 public class ByteSequenceParser {
 
     public static void parseByteSequence(byte separator, Buffer buffer, MutableInt offset, int end, ByteSequence sequence) {
         int off = offset.value();
         int start = off;
-        ParserUtil.checkMinLength(end - off, ParserUtil.MIN_LENGTH);
-        ParserUtil.checkByteNotEqual(buffer.getByte(off++), separator);
+        checkFreeSpace(end - off, ParserUtil.MIN_LENGTH);
+        checkByteNotEqual(buffer.getByte(off++), separator);
 
         do {
             if (buffer.getByte(off++) == separator) {
@@ -20,13 +22,13 @@ public class ByteSequenceParser {
             }
         } while (off < end);
 
-        ParserUtil.throwSeparatorNotFound(separator);
+        throwSeparatorNotFound(separator);
     }
 
     public static void parseByteSequence(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.value();
-        ParserUtil.checkMinLength(end - off, ParserUtil.MIN_LENGTH);
-        ParserUtil.checkByteNotEqual(buffer.getByte(off++), separator);
+        checkFreeSpace(end - off, ParserUtil.MIN_LENGTH);
+        checkByteNotEqual(buffer.getByte(off++), separator);
 
         do {
             if (buffer.getByte(off++) == separator) {
@@ -35,7 +37,7 @@ public class ByteSequenceParser {
             }
         } while (off < end);
 
-        ParserUtil.throwSeparatorNotFound(separator);
+        throwSeparatorNotFound(separator);
     }
 
 }

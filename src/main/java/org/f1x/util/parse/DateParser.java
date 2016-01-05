@@ -3,6 +3,9 @@ package org.f1x.util.parse;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
+import static org.f1x.util.parse.ParserUtil.checkByte;
+import static org.f1x.util.parse.ParserUtil.checkFreeSpace;
+
 public class DateParser {
 
     protected static final int DATE_LENGTH = 8;
@@ -24,10 +27,10 @@ public class DateParser {
     public static long parseDate(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.value();
 
-        ParserUtil.checkMinLength(end - off, DATE_LENGTH + 1);
+        checkFreeSpace(end - off, DATE_LENGTH + 1);
         long time = parseDate(buffer, off);
 
-        ParserUtil.checkByte(buffer.getByte(off + DATE_LENGTH), separator);
+        checkByte(buffer.getByte(off + DATE_LENGTH), separator);
         offset.value(off + DATE_LENGTH + 1);
 
         return time;

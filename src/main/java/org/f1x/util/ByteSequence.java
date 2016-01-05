@@ -8,7 +8,7 @@ public class ByteSequence implements CharSequence {
 
     protected static final byte[] EMPTY = new byte[0];
 
-    protected MutableBuffer wrapper = new UnsafeBuffer(EMPTY);
+    protected final MutableBuffer wrapper = new UnsafeBuffer(EMPTY);
 
     public ByteSequence wrap(Buffer buffer, int offset, int length) {
         wrapper.wrap(buffer, offset, length);

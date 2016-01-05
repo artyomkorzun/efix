@@ -6,7 +6,7 @@ import org.f1x.util.buffer.Buffer;
 import static org.f1x.util.parse.IntParser.parse2DigitInt;
 import static org.f1x.util.parse.IntParser.parse3DigitInt;
 import static org.f1x.util.parse.ParserUtil.checkByte;
-import static org.f1x.util.parse.ParserUtil.checkMinLength;
+import static org.f1x.util.parse.ParserUtil.checkFreeSpace;
 
 public class TimeParser {
 
@@ -30,12 +30,12 @@ public class TimeParser {
         int off = offset.value();
         int length = end - off;
 
-        checkMinLength(length, SECOND_TIME_LENGTH + 1);
+        checkFreeSpace(length, SECOND_TIME_LENGTH + 1);
         int time = parseSecondTime(buffer, off);
 
         byte b = buffer.getByte(off + DOT_OFFSET);
         if (b == '.') {
-            checkMinLength(length, MILLISECOND_TIME_LENGTH + 1);
+            checkFreeSpace(length, MILLISECOND_TIME_LENGTH + 1);
             time += parse3DigitInt(buffer, off + MILLISECOND_OFFSET);
             b = buffer.getByte(off + MILLISECOND_TIME_LENGTH);
             off += MILLISECOND_TIME_LENGTH + 1;
