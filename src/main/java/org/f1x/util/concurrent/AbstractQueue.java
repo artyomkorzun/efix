@@ -12,7 +12,7 @@ public abstract class AbstractQueue<E> implements Queue<E> {
     protected final int capacity;
 
     public AbstractQueue(int requestedCapacity) {
-        capacity = BitUtil.findNextPositivePowerOfTwo(requestedCapacity);
+        capacity = BitUtil.findNextPowerOfTwo(requestedCapacity);
         mask = capacity - 1;
         array = new UnsafeArray<>(capacity);
     }

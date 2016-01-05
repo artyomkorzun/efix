@@ -19,7 +19,7 @@ public class FastMessageParser implements MessageParser {
 
     @Override
     public int parseTag() {
-        return IntParser.parsePositiveInt(TAG_VALUE_SEPARATOR, buffer, offset, end);
+        return IntParser.parseUInt(TAG_VALUE_SEPARATOR, buffer, offset, end);
     }
 
     @Override

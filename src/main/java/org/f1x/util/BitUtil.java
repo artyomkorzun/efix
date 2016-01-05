@@ -14,7 +14,7 @@ public final class BitUtil {
     public static final int SIZE_OF_LONG = 8;
     public static final int SIZE_OF_DOUBLE = 8;
 
-    public static int findNextPositivePowerOfTwo(final int value) {
+    public static int findNextPowerOfTwo(int value) {
         return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
     }
 

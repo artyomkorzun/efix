@@ -19,7 +19,7 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder startField(int tag) {
-        IntFormatter.formatPositiveInt(tag, buffer, offset, end);
+        IntFormatter.formatUInt(tag, buffer, offset, end);
         ByteFormatter.formatByte(FieldUtil.TAG_VALUE_SEPARATOR, buffer, offset, end);
         return this;
     }

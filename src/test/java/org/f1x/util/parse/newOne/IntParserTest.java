@@ -10,26 +10,26 @@ import static org.f1x.util.TestUtil.arrayOf;
 public class IntParserTest extends AbstractParserTest {
 
     protected static final ParserVerifier<Integer> VERIFIER = Integer::parseInt;
-    protected static final Parser<Integer> INTEGER_PARSER = IntParser::parseInt;
-    protected static final Parser<Integer> POSITIVE_PARSER = IntParser::parsePositiveInt;
-    protected static final Parser<Integer>[] ALL_PARSERS = arrayOf(INTEGER_PARSER, POSITIVE_PARSER);
+    protected static final Parser<Integer> INT_PARSER = IntParser::parseInt;
+    protected static final Parser<Integer> UINT_PARSER = IntParser::parseUInt;
+    protected static final Parser<Integer>[] ALL_PARSERS = arrayOf(INT_PARSER, UINT_PARSER);
 
     @Test
     public void shouldParseNumbers() {
-        shouldParse(-1, INTEGER_PARSER);
-        shouldParse(-12, INTEGER_PARSER);
-        shouldParse(-123, INTEGER_PARSER);
-        shouldParse(-1234, INTEGER_PARSER);
-        shouldParse(-12345, INTEGER_PARSER);
-        shouldParse(-123456, INTEGER_PARSER);
-        shouldParse(-1234567, INTEGER_PARSER);
-        shouldParse(-12345678, INTEGER_PARSER);
-        shouldParse(-123456789, INTEGER_PARSER);
-        shouldParse(-1234567890, INTEGER_PARSER);
-        shouldParse(-Integer.MAX_VALUE, INTEGER_PARSER);
+        shouldParse(-1, INT_PARSER);
+        shouldParse(-12, INT_PARSER);
+        shouldParse(-123, INT_PARSER);
+        shouldParse(-1234, INT_PARSER);
+        shouldParse(-12345, INT_PARSER);
+        shouldParse(-123456, INT_PARSER);
+        shouldParse(-1234567, INT_PARSER);
+        shouldParse(-12345678, INT_PARSER);
+        shouldParse(-123456789, INT_PARSER);
+        shouldParse(-1234567890, INT_PARSER);
+        shouldParse(-Integer.MAX_VALUE, INT_PARSER);
 
-        shouldParse("-00012", INTEGER_PARSER);
-        shouldParse("-031", INTEGER_PARSER);
+        shouldParse("-00012", INT_PARSER);
+        shouldParse("-031", INT_PARSER);
 
         shouldParse(0, ALL_PARSERS);
         shouldParse(1, ALL_PARSERS);
@@ -58,7 +58,7 @@ public class IntParserTest extends AbstractParserTest {
             if (number >= 0)
                 shouldParse(number, ALL_PARSERS);
             else
-                shouldParse(number, INTEGER_PARSER);
+                shouldParse(number, INT_PARSER);
         }
     }
 
@@ -80,10 +80,10 @@ public class IntParserTest extends AbstractParserTest {
         shouldFailParse("01234567890=", ALL_PARSERS);
         shouldFailParse("-01234567890=", ALL_PARSERS);
 
-        shouldFailParse("-1=", POSITIVE_PARSER);
-        shouldFailParse("-25=", POSITIVE_PARSER);
-        shouldFailParse("-105=", POSITIVE_PARSER);
-        shouldFailParse("-0105=", POSITIVE_PARSER);
+        shouldFailParse("-1=", UINT_PARSER);
+        shouldFailParse("-25=", UINT_PARSER);
+        shouldFailParse("-105=", UINT_PARSER);
+        shouldFailParse("-0105=", UINT_PARSER);
     }
 
     @SafeVarargs

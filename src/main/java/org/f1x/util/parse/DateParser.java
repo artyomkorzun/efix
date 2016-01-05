@@ -37,9 +37,9 @@ public class DateParser {
     }
 
     protected static long parseDate(Buffer buffer, int offset) {
-        int year = IntParser.parse4DigitInt(buffer, offset + YEAR_OFFSET);
-        int month = IntParser.parse2DigitInt(buffer, offset + MONTH_OFFSET);
-        int day = IntParser.parse2DigitInt(buffer, offset + DAY_OFFSET);
+        int year = IntParser.parse4DigitUInt(buffer, offset + YEAR_OFFSET);
+        int month = IntParser.parse2DigitUInt(buffer, offset + MONTH_OFFSET);
+        int day = IntParser.parse2DigitUInt(buffer, offset + DAY_OFFSET);
 
         checkMonth(month);
 

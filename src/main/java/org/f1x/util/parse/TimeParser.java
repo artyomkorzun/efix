@@ -3,8 +3,8 @@ package org.f1x.util.parse;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
-import static org.f1x.util.parse.IntParser.parse2DigitInt;
-import static org.f1x.util.parse.IntParser.parse3DigitInt;
+import static org.f1x.util.parse.IntParser.parse2DigitUInt;
+import static org.f1x.util.parse.IntParser.parse3DigitUInt;
 import static org.f1x.util.parse.ParserUtil.checkByte;
 import static org.f1x.util.parse.ParserUtil.checkFreeSpace;
 
@@ -36,7 +36,7 @@ public class TimeParser {
         byte b = buffer.getByte(off + DOT_OFFSET);
         if (b == '.') {
             checkFreeSpace(length, MILLISECOND_TIME_LENGTH + 1);
-            time += parse3DigitInt(buffer, off + MILLISECOND_OFFSET);
+            time += parse3DigitUInt(buffer, off + MILLISECOND_OFFSET);
             b = buffer.getByte(off + MILLISECOND_TIME_LENGTH);
             off += MILLISECOND_TIME_LENGTH + 1;
         } else {
@@ -50,15 +50,15 @@ public class TimeParser {
     }
 
     protected static int parseSecondTime(Buffer buffer, int offset) {
-        int hour = parse2DigitInt(buffer, offset + HOUR_OFFSET);
+        int hour = parse2DigitUInt(buffer, offset + HOUR_OFFSET);
         checkHour(hour);
         checkByte(buffer.getByte(offset + FIRST_COLON_OFFSET), COLON);
 
-        int minute = parse2DigitInt(buffer, offset + MINUTE_OFFSET);
+        int minute = parse2DigitUInt(buffer, offset + MINUTE_OFFSET);
         checkMinute(minute);
         checkByte(buffer.getByte(offset + SECOND_COLON_OFFSET), COLON);
 
-        int second = parse2DigitInt(buffer, offset + SECOND_OFFSET);
+        int second = parse2DigitUInt(buffer, offset + SECOND_OFFSET);
         checkSecond(second);
 
         //return ((hour * 60 + minute) * 60 + second) * 1000;

@@ -8,14 +8,14 @@ import static org.f1x.util.parse.ParserUtil.*;
 @SuppressWarnings("Duplicates")
 public class IntParser {
 
-    protected static final int MAX_POSITIVE_INT_LENGTH = 10;
-    protected static final int MAX_NEGATIVE_INT_LENGTH = MAX_POSITIVE_INT_LENGTH + 1;
+    protected static final int MAX_UNSIGNED_INT_LENGTH = 10;
+    protected static final int MAX_NEGATIVE_INT_LENGTH = MAX_UNSIGNED_INT_LENGTH + 1;
 
     public static int parseInt(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
         int off = start;
 
-        checkFreeSpace(end - off, ParserUtil.MIN_LENGTH);
+        checkFreeSpace(end - off, MIN_LENGTH);
 
         byte b = buffer.getByte(off++);
         if (isDigit(b)) { // fast path
@@ -26,7 +26,7 @@ public class IntParser {
                 if (isDigit(b)) {
                     value = (value << 3) + (value << 1) + digit(b);
                 } else if (b == separator) {
-                    checkPositiveValue(value, off - start - 1);
+                    checkUnsignedValue(value, off - start - 1);
                     offset.value(off);
                     return (int) value;
                 } else {
@@ -63,11 +63,11 @@ public class IntParser {
         throw throwSeparatorNotFound(separator);
     }
 
-    public static int parsePositiveInt(byte separator, Buffer buffer, MutableInt offset, int end) {
+    public static int parseUInt(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
         int off = start;
 
-        checkFreeSpace(end - off, ParserUtil.MIN_LENGTH);
+        checkFreeSpace(end - off, MIN_LENGTH);
 
         long value = 0;
         byte b = buffer.getByte(off++);
@@ -81,7 +81,7 @@ public class IntParser {
             if (isDigit(b)) {
                 value = (value << 3) + (value << 1) + digit(b);
             } else if (b == separator) {
-                checkPositiveValue(value, off - start - 1);
+                checkUnsignedValue(value, off - start - 1);
                 offset.value(off);
                 return (int) value;
             } else {
@@ -92,20 +92,20 @@ public class IntParser {
         throw throwSeparatorNotFound(separator);
     }
 
-    protected static int parse2DigitInt(Buffer buffer, int offset) {
+    protected static int parse2DigitUInt(Buffer buffer, int offset) {
         int value = checkDigit(buffer.getByte(offset));
         value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 1));
         return value;
     }
 
-    protected static int parse3DigitInt(Buffer buffer, int offset) {
+    protected static int parse3DigitUInt(Buffer buffer, int offset) {
         int value = checkDigit(buffer.getByte(offset));
         value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 1));
         value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 2));
         return value;
     }
 
-    protected static int parse4DigitInt(Buffer buffer, int offset) {
+    protected static int parse4DigitUInt(Buffer buffer, int offset) {
         int value = checkDigit(buffer.getByte(offset));
         value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 1));
         value = (value << 3) + (value << 1) + checkDigit(buffer.getByte(offset + 2));
@@ -113,13 +113,13 @@ public class IntParser {
         return value;
     }
 
-    protected static void checkPositiveValue(long value, int length) {
-        if (length > MAX_POSITIVE_INT_LENGTH | value > Integer.MAX_VALUE)
+    protected static void checkUnsignedValue(long value, int length) {
+        if (length > MAX_UNSIGNED_INT_LENGTH || value > Integer.MAX_VALUE)
             throw new ParserException(String.format("number is too big, length %s", length));
     }
 
     protected static void checkNegativeValue(long value, int length) {
-        if (length > MAX_NEGATIVE_INT_LENGTH | value < Integer.MIN_VALUE)
+        if (length > MAX_NEGATIVE_INT_LENGTH || value < Integer.MIN_VALUE)
             throw new ParserException(String.format("number is too small, length %s", length));
     }
 

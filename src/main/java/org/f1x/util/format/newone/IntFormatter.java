@@ -10,7 +10,6 @@ import static org.f1x.util.format.newone.FormatterUtil.checkFreeSpace;
 @SuppressWarnings("Duplicates")
 public class IntFormatter {
 
-    protected static final byte SIGN_BYTE = '-';
     protected static final Buffer MIN_INT = BufferUtil.create(Integer.MIN_VALUE + "");
 
     private static final int[] SIZE_TABLE = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, Integer.MAX_VALUE};
@@ -46,47 +45,50 @@ public class IntFormatter {
     };
 
     public static void formatInt(int value, MutableBuffer buffer, MutableInt offset, int end) {
-        if (value >= 0) {
-            formatPositiveInt(value, buffer, offset, end);
-        } else {
-            int off = offset.value();
-
-            if (value == Integer.MIN_VALUE) {
-                int length = MIN_INT.capacity();
-                checkFreeSpace(end - off, length);
-
-                buffer.putBytes(off, MIN_INT);
-                offset.value(off + length);
-                return;
-            }
-
-            value = -value;
-            int length = positiveIntLength(value) + 1;
-            checkFreeSpace(end - off, length);
-
-            formatPositiveInt(value, off + length, buffer);
-            buffer.putByte(off, SIGN_BYTE);
-            offset.value(off + length);
-        }
+        if (value >= 0)
+            formatUInt(value, buffer, offset, end);
+        else
+            formatNegativeInt(value, buffer, offset, end);
     }
 
-    public static void formatPositiveInt(int value, MutableBuffer buffer, MutableInt offset, int end) {
+    private static void formatNegativeInt(int value, MutableBuffer buffer, MutableInt offset, int end) {
+        if (value == Integer.MIN_VALUE) {
+            int off = offset.value();
+            int length = MIN_INT.capacity();
+            checkFreeSpace(end - off, length);
+
+            buffer.putBytes(off, MIN_INT);
+            offset.value(off + length);
+            return;
+        }
+
         int off = offset.value();
-        int length = positiveIntLength(value);
+        value = -value;
+        int length = uintLength(value) + 1;
         checkFreeSpace(end - off, length);
 
-        int index = off + length;
-        formatPositiveInt(value, index, buffer);
+        formatUInt(value, off + length, buffer);
+        buffer.putByte(off, (byte) '-');
         offset.value(off + length);
     }
 
-    public static int positiveIntLength(int x) {
+    public static void formatUInt(int value, MutableBuffer buffer, MutableInt offset, int end) {
+        int off = offset.value();
+        int length = uintLength(value);
+        checkFreeSpace(end - off, length);
+
+        int index = off + length;
+        formatUInt(value, index, buffer);
+        offset.value(off + length);
+    }
+
+    public static int uintLength(int x) {
         for (int i = 0; ; i++)
             if (x <= SIZE_TABLE[i])
                 return i + 1;
     }
 
-    protected static void formatPositiveInt(int value, int index, MutableBuffer buffer) {
+    protected static void formatUInt(int value, int index, MutableBuffer buffer) {
         int integer;
         int remainder;
 
@@ -99,7 +101,7 @@ public class IntFormatter {
         }
 
         do {
-            integer = (value * 52429) >>> (16 + 3); // inverse division, the same as value / 100
+            integer = (value * 52429) >>> (16 + 3); // the same as value / 100
             remainder = value - ((integer << 3) + (integer << 1));
             buffer.putByte(--index, DIGIT[remainder]);
             value = integer;
