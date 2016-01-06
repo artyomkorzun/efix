@@ -1,12 +1,11 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
 import org.f1x.util.TestUtil;
-import org.f1x.util.parse.DateParser;
 import org.junit.Test;
 
 public class DateParserTest extends AbstractParserTest {
 
-    protected static final ParserVerifier<Long> VERIFIER = TestUtil::parseDate;
+    protected static final Verifier<Long> VERIFIER = TestUtil::parseDate;
     protected static final Parser<Long> PARSER = DateParser::parseDate;
 
     protected static final int[] DAYS_IN_MONTH = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};

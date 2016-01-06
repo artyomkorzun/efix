@@ -1,12 +1,11 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
 import org.f1x.util.TestUtil;
-import org.f1x.util.parse.TimeParser;
 import org.junit.Test;
 
 public class TimeParserTest extends AbstractParserTest {
 
-    protected static final ParserVerifier<Integer> VERIFIER = TestUtil::parseTime;
+    protected static final Verifier<Integer> VERIFIER = TestUtil::parseTime;
     protected static final Parser<Integer> PARSER = TimeParser::parseTime;
 
     @Test

@@ -1,6 +1,5 @@
 package org.f1x.util;
 
-import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 
 import java.time.LocalDate;
@@ -30,13 +29,21 @@ public class TestUtil {
         return date.atStartOfDay(UTC_ZONE).toInstant().toEpochMilli();
     }
 
-    public static Buffer makeMessage(String message) {
+    public static UnsafeBuffer makeMessage(String message) {
         message = message.replace('|', '\u0001');
         return new UnsafeBuffer(StringUtil.asciiBytes(message));
     }
 
     public static int generateInt(int from, int to) {
-        return ThreadLocalRandom.current().nextInt(from, to + 1);
+        return (int) ThreadLocalRandom.current().nextLong(from, to + 1L);
+    }
+
+    public static int generateInt() {
+        return ThreadLocalRandom.current().nextInt();
+    }
+
+    public static long generateLong() {
+        return ThreadLocalRandom.current().nextLong();
     }
 
     @SafeVarargs

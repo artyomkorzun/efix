@@ -1,4 +1,4 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;

@@ -1,14 +1,13 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
 import org.f1x.util.TestUtil;
-import org.f1x.util.parse.TimestampParser;
 import org.junit.Test;
 
 import static org.f1x.util.TestUtil.generateInt;
 
 public class TimestampParserTest extends AbstractParserTest {
 
-    protected static final ParserVerifier<Long> VERIFIER = TestUtil::parseTimestamp;
+    protected static final Verifier<Long> VERIFIER = TestUtil::parseTimestamp;
     protected static final Parser<Long> PARSER = TimestampParser::parseTimestamp;
 
     @Test

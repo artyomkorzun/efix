@@ -1,18 +1,16 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
-import org.f1x.util.parse.IntParser;
 import org.junit.Test;
 
-import java.util.Random;
-
 import static org.f1x.util.TestUtil.arrayOf;
+import static org.f1x.util.TestUtil.generateLong;
 
-public class IntParserTest extends AbstractParserTest {
+public class LongParserTest extends AbstractParserTest {
 
-    protected static final ParserVerifier<Integer> VERIFIER = Integer::parseInt;
-    protected static final Parser<Integer> INT_PARSER = IntParser::parseInt;
-    protected static final Parser<Integer> UINT_PARSER = IntParser::parseUInt;
-    protected static final Parser<Integer>[] ALL_PARSERS = arrayOf(INT_PARSER, UINT_PARSER);
+    protected static final Verifier<Long> VERIFIER = Long::parseLong;
+    protected static final Parser<Long> INT_PARSER = LongParser::parseLong;
+    protected static final Parser<Long> UINT_PARSER = LongParser::parseULong;
+    protected static final Parser<Long>[] ALL_PARSERS = arrayOf(INT_PARSER, UINT_PARSER);
 
     @Test
     public void shouldParseNumbers() {
@@ -26,7 +24,15 @@ public class IntParserTest extends AbstractParserTest {
         shouldParse(-12345678, INT_PARSER);
         shouldParse(-123456789, INT_PARSER);
         shouldParse(-1234567890, INT_PARSER);
-        shouldParse(-Integer.MAX_VALUE, INT_PARSER);
+        shouldParse(-12345678901L, INT_PARSER);
+        shouldParse(-123456789012L, INT_PARSER);
+        shouldParse(-1234567890123L, INT_PARSER);
+        shouldParse(-12345678901234L, INT_PARSER);
+        shouldParse(-123456789012345L, INT_PARSER);
+        shouldParse(-1234567890123456L, INT_PARSER);
+        shouldParse(-12345678901234567L, INT_PARSER);
+        shouldParse(-123456789012345678L, INT_PARSER);
+        shouldParse(-999999999999999999L, INT_PARSER);
 
         shouldParse("-00012", INT_PARSER);
         shouldParse("-031", INT_PARSER);
@@ -42,7 +48,15 @@ public class IntParserTest extends AbstractParserTest {
         shouldParse(12345678, ALL_PARSERS);
         shouldParse(123456789, ALL_PARSERS);
         shouldParse(1234567890, ALL_PARSERS);
-        shouldParse(Integer.MAX_VALUE, ALL_PARSERS);
+        shouldParse(12345678901L, ALL_PARSERS);
+        shouldParse(123456789012L, ALL_PARSERS);
+        shouldParse(1234567890123L, ALL_PARSERS);
+        shouldParse(12345678901234L, ALL_PARSERS);
+        shouldParse(123456789012345L, ALL_PARSERS);
+        shouldParse(1234567890123456L, ALL_PARSERS);
+        shouldParse(12345678901234567L, ALL_PARSERS);
+        shouldParse(123456789012345678L, ALL_PARSERS);
+        shouldParse(999999999999999999L, ALL_PARSERS);
 
         shouldParse("01", ALL_PARSERS);
         shouldParse("002", ALL_PARSERS);
@@ -52,9 +66,8 @@ public class IntParserTest extends AbstractParserTest {
 
     @Test
     public void shouldParseRandomNumbers() {
-        Random random = new Random();
         for (int i = 0; i < 50000; i++) {
-            int number = random.nextInt();
+            long number = generateLong() / 10;
             if (number >= 0)
                 shouldParse(number, ALL_PARSERS);
             else
@@ -64,12 +77,15 @@ public class IntParserTest extends AbstractParserTest {
 
     @Test
     public void shouldFailParseNumbers() {
-        shouldFailParse(makeString(1L + Integer.MAX_VALUE), ALL_PARSERS);
-        shouldFailParse(makeString(-1L + Integer.MIN_VALUE), ALL_PARSERS);
+        shouldFailParse(1000000000000000000L, ALL_PARSERS);
+        shouldFailParse(Long.MAX_VALUE, ALL_PARSERS);
+        shouldFailParse(-1000000000000000000L, ALL_PARSERS);
+        shouldFailParse(Long.MIN_VALUE, ALL_PARSERS);
+
         shouldFailParse("hd", ALL_PARSERS);
         shouldFailParse("3ttt", ALL_PARSERS);
         shouldFailParse("111", ALL_PARSERS);
-        shouldFailParse("1111111111111111111=", ALL_PARSERS);
+        shouldFailParse("111111111111111111111111111111=", ALL_PARSERS);
         shouldFailParse("1", ALL_PARSERS);
         shouldFailParse("12345", ALL_PARSERS);
         shouldFailParse("-", ALL_PARSERS);
@@ -77,8 +93,8 @@ public class IntParserTest extends AbstractParserTest {
         shouldFailParse("-123", ALL_PARSERS);
         shouldFailParse("=", ALL_PARSERS);
         shouldFailParse("", ALL_PARSERS);
-        shouldFailParse("01234567890=", ALL_PARSERS);
-        shouldFailParse("-01234567890=", ALL_PARSERS);
+        shouldFailParse("0123456789011111111=", ALL_PARSERS);
+        shouldFailParse("-0123456789011111111=", ALL_PARSERS);
 
         shouldFailParse("-1=", UINT_PARSER);
         shouldFailParse("-25=", UINT_PARSER);
@@ -87,17 +103,17 @@ public class IntParserTest extends AbstractParserTest {
     }
 
     @SafeVarargs
-    protected static void shouldParse(int number, Parser<Integer>... parsers) {
+    protected static void shouldParse(long number, Parser<Long>... parsers) {
         shouldParse("" + number, parsers);
     }
 
     @SafeVarargs
-    protected static void shouldParse(String string, Parser<Integer>... parsers) {
+    protected static void shouldParse(String string, Parser<Long>... parsers) {
         shouldParse(string, VERIFIER, parsers);
     }
 
-    protected static String makeString(long value) {
-        return "" + value + (char) SEPARATOR;
+    protected static void shouldFailParse(long number, Parser<?>... parsers) {
+        shouldFailParse("" + number + (char) SEPARATOR, parsers);
     }
 
 }

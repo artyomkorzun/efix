@@ -1,11 +1,10 @@
-package org.f1x.util.parse.newOne;
+package org.f1x.util.parse;
 
-import org.f1x.util.parse.BooleanParser;
 import org.junit.Test;
 
 public class BooleanParserTest extends AbstractParserTest {
 
-    protected static final ParserVerifier<Boolean> VERIFIER = string -> {
+    protected static final Verifier<Boolean> VERIFIER = string -> {
         if (string.length() == 1) {
             char c = string.charAt(0);
             if (c == 'Y')

@@ -6,6 +6,7 @@ import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 
 import static org.f1x.util.format.newone.FormatterUtil.checkFreeSpace;
+import static org.f1x.util.format.newone.FormatterUtil.digit;
 
 @SuppressWarnings("Duplicates")
 public class IntFormatter {
@@ -106,6 +107,39 @@ public class IntFormatter {
             buffer.putByte(--index, DIGIT[remainder]);
             value = integer;
         } while (value != 0);
+
+
+        /*
+
+        // TODO: replace
+
+        div is replaced by inverse mul (3435973837 / 34359738368 = 0.10000000000582...)
+        it works approx for value < 10^11 that covers all ints
+
+        do {
+            long integer = (value * 3435973837L) >>> (32 + 3);
+            int remainder = (int) (value - ((integer << 3) + (integer << 1)));
+            builder.append((char) (remainder + '0'));
+            value = integer;
+        } while (value != 0);
+
+        */
     }
+
+    // TODO: optimize
+    protected static void format4DigitUInt(int value, MutableBuffer buffer, int offset) {
+        for (int i = 3; i >= 0; i--) {
+            buffer.putByte(offset + i, digit(value % 10));
+            value /= 10;
+        }
+    }
+
+    protected static void format2DigitUInt(int value, MutableBuffer buffer, int offset) {
+        for (int i = 1; i >= 0; i--) {
+            buffer.putByte(offset + i, digit(value % 10));
+            value /= 10;
+        }
+    }
+
 
 }
