@@ -2,17 +2,16 @@ package org.f1x.util;
 
 import org.f1x.util.buffer.UnsafeBuffer;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TestUtil {
 
-    public static final ZoneId UTC_ZONE = ZoneId.of("UTC");
-    public static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss[.SSS]");
+    protected static final ZoneId UTC_ZONE = ZoneId.of("UTC");
+    protected static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss[.SSS]");
+    protected static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd");
+
 
     public static long parseTimestamp(String string) {
         LocalDateTime timestamp = LocalDateTime.parse(string, TIMESTAMP_FORMATTER);
@@ -25,14 +24,21 @@ public class TestUtil {
     }
 
     public static long parseDate(String string) {
-        LocalDate date = LocalDate.parse(string, DateTimeFormatter.BASIC_ISO_DATE);
+        LocalDate date = LocalDate.parse(string, DATE_FORMATTER);
         return date.atStartOfDay(UTC_ZONE).toInstant().toEpochMilli();
     }
+
+
+    public static String formatDate(long timestamp) {
+        return Instant.ofEpochMilli(timestamp).atZone(UTC_ZONE).format(DATE_FORMATTER);
+    }
+
 
     public static UnsafeBuffer makeMessage(String message) {
         message = message.replace('|', '\u0001');
         return new UnsafeBuffer(StringUtil.asciiBytes(message));
     }
+
 
     public static int generateInt(int from, int to) {
         return (int) ThreadLocalRandom.current().nextLong(from, to + 1L);
@@ -44,6 +50,10 @@ public class TestUtil {
 
     public static long generateLong() {
         return ThreadLocalRandom.current().nextLong();
+    }
+
+    public static long generateLong(long from, long to) {
+        return ThreadLocalRandom.current().nextLong(from, to + 1);
     }
 
     @SafeVarargs
