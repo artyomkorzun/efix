@@ -10,8 +10,6 @@ import static org.f1x.util.parse.ParserUtil.checkFreeSpace;
 
 public class TimeParser {
 
-    protected static final byte COLON = ':';
-
     protected static final int SECOND_TIME_LENGTH = 8;
     protected static final int MILLISECOND_TIME_LENGTH = 12;
 
@@ -52,11 +50,11 @@ public class TimeParser {
     protected static int parseSecondTime(Buffer buffer, int offset) {
         int hour = parse2DigitUInt(buffer, offset + HOUR_OFFSET);
         checkHour(hour);
-        checkByte(buffer.getByte(offset + FIRST_COLON_OFFSET), COLON);
+        checkByte(buffer.getByte(offset + FIRST_COLON_OFFSET), (byte) ':');
 
         int minute = parse2DigitUInt(buffer, offset + MINUTE_OFFSET);
         checkMinute(minute);
-        checkByte(buffer.getByte(offset + SECOND_COLON_OFFSET), COLON);
+        checkByte(buffer.getByte(offset + SECOND_COLON_OFFSET), (byte) ':');
 
         int second = parse2DigitUInt(buffer, offset + SECOND_OFFSET);
         checkSecond(second);

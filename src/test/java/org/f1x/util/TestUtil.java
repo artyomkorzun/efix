@@ -9,12 +9,13 @@ import java.util.concurrent.ThreadLocalRandom;
 public class TestUtil {
 
     protected static final ZoneId UTC_ZONE = ZoneId.of("UTC");
-    protected static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss[.SSS]");
-    protected static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd");
-
+    protected static final DateTimeFormatter TIMESTAMP_PARSER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss[.SSS]");
+    protected static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss.SSS");
+    protected static final DateTimeFormatter DATE_PARSER_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd");
+    protected static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
     public static long parseTimestamp(String string) {
-        LocalDateTime timestamp = LocalDateTime.parse(string, TIMESTAMP_FORMATTER);
+        LocalDateTime timestamp = LocalDateTime.parse(string, TIMESTAMP_PARSER);
         return timestamp.atZone(UTC_ZONE).toInstant().toEpochMilli();
     }
 
@@ -24,13 +25,21 @@ public class TestUtil {
     }
 
     public static long parseDate(String string) {
-        LocalDate date = LocalDate.parse(string, DATE_FORMATTER);
+        LocalDate date = LocalDate.parse(string, DATE_PARSER_FORMATTER);
         return date.atStartOfDay(UTC_ZONE).toInstant().toEpochMilli();
     }
 
 
+    public static String formatTimestamp(long timestamp) {
+        return Instant.ofEpochMilli(timestamp).atZone(UTC_ZONE).format(TIMESTAMP_FORMATTER);
+    }
+
     public static String formatDate(long timestamp) {
-        return Instant.ofEpochMilli(timestamp).atZone(UTC_ZONE).format(DATE_FORMATTER);
+        return Instant.ofEpochMilli(timestamp).atZone(UTC_ZONE).format(DATE_PARSER_FORMATTER);
+    }
+
+    public static String formatTime(long timestamp) {
+        return Instant.ofEpochMilli(timestamp).atZone(UTC_ZONE).format(TIME_FORMATTER);
     }
 
 

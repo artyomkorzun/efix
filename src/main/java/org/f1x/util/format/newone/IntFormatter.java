@@ -134,6 +134,13 @@ public class IntFormatter {
         }
     }
 
+    protected static void format3DigitUInt(int value, MutableBuffer buffer, int offset) {
+        for (int i = 2; i >= 0; i--) {
+            buffer.putByte(offset + i, digit(value % 10));
+            value /= 10;
+        }
+    }
+
     protected static void format2DigitUInt(int value, MutableBuffer buffer, int offset) {
         for (int i = 1; i >= 0; i--) {
             buffer.putByte(offset + i, digit(value % 10));

@@ -10,6 +10,10 @@ public class ByteFormatter {
 
     protected static final int BYTE_LENGTH = 1;
 
+    public static void formatByte(char value, MutableBuffer buffer, MutableInt offset, int end) {
+        formatByte((byte) value, buffer, offset, end);
+    }
+
     public static void formatByte(byte value, MutableBuffer buffer, MutableInt offset, int end) {
         int off = offset.value();
         checkFreeSpace(end - off, BYTE_LENGTH);

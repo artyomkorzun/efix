@@ -14,7 +14,7 @@ public class DateFormatter {
     protected static final int MONTH_OFFSET = 4;
     protected static final int DAY_OFFSET = 6;
 
-    protected static final long DAY_IN_MILLIS = 24 * 60 * 60 * 1000;
+    protected static final long DAY_MILLIS = 24 * 60 * 60 * 1000;
     protected static final int DAYS_IN_YEAR = 365;
     protected static final int DAYS_IN_LEAP_YEAR = 366;
     protected static final int DAYS_IN_4_CYCLE = DAYS_IN_YEAR * 3 + DAYS_IN_LEAP_YEAR;
@@ -23,8 +23,8 @@ public class DateFormatter {
     protected static final int DAYS_TO_1904 = daysToYear(1904);
     protected static final int DAYS_TO_2100 = daysToYear(2100);
 
-    protected static final long MILLIS_1904_TO_EPOCH = (DAYS_TO_EPOCH - DAYS_TO_1904) * DAY_IN_MILLIS;
-    protected static final long MILLIS_EPOCH_TO_2100 = (DAYS_TO_2100 - DAYS_TO_EPOCH) * DAY_IN_MILLIS;
+    protected static final long MILLIS_1904_TO_EPOCH = (DAYS_TO_EPOCH - DAYS_TO_1904) * DAY_MILLIS;
+    protected static final long MILLIS_EPOCH_TO_2100 = (DAYS_TO_2100 - DAYS_TO_EPOCH) * DAY_MILLIS;
 
     private static final byte[] DAY_TO_MONTH = {
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -73,7 +73,7 @@ public class DateFormatter {
 
         timestamp += MILLIS_1904_TO_EPOCH;
 
-        int days = (int) (timestamp / DAY_IN_MILLIS);
+        int days = (int) (timestamp / DAY_MILLIS);
         int cycles4 = days / DAYS_IN_4_CYCLE;
         days -= cycles4 * DAYS_IN_4_CYCLE;
 
