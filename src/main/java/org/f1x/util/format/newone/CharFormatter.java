@@ -5,9 +5,13 @@ import org.f1x.util.buffer.MutableBuffer;
 
 import static org.f1x.util.format.newone.FormatterUtil.checkFreeSpace;
 
-public class CharSequenceFormatter {
+public class CharFormatter {
 
-    public static void formatCharSequence(CharSequence value, int valueOffset, int valueLength, MutableBuffer buffer, MutableInt offset, int end) {
+    public static void formatChar(char value, MutableBuffer buffer, MutableInt offset, int end) {
+        ByteFormatter.formatByte((byte) value, buffer, offset, end);
+    }
+
+    public static void formatChars(CharSequence value, int valueOffset, int valueLength, MutableBuffer buffer, MutableInt offset, int end) {
         int off = offset.value();
         checkFreeSpace(end - off, valueLength);
 

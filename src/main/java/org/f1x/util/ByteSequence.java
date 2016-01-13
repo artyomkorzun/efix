@@ -10,13 +10,24 @@ public class ByteSequence implements CharSequence {
 
     protected final MutableBuffer wrapper = new UnsafeBuffer(EMPTY);
 
-    public ByteSequence wrap(Buffer buffer, int offset, int length) {
-        wrapper.wrap(buffer, offset, length);
-        return this;
+    public ByteSequence() {
+    }
+
+    public ByteSequence(Buffer buffer, int offset, int length) {
+        wrap(buffer, offset, length);
+    }
+
+    public ByteSequence(Buffer buffer) {
+        wrap(buffer);
     }
 
     public ByteSequence wrap(Buffer buffer) {
         wrapper.wrap(buffer, 0, buffer.capacity());
+        return this;
+    }
+
+    public ByteSequence wrap(Buffer buffer, int offset, int length) {
+        wrapper.wrap(buffer, offset, length);
         return this;
     }
 

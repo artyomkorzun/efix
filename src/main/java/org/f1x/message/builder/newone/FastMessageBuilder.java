@@ -97,7 +97,7 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder appendCharSequence(CharSequence value, int offset, int length) {
-        CharSequenceFormatter.formatCharSequence(value, offset, length, buffer, this.offset, end);
+        CharFormatter.formatChars(value, offset, length, buffer, this.offset, end);
         return this;
     }
 

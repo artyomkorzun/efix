@@ -65,6 +65,10 @@ public class TestUtil {
         return ThreadLocalRandom.current().nextLong(from, to + 1);
     }
 
+    public static double generateDouble(double from, double to) {
+        return ThreadLocalRandom.current().nextDouble(from, Math.nextUp(to));
+    }
+
     @SafeVarargs
     public static <T> T[] arrayOf(T... objects) {
         return objects;

@@ -6,6 +6,7 @@ public class FormatterUtil {
         return (byte) (digit + '0');
     }
 
+    // TODO move to MessageFormatter
     public static void checkFreeSpace(int free, int required) {
         if (free < required)
             throw new FormatterException(String.format("free %s < required %s", free, required));
