@@ -18,8 +18,8 @@ public class NioSocketChannel implements Channel {
 
     @Override
     public int read(MutableBuffer buffer, int offset, int length) {
-        ByteBuffer byteBuffer = buffer.byteBuffer();
-        byteBuffer.limit(offset + length).position(offset);
+        ByteBuffer byteBuffer = byteBuffer(buffer, offset, length);
+
         try {
             return channel.read(byteBuffer);
         } catch (IOException e) {
@@ -29,13 +29,20 @@ public class NioSocketChannel implements Channel {
 
     @Override
     public int write(Buffer buffer, int offset, int length) {
-        ByteBuffer byteBuffer = buffer.byteBuffer();
-        byteBuffer.limit(offset + length).position(offset);
+        ByteBuffer byteBuffer = byteBuffer(buffer, offset, length);
+
         try {
             return channel.write(byteBuffer);
         } catch (IOException e) {
             throw new ConnectionException(e);
         }
+    }
+
+    protected ByteBuffer byteBuffer(Buffer buffer, int offset, int length) {
+        ByteBuffer byteBuffer = buffer.byteBuffer();
+        int position = offset + buffer.offset();
+        byteBuffer.limit(position + length).position(position);
+        return byteBuffer;
     }
 
 }
