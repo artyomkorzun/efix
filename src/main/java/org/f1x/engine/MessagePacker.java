@@ -51,8 +51,8 @@ public class MessagePacker {
 
         builder.wrap(buffer);
         addStandardHeader(bodyLength, msgSeqNum, sendingTime, msgType, builder);
-        builder.addBoolean(FixTags.PossDupFlag, true);
         builder.addTimestamp(FixTags.OrigSendingTime, origSendingTime);
+        builder.addBoolean(FixTags.PossDupFlag, true);
         builder.appendBytes(body, offset, length);
         addCheckSum(builder);
 
@@ -93,8 +93,8 @@ public class MessagePacker {
         int bodyLength = 0;
 
         bodyLength += computeBodyLength(msgSeqNum, sendingTime, msgType, length);
+        bodyLength += 5 + TimestampFormatter.TIMESTAMP_LENGTH;
         bodyLength += 5;
-        bodyLength += 4 + TimestampFormatter.TIMESTAMP_LENGTH;
 
         return bodyLength;
     }

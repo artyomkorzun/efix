@@ -83,7 +83,7 @@ public class MessageBuilderTest {
     }
 
     protected static void assertMessage(String expected, String actual) {
-        expected = expected.replace('|', '\u0001');
+        expected = normalize(expected);
         assertEquals("Fail to build " + expected, expected, actual);
     }
 

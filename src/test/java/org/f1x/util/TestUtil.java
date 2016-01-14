@@ -44,10 +44,12 @@ public class TestUtil {
 
 
     public static UnsafeBuffer byteMessage(String message) {
-        message = message.replace('|', '\u0001');
-        return BufferUtil.fromString(message);
+        return BufferUtil.fromString(normalize(message));
     }
 
+    public static String normalize(String message) {
+        return message.replace('|', '\u0001');
+    }
 
     public static int generateInt(int from, int to) {
         return (int) ThreadLocalRandom.current().nextLong(from, to + 1L);
