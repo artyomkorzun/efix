@@ -24,18 +24,19 @@ public class Receiver {
     }
 
     public int receive(MessageHandler handler) {
-        Channel channel = this.channel;
         MutableBuffer buffer = this.buffer;
         int offset = this.offset;
+
         int bytesRead = channel.read(buffer, offset, buffer.capacity() - offset);
         if (bytesRead > 0) {
             int length = offset + bytesRead;
             int bytesProcessed = processMessages(handler, buffer, length);
-            if (bytesProcessed != 0) {
+            if (bytesProcessed > 0) {
                 int remaining = length - bytesProcessed;
-                this.offset = remaining;
                 if (remaining > 0)
                     buffer.putBytes(0, buffer, bytesProcessed, remaining);
+
+                this.offset = remaining;
             }
         }
 
