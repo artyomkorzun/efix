@@ -1,6 +1,6 @@
-package org.f1x.util.format.newone;
+package org.f1x.util.format;
 
-import org.f1x.util.ByteSequence;
+import org.f1x.util.BufferUtil;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -19,7 +19,7 @@ public abstract class AbstractFormatterTest {
         for (Formatter<T> formatter : formatters) {
             offset.value(0);
             formatter.format(object, buffer, offset, end);
-            String actual = new ByteSequence().wrap(buffer, 0, offset.value()).toString();
+            String actual = BufferUtil.toString(buffer, 0, offset.value());
             assertEquals("Fail to parse " + object, expected, actual);
         }
     }

@@ -1,4 +1,4 @@
-package org.f1x.util.format.newone;
+package org.f1x.util.format;
 
 public class FormatterException extends RuntimeException {
 

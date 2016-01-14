@@ -45,40 +45,40 @@ public class SessionUtil {
     }
 
     public static void makeLogon(boolean resetSeqNum, int heartBtInt, MessageBuilder builder) {
-        builder.add(FixTags.MsgType, MsgType.LOGON);
-        builder.add(FixTags.EncryptMethod, EncryptMethod.NONE_OTHER);
-        builder.add(FixTags.HeartBtInt, heartBtInt);
-        builder.add(FixTags.ResetSeqNumFlag, resetSeqNum);
+        builder.addBytes(FixTags.MsgType, MsgType.LOGON.getBytes());
+        builder.addByte(FixTags.EncryptMethod, EncryptMethod.NONE_OTHER.getCode());
+        builder.addInt(FixTags.HeartBtInt, heartBtInt);
+        builder.addBoolean(FixTags.ResetSeqNumFlag, resetSeqNum);
     }
 
     public static void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {
-        builder.add(FixTags.MsgType, MsgType.HEARTBEAT);
+        builder.addBytes(FixTags.MsgType, MsgType.HEARTBEAT.getBytes());
         if (testReqID != null)
-            builder.add(FixTags.TestReqID, testReqID);
+            builder.addCharSequence(FixTags.TestReqID, testReqID);
     }
 
     public static void makeTestRequest(CharSequence testReqID, MessageBuilder builder) {
-        builder.add(FixTags.MsgType, MsgType.TEST_REQUEST);
-        builder.add(FixTags.TestReqID, testReqID);
+        builder.addBytes(FixTags.MsgType, MsgType.TEST_REQUEST.getBytes());
+        builder.addCharSequence(FixTags.TestReqID, testReqID);
     }
 
     public static void makeResendRequest(int beginSeqNo, int endSeqNo, MessageBuilder builder) {
-        builder.add(FixTags.MsgType, MsgType.RESEND_REQUEST);
-        builder.add(FixTags.BeginSeqNo, beginSeqNo);
-        builder.add(FixTags.EndSeqNo, endSeqNo);
+        builder.addBytes(FixTags.MsgType, MsgType.RESEND_REQUEST.getBytes());
+        builder.addInt(FixTags.BeginSeqNo, beginSeqNo);
+        builder.addInt(FixTags.EndSeqNo, endSeqNo);
     }
 
     public static void makeSequenceReset(boolean gapFill, int newSeqNo, MessageBuilder builder) {
-        builder.add(FixTags.MsgType, MsgType.SEQUENCE_RESET);
-        builder.add(FixTags.PossDupFlag, true);
-        builder.add(FixTags.NewSeqNo, newSeqNo);
-        builder.add(FixTags.GapFillFlag, gapFill);
+        builder.addBytes(FixTags.MsgType, MsgType.SEQUENCE_RESET.getBytes());
+        builder.addBoolean(FixTags.PossDupFlag, true);
+        builder.addInt(FixTags.NewSeqNo, newSeqNo);
+        builder.addBoolean(FixTags.GapFillFlag, gapFill);
     }
 
     public static void makeLogout(CharSequence text, MessageBuilder builder) {
-        builder.add(FixTags.MsgType, MsgType.LOGOUT);
+        builder.addBytes(FixTags.MsgType, MsgType.LOGOUT.getBytes());
         if (text != null)
-            builder.add(FixTags.Text, text);
+            builder.addCharSequence(FixTags.Text, text);
     }
 
     public static boolean checkTargetSeqNum(int expected, int actual, boolean checkHigher) {

@@ -1,179 +1,97 @@
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.f1x.util.format;
 
+import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
 
-import java.math.BigDecimal;
+public class DoubleFormatter {
 
-/**
- * This class formats floating point number to textual representation with given precision.
- * Not thread safe.
- * For large numbers this method falls back to BigDecimal.toPlainString().
- * Note: formatter always uses '.' dot as decimal separator (regardless of current locale).
- *
- */
-public final class DoubleFormatter {
+    protected static final int MAX_PRECISION = 15;
+    protected static final int MAX_LENGTH = 17;
+    protected static final double MAX_VALUE = 1E15 - 1;
+    protected static final double MIN_VALUE = -MAX_VALUE;
 
-    public static final int MAX_WIDTH = 21;
-    public static final int MAX_PRECISION = 15;
-    private static final long MAX = Long.MAX_VALUE / 10;
 
-    private final byte [] buffer = new byte [MAX_WIDTH];
+    private static final long[] MULTIPLIER = {
+            0,
+            10L,
+            100L,
+            1000L,
+            10000L,
+            100000L,
+            1000000L,
+            10000000L,
+            100000000L,
+            1000000000L,
+            10000000000L,
+            100000000000L,
+            1000000000000L,
+            10000000000000L,
+            100000000000000L,
+            1000000000000000L
+    };
 
-    private final int maxLength;
-    private final int precision;
-    private final long factor;
+    public static void formatDouble(double value, int precision, MutableBuffer buffer, MutableInt offset, int end) {
+        formatDouble(value, precision, true, buffer, offset, end);
+    }
 
-    public DoubleFormatter (int precision) {
-        this (precision, MAX_WIDTH);
+    // TODO optimize
+    public static void formatDouble(double value, int precision, boolean roundHalfUp, MutableBuffer buffer, MutableInt offset, int end) {
+        checkValue(value);
+
+        if (precision <= 0) {
+            long integer = round(value, roundHalfUp);
+            LongFormatter.formatLong(integer, buffer, offset, end);
+            return;
+        }
+
+        FormatterUtil.checkFreeSpace(end - offset.value(), MAX_LENGTH);
+
+        long integer = (long) value;
+        if (integer < 0) {
+            value = -value;
+            integer = -integer;
+            CharFormatter.formatChar('-', buffer, offset, end);
+        }
+
+        int length = LongFormatter.ulongLength(integer);
+        if (precision > MAX_PRECISION - length)
+            throw new FormatterException(String.format("value %s contains more than 15 significant digits, precision %s", value, precision));
+
+        LongFormatter.formatULong(integer, buffer, offset, end);
+        long fractional = round((value - integer) * MULTIPLIER[precision], roundHalfUp);
+
+        if (fractional > 0) {
+            CharFormatter.formatChar('.', buffer, offset, end);
+
+            int leadingZeros = precision - LongFormatter.ulongLength(fractional);
+            for (int i = 0; i < leadingZeros; i++)
+                CharFormatter.formatChar('0', buffer, offset, end);
+
+            LongFormatter.formatULong(truncateZeros(fractional), buffer, offset, end);
+        }
+    }
+
+    protected static long round(double value, boolean roundHalfUp) {
+        if (roundHalfUp) {
+            return value >= 0 ? Math.round(value) : -Math.round(-value);
+        } else {
+            return value >= 0 ? -Math.round(-value) : Math.round(value);
+        }
+    }
+
+    protected static long truncateZeros(long value) {
+        while (value % 10 == 0)
+            value /= 10;
+
+        return value;
     }
 
     /**
-     * @param precision maximum number of digits after decimal point (e.g. 3). Truncated part will be rounded.
-     * @param maxLength maximum length a whole string should take (e.g. 16).
+     * Checks value bounds. Note: checks NaN and infinities as well
      */
-    public DoubleFormatter (int precision, int maxLength) {
-        if (precision < 0 || precision > MAX_PRECISION)
-            throw new IllegalArgumentException("Precision");
-        if (maxLength < 0 || maxLength > MAX_WIDTH)
-            throw new IllegalArgumentException("Length");
-        this.precision = precision;
-        this.maxLength = maxLength;
-        this.factor = Math.round(Math.pow(10, precision+1));
-    }
-
-    /** Formats given number into output byte buffer */
-    public int format (double number, MutableBuffer output, int offset) {
-        return format(number, precision, true, maxLength, factor, output, offset);
-    }
-
-    /** Formats given number into output byte buffer */
-    public int format (double number, int precision, MutableBuffer output, int offset) {
-        return format(number, precision, MAX_WIDTH, output, offset);
-    }
-
-    /**
-     * @param precision maximum number of digits after decimal point (e.g. 3). Truncated part will be rounded.
-     * @param maxLength maximum length a whole string should take (e.g. 16).
-     */
-    public int format (double number, int precision, int maxLength, MutableBuffer output, int offset) {
-        return format(number, precision, true, maxLength, output, offset);
-    }
-
-    /**
-     * @param precision maximum number of digits after decimal point (e.g. 3). Truncated part will be rounded.
-     * @param roundUp defines rounding mode (RoundingMode.HALF_UP or RoundingMode.HALF_DOWN)
-     * @param maxLength maximum length a whole string should take (e.g. 16).
-     */
-    public int format (double number, int precision, boolean roundUp, int maxLength, MutableBuffer output, int offset) {
-        long factor = 10;
-        for (int i = 0; i < precision; i++)
-            factor*= 10;
-        return format(number, precision, roundUp, maxLength, factor, output, offset);
-    }
-
-    /**
-     * @param precision maximum number of digits after decimal point (e.g. 3). Truncated part will be rounded.
-     * @param roundUp defines rounding mode (HALF_UP or HALF_DOWN)
-     * @param maxLength maximum length a whole string should take (e.g. 16).
-     */
-    private int format (double number, int precision, boolean roundUp, int maxLength, long factor10, MutableBuffer output, int offset) {
-        if (precision < 0 || precision > MAX_PRECISION)
-            throw new IllegalArgumentException("Precision");
-        if (maxLength < 0 || maxLength > MAX_WIDTH)
-            throw new IllegalArgumentException("Length");
-        if (Double.isNaN(number)) // Infinity will be checked a bit later
-            throw new IllegalArgumentException("NaN");
-
-        boolean sign = false;
-        double factoredNumber = number;
-        if (number < 0) {
-            sign = true;
-            factoredNumber = Math.abs(number);
-        }
-        factoredNumber = factoredNumber*factor10;
-        if (Double.isInfinite(factoredNumber) || factoredNumber > MAX)
-            return formatLargeNumber (number, output, offset);
-
-
-        //long numberAsDecimal = Math.round(factoredNumber);  // this call costs 8% of total time we spend in this method on avg.
-        long numberAsDecimal;
-        {
-            //factoredNumber = factoredNumber * 10;
-            numberAsDecimal = (long) factoredNumber;
-            double smallestDigit = factoredNumber % 10;
-            numberAsDecimal = numberAsDecimal / 10;
-            if (roundUp) {
-                if (smallestDigit >= 5)
-                    numberAsDecimal++; // round up;
-            } else {
-                if (smallestDigit > 5)
-                    numberAsDecimal++; // round up;
-            }
-        }
-        if (numberAsDecimal == 0)
-            return formatZero(output, offset);
-
-        int i = MAX_WIDTH;
-        int fractional_part = precision;
-
-        boolean needLeadingZero = (fractional_part > 0);
-        while (numberAsDecimal > 0) {
-            int digit = (int) (numberAsDecimal % 10);
-            if (digit != 0 || i != MAX_WIDTH || fractional_part == 0) // skip trailing zeros
-                buffer [--i] = IntFormatter.Digits[digit];
-
-            numberAsDecimal = numberAsDecimal / 10;
-            if (fractional_part > 0) {
-                fractional_part --;
-                if (fractional_part == 0) {
-                    if (i != MAX_WIDTH)
-                        buffer [--i] = '.';
-                    needLeadingZero = (numberAsDecimal == 0);
-                }
-            }
-        }
-        if (needLeadingZero) {
-            if (fractional_part > 0) { // if number was less than zero
-                while (fractional_part-- > 0)
-                    buffer [--i] = '0';
-                buffer [--i] = '.';
-            }
-            buffer [--i] = '0';
-        }
-
-        if (sign)
-            buffer [--i] = '-';
-
-        int len = Math.min(MAX_WIDTH - i, maxLength);
-        output.putBytes(offset, buffer, i, len);
-        return offset + len;
-    }
-
-    private static int formatZero(MutableBuffer output, int offset) {
-        output.putByte(offset++, (byte)'0');
-        return offset;
-    }
-
-    // Super Rarely used to represent prices
-    private static int formatLargeNumber(double number, MutableBuffer output, int offset) {
-        final String text = new BigDecimal(number).toPlainString();
-        final int cnt = text.length();
-        for(int i=0; i < cnt; i++)
-            output.putByte(offset++, (byte) text.charAt(i));
-        return offset;
+    protected static void checkValue(double value) {
+        if (!(MIN_VALUE <= value && value <= MAX_VALUE))
+            throw new FormatterException("invalid value " + value);
     }
 
 }

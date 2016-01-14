@@ -1,9 +1,9 @@
 package org.f1x.util.parse;
 
+import org.f1x.util.BufferUtil;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
-import static org.f1x.util.TestUtil.makeMessage;
 import static org.junit.Assert.*;
 
 public abstract class AbstractParserTest {
@@ -12,7 +12,7 @@ public abstract class AbstractParserTest {
 
     @SafeVarargs
     protected static <T> void shouldParse(String string, Verifier<T> verifier, Parser<T>... parsers) {
-        Buffer buffer = makeMessage(string + (char) SEPARATOR);
+        Buffer buffer = BufferUtil.fromString(string + (char) SEPARATOR);
         MutableInt offset = new MutableInt();
         int end = buffer.capacity();
 
@@ -27,7 +27,7 @@ public abstract class AbstractParserTest {
     }
 
     protected static void shouldFailParse(String string, Parser<?>... parsers) {
-        Buffer buffer = makeMessage(string);
+        Buffer buffer = BufferUtil.fromString(string);
         MutableInt offset = new MutableInt();
         int end = buffer.capacity();
 

@@ -79,6 +79,26 @@ public class FastMessageParser implements MessageParser {
     }
 
     @Override
+    public MessageParser wrap(Buffer buffer) {
+        return wrap(buffer, 0, buffer.capacity());
+    }
+
+    @Override
+    public MessageParser wrap(Buffer buffer, int offset, int length) {
+        this.buffer = buffer;
+        this.offset.value(offset);
+        this.start = offset;
+        this.end = offset + length;
+        return this;
+    }
+
+    @Override
+    public MessageParser reset() {
+        offset.value(start);
+        return this;
+    }
+
+    @Override
     public int offset() {
         return offset.value();
     }
@@ -96,21 +116,6 @@ public class FastMessageParser implements MessageParser {
     @Override
     public boolean hasRemaining() {
         return offset.value() < end;
-    }
-
-    @Override
-    public MessageParser wrap(Buffer buffer, int offset, int length) {
-        this.buffer = buffer;
-        this.offset.value(offset);
-        this.start = offset;
-        this.end = offset + length;
-        return this;
-    }
-
-    @Override
-    public MessageParser reset() {
-        offset.value(start);
-        return this;
     }
 
 }

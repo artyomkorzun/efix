@@ -26,7 +26,7 @@ public class MessageParserTest {
     public void shouldParseFields() {
         String message = "1=sequence|2=12345|3=123456789012345|4=3.14159|5=b|6=Y|7=20121009-13:44:49.421|8=20121009|9=13:44:49.421|10=skipped value|";
         MessageParser parser = new FastMessageParser();
-        parser.wrap(makeMessage(message));
+        parser.wrap(byteMessage(message));
 
         int tags = 0;
         while (parser.hasRemaining()) {
@@ -76,7 +76,7 @@ public class MessageParserTest {
     public void shouldParseAfterReset() {
         String message = "1=ABC|2=12345|3=123456789012345|";
         MessageParser parser = new FastMessageParser();
-        parser.wrap(makeMessage(message));
+        parser.wrap(byteMessage(message));
 
         assertParser(message, parser);
         parser.reset();
@@ -89,7 +89,7 @@ public class MessageParserTest {
         String message = "1=1|2=2|" + expected + "5=5|6=6|";
 
         MessageParser parser = new FastMessageParser();
-        parser.wrap(makeMessage(message), 8, 8);
+        parser.wrap(byteMessage(message), 8, 8);
 
         assertParser(expected, parser);
         parser.reset();
@@ -98,7 +98,7 @@ public class MessageParserTest {
 
     protected void assertParser(String message) {
         MessageParser parser = new FastMessageParser();
-        parser.wrap(makeMessage(message));
+        parser.wrap(byteMessage(message));
         assertParser(message, parser);
     }
 

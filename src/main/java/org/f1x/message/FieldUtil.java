@@ -26,7 +26,7 @@ public class FieldUtil {
     }
 
     public static int tagLength(int field) {
-        return IntFormatter.stringSize(field);
+        return IntFormatter.uintLength(field);
     }
 
     public static int checkSum(int sum) {

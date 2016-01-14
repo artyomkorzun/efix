@@ -1,4 +1,4 @@
-package org.f1x.util.format.newone;
+package org.f1x.util.format;
 
 import org.f1x.util.ByteSequence;
 import org.f1x.util.MutableInt;

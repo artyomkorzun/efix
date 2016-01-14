@@ -31,6 +31,13 @@ public interface MessageParser {
     void parseValue();
 
 
+    MessageParser wrap(Buffer buffer);
+
+    MessageParser wrap(Buffer buffer, int offset, int length);
+
+    MessageParser reset();
+
+
     int offset();
 
     int length();
@@ -38,15 +45,6 @@ public interface MessageParser {
     int remaining();
 
     boolean hasRemaining();
-
-
-    default MessageParser wrap(Buffer buffer){
-        return wrap(buffer, 0, buffer.capacity());
-    }
-
-    MessageParser wrap(Buffer buffer, int offset, int length);
-
-    MessageParser reset();
 
 }
 

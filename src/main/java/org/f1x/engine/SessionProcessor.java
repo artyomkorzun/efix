@@ -603,7 +603,7 @@ public class SessionProcessor implements Worker {
     protected void makeLogon(boolean resetSeqNum, MessageBuilder builder) {
         SessionUtil.makeLogon(resetSeqNum, settings.getHeartbeatInterval(), builder);
         if (settings.isLogonWithNextExpectedSeqNum())
-            builder.add(FixTags.NextExpectedMsgSeqNum, state.getNextTargetSeqNum());
+            builder.addInt(FixTags.NextExpectedMsgSeqNum, state.getNextTargetSeqNum());
     }
 
     protected void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {

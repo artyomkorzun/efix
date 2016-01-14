@@ -35,7 +35,7 @@ public class MessagePacker {
 
         builder.wrap(buffer);
         addStandardHeader(bodyLength, msgSeqNum, sendingTime, msgType, builder);
-        builder.append(body, offset, length);
+        builder.appendBytes(body, offset, length);
         addCheckSum(builder);
 
         wrapper.wrap(buffer, 0, builder.length());
@@ -51,9 +51,9 @@ public class MessagePacker {
 
         builder.wrap(buffer);
         addStandardHeader(bodyLength, msgSeqNum, sendingTime, msgType, builder);
-        builder.add(FixTags.PossDupFlag, true);
-        builder.addUTCTimestamp(FixTags.OrigSendingTime, origSendingTime);
-        builder.append(body, offset, length);
+        builder.addBoolean(FixTags.PossDupFlag, true);
+        builder.addTimestamp(FixTags.OrigSendingTime, origSendingTime);
+        builder.appendBytes(body, offset, length);
         addCheckSum(builder);
 
         wrapper.wrap(buffer, 0, builder.length());
@@ -61,25 +61,32 @@ public class MessagePacker {
     }
 
     protected void addStandardHeader(int bodyLength, int msgSeqNum, long sendingTime, CharSequence msgType, MessageBuilder builder) {
-        builder.add(FixTags.BeginString, beginString);
-        builder.add(FixTags.BodyLength, bodyLength);
-        builder.add(FixTags.MsgType, msgType);
-        builder.add(FixTags.MsgSeqNum, msgSeqNum);
+        builder.addCharSequence(FixTags.BeginString, beginString);
+        builder.addInt(FixTags.BodyLength, bodyLength);
+        builder.addCharSequence(FixTags.MsgType, msgType);
+        builder.addInt(FixTags.MsgSeqNum, msgSeqNum);
 
-        builder.add(FixTags.SenderCompID, sessionID.getSenderCompId());
+        builder.addCharSequence(FixTags.SenderCompID, sessionID.getSenderCompId());
         if (sessionID.getSenderSubId() != null)
-            builder.add(FixTags.SenderSubID, sessionID.getSenderSubId());
+            builder.addCharSequence(FixTags.SenderSubID, sessionID.getSenderSubId());
 
-        builder.add(FixTags.TargetCompID, sessionID.getTargetCompId());
+        builder.addCharSequence(FixTags.TargetCompID, sessionID.getTargetCompId());
         if (sessionID.getTargetSubId() != null)
-            builder.add(FixTags.TargetSubID, sessionID.getTargetSubId());
+            builder.addCharSequence(FixTags.TargetSubID, sessionID.getTargetSubId());
 
-        builder.addUTCTimestamp(FixTags.SendingTime, sendingTime);
+        builder.addTimestamp(FixTags.SendingTime, sendingTime);
     }
 
     protected void addCheckSum(MessageBuilder builder) {
         int checkSum = computeCheckSum(buffer, 0, builder.length());
-        builder.append(FixTags.CheckSum).append(checkSum, 3);
+        builder.startField(FixTags.CheckSum);
+        if (checkSum < 100) {
+            builder.appendChar('0');
+            if (checkSum < 10)
+                builder.appendChar('0');
+        }
+
+        builder.appendInt(checkSum).endField();
     }
 
     protected int computeBodyLength(int msgSeqNum, long sendingTime, long origSendingTime, CharSequence msgType, int length) {
@@ -87,7 +94,7 @@ public class MessagePacker {
 
         bodyLength += computeBodyLength(msgSeqNum, sendingTime, msgType, length);
         bodyLength += 5;
-        bodyLength += 4 + TimestampFormatter.DATE_TIME_LENGTH;
+        bodyLength += 4 + TimestampFormatter.TIMESTAMP_LENGTH;
 
         return bodyLength;
     }
@@ -96,7 +103,7 @@ public class MessagePacker {
         int bodyLength = 0;
 
         bodyLength += 4 + msgType.length();
-        bodyLength += 4 + IntFormatter.stringSize(msgSeqNum);
+        bodyLength += 4 + IntFormatter.uintLength(msgSeqNum);
         bodyLength += 4 + sessionID.getSenderCompId().length();
         if (sessionID.getSenderSubId() != null)
             bodyLength += 4 + sessionID.getSenderSubId().length();
@@ -105,7 +112,7 @@ public class MessagePacker {
         if (sessionID.getTargetSubId() != null)
             bodyLength += 4 + sessionID.getTargetSubId().length();
 
-        bodyLength += 4 + TimestampFormatter.DATE_TIME_LENGTH;
+        bodyLength += 4 + TimestampFormatter.TIMESTAMP_LENGTH;
         bodyLength += length;
 
         return bodyLength;
@@ -113,7 +120,7 @@ public class MessagePacker {
 
     protected int computeMessageLength(int bodyLength) {
         return 3 + beginString.length() +
-                3 + IntFormatter.stringSize(bodyLength) +
+                3 + IntFormatter.uintLength(bodyLength) +
                 bodyLength +
                 FieldUtil.CHECK_SUM_FIELD_LENGTH;
     }

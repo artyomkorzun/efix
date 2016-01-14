@@ -1,6 +1,6 @@
-package org.f1x.util.format.newone;
+package org.f1x.util.format;
 
-import org.f1x.util.ByteSequence;
+import org.f1x.util.BufferUtil;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -41,17 +41,17 @@ public class ByteFormatterTest extends AbstractFormatterTest {
         ByteFormatter.formatBytes(asciiBytes(value), offset, length, buffer, new MutableInt(), length);
 
         String expected = value.substring(offset, offset + length);
-        String actual = new ByteSequence(buffer).toString();
+        String actual = BufferUtil.toString(buffer);
 
         assertEquals("Fail to format " + value, expected, actual);
     }
 
     protected void shouldFormatBuffer(String value, int offset, int length) {
         MutableBuffer buffer = new UnsafeBuffer(new byte[length]);
-        ByteFormatter.formatBytes(new UnsafeBuffer(asciiBytes(value)), offset, length, buffer, new MutableInt(), length);
+        ByteFormatter.formatBytes(BufferUtil.fromString(value), offset, length, buffer, new MutableInt(), length);
 
         String expected = value.substring(offset, offset + length);
-        String actual = new ByteSequence(buffer).toString();
+        String actual = BufferUtil.toString(buffer);
 
         assertEquals("Fail to format " + value, expected, actual);
     }

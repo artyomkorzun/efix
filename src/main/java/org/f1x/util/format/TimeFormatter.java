@@ -1,12 +1,12 @@
-package org.f1x.util.format.newone;
+package org.f1x.util.format;
 
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
 
-import static org.f1x.util.format.newone.DateFormatter.DAY_MILLIS;
-import static org.f1x.util.format.newone.FormatterUtil.checkFreeSpace;
-import static org.f1x.util.format.newone.IntFormatter.format2DigitUInt;
-import static org.f1x.util.format.newone.IntFormatter.format3DigitUInt;
+import static org.f1x.util.format.DateFormatter.DAY_MILLIS;
+import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
+import static org.f1x.util.format.IntFormatter.format2DigitUInt;
+import static org.f1x.util.format.IntFormatter.format3DigitUInt;
 
 public class TimeFormatter {
 

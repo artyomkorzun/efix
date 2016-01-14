@@ -1,129 +1,114 @@
-/*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.f1x.util.format;
 
+import org.f1x.util.BufferUtil;
+import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.buffer.UnsafeBuffer;
 
-import java.nio.charset.StandardCharsets;
+import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
 
-/**
- * Adaptation of java.lang.Long.toString() to format long number into byte array.
- */
+@SuppressWarnings("Duplicates")
 public class LongFormatter {
 
-    private static final Buffer MIN_VALUE_REPRESENTATION = new UnsafeBuffer(Long.toString(Long.MIN_VALUE).getBytes(StandardCharsets.US_ASCII));
+    protected static final Buffer MIN_LONG = BufferUtil.fromString(Long.MIN_VALUE + "");
 
-    // I use the "invariant division by multiplication" trick to
-    // accelerate Integer.toString.  In particular we want to
-    // avoid division by 10.
-    //
-    // The "trick" has roughly the same performance characteristics
-    // as the "classic" Integer.toString code on a non-JIT VM.
-    // The trick avoids .rem and .div calls but has a longer code
-    // path and is thus dominated by dispatch overhead.  In the
-    // JIT case the dispatch overhead doesn't exist and the
-    // "trick" is considerably faster than the classic code.
-    //
-    // TODO-FIXME: convert (x * 52429) into the equiv shift-add
-    // sequence.
-    //
-    // RE:  Division by Invariant Integers using Multiplication
-    //      T Gralund, P Montgomery
-    //      ACM PLDI 1994
-    //
+    private static final long[] SIZE_TABLE = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999,
+            999999999, 9999999999L, 99999999999L, 999999999999L, 9999999999999L, 99999999999999L,
+            999999999999999L, 9999999999999999L, 99999999999999999L, 999999999999999999L, Long.MAX_VALUE
+    };
 
-    public static int format(long value, MutableBuffer buffer, int offset) {
+    private static final byte[] DIGIT = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+    };
+
+    private static final byte[] DIGIT_TEN = {
+            '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
+            '1', '1', '1', '1', '1', '1', '1', '1', '1', '1',
+            '2', '2', '2', '2', '2', '2', '2', '2', '2', '2',
+            '3', '3', '3', '3', '3', '3', '3', '3', '3', '3',
+            '4', '4', '4', '4', '4', '4', '4', '4', '4', '4',
+            '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
+            '6', '6', '6', '6', '6', '6', '6', '6', '6', '6',
+            '7', '7', '7', '7', '7', '7', '7', '7', '7', '7',
+            '8', '8', '8', '8', '8', '8', '8', '8', '8', '8',
+            '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',
+    };
+
+    private static final byte[] DIGIT_ONE = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    };
+
+    public static void formatLong(long value, MutableBuffer buffer, MutableInt offset, int end) {
+        if (value >= 0)
+            formatULong(value, buffer, offset, end);
+        else
+            formatNegativeLong(value, buffer, offset, end);
+    }
+
+    public static void formatULong(long value, MutableBuffer buffer, MutableInt offset, int end) {
+        int off = offset.value();
+        int length = ulongLength(value);
+        checkFreeSpace(end - off, length);
+
+        int index = off + length;
+        formatULong(value, index, buffer);
+        offset.value(off + length);
+    }
+
+    public static void formatNegativeLong(long value, MutableBuffer buffer, MutableInt offset, int end) {
         if (value == Long.MIN_VALUE) {
-            buffer.putBytes(offset, MIN_VALUE_REPRESENTATION);
-            return offset + MIN_VALUE_REPRESENTATION.capacity();
-        } else {
-            int stringSize = (value < 0) ? stringSize(-value) + 1 : stringSize(value);
-            int endIndex = offset + stringSize;
-            LongFormatter.getBytes(value, buffer, endIndex);
-            return endIndex;
+            int off = offset.value();
+            int length = MIN_LONG.capacity();
+            checkFreeSpace(end - off, length);
+
+            buffer.putBytes(off, MIN_LONG);
+            offset.value(off + length);
+            return;
         }
+
+        int off = offset.value();
+        value = -value;
+        int length = ulongLength(value) + 1;
+        checkFreeSpace(end - off, length);
+
+        formatULong(value, off + length, buffer);
+        buffer.putByte(off, (byte) '-');
+        offset.value(off + length);
     }
 
-
-    /**
-     * Places characters representing the integer value into the
-     * character array buffer. The characters are placed into
-     * the buffer backwards starting with the least significant
-     * digit at the specified index (exclusive), and working
-     * backwards from there.
-     * <p>
-     * Will fail if value == Long.MIN_VALUE
-     */
-    static void getBytes(long value, MutableBuffer buffer, int stringSize) {
-        long q;
-        int r;
-        int charPos = stringSize;
-        byte sign = 0;
-
-        if (value < 0) {
-            sign = '-';
-            value = -value;
-        }
-
-        // Get 2 digits/iteration using longs until quotient fits into an int
-        while (value > Integer.MAX_VALUE) {
-            q = value / 100;
-            // really: r = value - (q * 100);
-            r = (int) (value - ((q << 6) + (q << 5) + (q << 2)));
-            value = q;
-            buffer.putByte(--charPos, IntFormatter.DigitOnes[r]);
-            buffer.putByte(--charPos, IntFormatter.DigitTens[r]);
-        }
-
-        // Get 2 digits/iteration using ints
-        int q2;
-        int i2 = (int) value;
-        while (i2 >= 65536) {
-            q2 = i2 / 100;
-            // really: r = i2 - (q * 100);
-            r = i2 - ((q2 << 6) + (q2 << 5) + (q2 << 2));
-            i2 = q2;
-            buffer.putByte(--charPos, IntFormatter.DigitOnes[r]);
-            buffer.putByte(--charPos, IntFormatter.DigitTens[r]);
-        }
-
-        // Fall thru to fast mode for smaller numbers
-        // assert(i2 <= 65536, i2);
-        for (; ; ) {
-            q2 = (i2 * 52429) >>> (16 + 3);
-            r = i2 - ((q2 << 3) + (q2 << 1));  // r = i2-(q2*10) ...
-            buffer.putByte(--charPos, IntFormatter.Digits[r]);
-            i2 = q2;
-            if (i2 == 0) break;
-        }
-        if (sign != 0) {
-            buffer.putByte(--charPos, sign);
-        }
+    public static int ulongLength(long x) {
+        for (int i = 0; ; i++)
+            if (x <= SIZE_TABLE[i])
+                return i + 1;
     }
 
-    // Requires positive x
-    static int stringSize(long x) {
-        long p = 10;
-        for (int i = 1; i < 19; i++) {
-            if (x < p)
-                return i;
-            p = 10 * p;
+    protected static void formatULong(long value, int index, MutableBuffer buffer) {
+        long integer;
+        int remainder;
+
+        while (value > 0xFFFF) {
+            integer = value / 100;
+            remainder = (int) (value - ((integer << 6) + (integer << 5) + (integer << 2)));
+            buffer.putByte(--index, DIGIT_ONE[remainder]);
+            buffer.putByte(--index, DIGIT_TEN[remainder]);
+            value = integer;
         }
-        return 19;
+
+        do {
+            integer = (value * 52429) >>> (16 + 3); // the same as value / 100
+            remainder = (int) (value - ((integer << 3) + (integer << 1)));
+            buffer.putByte(--index, DIGIT[remainder]);
+            value = integer;
+        } while (value != 0);
     }
 
 }

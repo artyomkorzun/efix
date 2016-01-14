@@ -1,5 +1,6 @@
 package org.f1x.util.parse;
 
+import org.f1x.util.BufferUtil;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.junit.Test;
@@ -7,7 +8,6 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.util.Random;
 
-import static org.f1x.util.TestUtil.makeMessage;
 import static org.junit.Assert.assertEquals;
 
 public class DoubleParserTest extends AbstractParserTest {
@@ -230,7 +230,7 @@ public class DoubleParserTest extends AbstractParserTest {
     }
 
     protected static void shouldParse(String number) {
-        Buffer buffer = makeMessage(number + (char) SEPARATOR);
+        Buffer buffer = BufferUtil.fromString(number + (char) SEPARATOR);
         MutableInt offset = new MutableInt();
         int end = buffer.capacity();
 

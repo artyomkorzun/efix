@@ -1,11 +1,7 @@
-package org.f1x.util.format.newone;
+package org.f1x.util.format;
 
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
-
-import static org.f1x.util.format.newone.FormatterUtil.checkFreeSpace;
-import static org.f1x.util.format.newone.IntFormatter.format2DigitUInt;
-import static org.f1x.util.format.newone.IntFormatter.format4DigitUInt;
 
 public class DateFormatter {
 
@@ -61,7 +57,7 @@ public class DateFormatter {
 
     public static void formatDate(long timestamp, MutableBuffer buffer, MutableInt offset, int end) {
         int off = offset.value();
-        checkFreeSpace(end - off, DATE_LENGTH);
+        FormatterUtil.checkFreeSpace(end - off, DATE_LENGTH);
         formatDate(timestamp, buffer, off);
         offset.value(off + DATE_LENGTH);
     }
@@ -96,9 +92,9 @@ public class DateFormatter {
             day = days - MONTH_TO_DAY_OFFSET[month] + 1;
         }
 
-        format4DigitUInt(year, buffer, offset + YEAR_OFFSET);
-        format2DigitUInt(month, buffer, offset + MONTH_OFFSET);
-        format2DigitUInt(day, buffer, offset + DAY_OFFSET);
+        IntFormatter.format4DigitUInt(year, buffer, offset + YEAR_OFFSET);
+        IntFormatter.format2DigitUInt(month, buffer, offset + MONTH_OFFSET);
+        IntFormatter.format2DigitUInt(day, buffer, offset + DAY_OFFSET);
     }
 
     private static int daysToYear(int year) {

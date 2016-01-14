@@ -1,11 +1,11 @@
 package org.f1x.util.parse;
 
+import org.f1x.util.BufferUtil;
 import org.f1x.util.ByteSequence;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.junit.Test;
 
-import static org.f1x.util.TestUtil.makeMessage;
 import static org.junit.Assert.assertEquals;
 
 public class ByteSequenceParserTest extends AbstractParserTest {
@@ -25,7 +25,7 @@ public class ByteSequenceParserTest extends AbstractParserTest {
     }
 
     protected static void shouldParse(String string) {
-        Buffer buffer = makeMessage(string + (char) SEPARATOR);
+        Buffer buffer = BufferUtil.fromString(string + (char) SEPARATOR);
         MutableInt offset = new MutableInt();
         int end = buffer.capacity();
 
