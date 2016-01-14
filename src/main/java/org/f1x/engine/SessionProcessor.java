@@ -278,13 +278,14 @@ public class SessionProcessor implements Worker {
 
     protected boolean connect() {
         Channel channel = connector.connect();
-        if (channel != null) {
+        boolean connected = channel != null;
+        if (connected) {
             receiver.setChannel(channel);
             sender.setChannel(channel);
             setStatus(SOCKET_CONNECTED);
         }
 
-        return channel != null;
+        return connected;
     }
 
     protected void disconnect(CharSequence cause) {
