@@ -1,6 +1,5 @@
 package org.f1x.util;
 
-import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 
 import java.time.*;
@@ -47,10 +46,6 @@ public class TestUtil {
     public static UnsafeBuffer byteMessage(String message) {
         message = message.replace('|', '\u0001');
         return BufferUtil.fromString(message);
-    }
-
-    public static String stringMessage(Buffer buffer, int offset, int length) {
-        return BufferUtil.toString(buffer, offset, length).replace('\u0001', '|');
     }
 
 

@@ -1,6 +1,7 @@
 package org.f1x.message.builder;
 
 import org.f1x.message.fields.FixTags;
+import org.f1x.util.BufferUtil;
 import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -35,9 +36,8 @@ public class MessageBuilderTest {
                 .addByteSequence(FixTags.Password, new ByteSequence(fromString("-password-")), 1, 8)
                 .addInt(FixTags.CheckSum, 202);
 
-        String actual = stringMessage(buffer, 0, builder.length());
-
-        assertEquals("Fail to build " + expected, expected, actual);
+        String actual = BufferUtil.toString(buffer, 0, builder.length());
+        assertMessage(expected, actual);
     }
 
     @Test
@@ -78,8 +78,12 @@ public class MessageBuilderTest {
                 .startField(28).appendCharSequence("sequence").endField()
         ;
 
-        String actual = stringMessage(buffer, 0, builder.length());
+        String actual = BufferUtil.toString(buffer, 0, builder.length());
+        assertMessage(expected, actual);
+    }
 
+    protected static void assertMessage(String expected, String actual) {
+        expected = expected.replace('|', '\u0001');
         assertEquals("Fail to build " + expected, expected, actual);
     }
 
