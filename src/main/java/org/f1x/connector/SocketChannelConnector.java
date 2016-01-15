@@ -24,7 +24,7 @@ public abstract class SocketChannelConnector implements Connector {
     @Override
     public org.f1x.connector.channel.Channel connect() throws ConnectionException {
         if (!isConnected())
-            doConnect();
+            nioChannel = doConnect();
 
         return nioChannel;
     }
@@ -49,7 +49,7 @@ public abstract class SocketChannelConnector implements Connector {
         return nioChannel != null;
     }
 
-    protected abstract void doConnect();
+    protected abstract NioSocketChannel doConnect();
 
     protected void configure(SocketChannel channel) throws IOException {
         channel.configureBlocking(false);

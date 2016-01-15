@@ -1,6 +1,5 @@
 package org.f1x.engine;
 
-import org.f1x.FIXVersion;
 import org.f1x.message.*;
 import org.f1x.message.builder.MessageBuilder;
 import org.f1x.message.fields.EncryptMethod;
@@ -10,8 +9,7 @@ import org.f1x.message.parser.MessageParser;
 import org.f1x.state.SessionStatus;
 import org.f1x.util.ByteSequence;
 
-import static org.f1x.message.FieldUtil.checkPositive;
-import static org.f1x.message.FieldUtil.checkPresent;
+import static org.f1x.message.FieldUtil.*;
 
 public class SessionUtil {
 
@@ -191,64 +189,99 @@ public class SessionUtil {
         return reset;
     }
 
-    // TODO: optimize
-    public static Header parseHeader(MessageParser parser, FIXVersion FIXVersion, Header header) {
-      /*  parseBeginString(parser, fixVersion);
-        parser.next();
-        parseMessageType(parser, header.getMsgType());
-        parseMsgSeqNumWithPossDup(parser, header);*/
+    public static Header parseHeader(MessageParser parser, Header header) {
+        parseBeginString(parser);
+        parseBodyLength(parser);
+        parseMessageType(parser, header.msgType());
+        parseMsgSeqNumWithPossDup(parser, header);
         return header;
     }
 
     public static void parseBeginString(MessageParser parser) {
-        int tag = parser.parseTag();
-        if (tag != FixTags.BeginString)
-            throw new FieldException(FixTags.BeginString, "Missing BeginString(8)");
-
+        checkTag(parser.parseTag(), FixTags.BeginString);
         parser.parseValue();
     }
 
     public static CharSequence parseMessageType(MessageParser parser, ByteSequence out) {
-        int tag = parser.parseTag();
-        if (tag != FixTags.MsgType)
-            throw new FieldException(FixTags.MsgType, "Missing MsgType(35)");
-
+        checkTag(parser.parseTag(), FixTags.MsgType);
         parser.parseByteSequence(out);
         return out;
     }
 
     public static int parseBodyLength(MessageParser parser) {
-        int tag = parser.parseTag();
-        if (tag != FixTags.BodyLength)
-            throw new FieldException(FixTags.BodyLength, "Missing BodyLength(9)");
-
+        checkTag(parser.parseTag(), FixTags.BodyLength);
         return checkPositive(FixTags.BodyLength, parser.parseInt());
     }
 
-    // TODO: optimize
-    public static void parseMsgSeqNumWithPossDup(MessageParser parser, Header header) throws InvalidFixMessageException {
-       /* Boolean possDupFlag = null;
-        int msgSeqNum = 0;
-        while (parser.next()) {
-            final int tagNum = parser.tag();
-            if (tagNum == FixTags.MsgSeqNum) {
-                msgSeqNum = parser.intValue();
-                if (msgSeqNum < 1)
-                    throw InvalidFixMessageException.MSG_SEQ_NUM_MUST_BE_POSITIVE;
-                if (possDupFlag != null)
-                    break; // we are done
+    public static void parseMsgSeqNumWithPossDup(MessageParser parser, Header header) {
+        int msgSeqNum = -1;
+        boolean possDup = false;
+        boolean possDupFound = false;
 
+        while (parser.hasRemaining()) {
+            int tagNum = parser.parseTag();
+            if (tagNum == FixTags.MsgSeqNum) {
+                msgSeqNum = checkPositive(tagNum, parser.parseInt());
+                if (possDupFound)
+                    break;
             } else if (tagNum == FixTags.PossDupFlag) {
-                possDupFlag = parser.booleanValue() ? Boolean.TRUE : Boolean.FALSE;
-                if (msgSeqNum != 0)
-                    break; // we are done
+                possDup = parser.parseBoolean();
+                if (msgSeqNum > 0)
+                    break;
+
+                possDupFound = true;
+            } else {
+                if (!isHeaderField(tagNum))
+                    break;
+
+                parser.parseValue();
             }
         }
 
-        if (msgSeqNum == 0)
-            throw InvalidFixMessageException.NO_MSG_SEQ_NUM;
+        checkPresent(FixTags.MsgSeqNum, msgSeqNum, -1);
 
         header.msgSeqNum(msgSeqNum);
-        header.possDup(possDupFlag == null ? false : possDupFlag);*/
+        header.possDup(possDup);
     }
+
+    public static boolean isHeaderField(int tag) {
+        switch (tag) {
+            case FixTags.BeginString:
+            case FixTags.BodyLength:
+            case FixTags.MsgType:
+            case FixTags.SenderCompID:
+            case FixTags.SenderSubID:
+            case FixTags.TargetCompID:
+            case FixTags.TargetSubID:
+            case FixTags.OnBehalfOfCompID:
+            case FixTags.DeliverToCompID:
+            case FixTags.SecureData:
+            case FixTags.MsgSeqNum:
+            case FixTags.SenderLocationID:
+            case FixTags.TargetLocationID:
+            case FixTags.OnBehalfOfSubID:
+            case FixTags.OnBehalfOfLocationID:
+            case FixTags.DeliverToSubID:
+            case FixTags.DeliverToLocationID:
+            case FixTags.PossDupFlag:
+            case FixTags.PossResend:
+            case FixTags.SendingTime:
+            case FixTags.OrigSendingTime:
+            case FixTags.XmlDataLen:
+            case FixTags.XmlData:
+            case FixTags.MessageEncoding:
+            case FixTags.LastMsgSeqNumProcessed:
+            case FixTags.NoHops:
+            case FixTags.HopCompID:
+            case FixTags.HopSendingTime:
+            case FixTags.HopRefID:
+            case 1128:
+            case 1156:
+            case 1129:
+                return true;
+            default:
+                return false;
+        }
+    }
+
 }

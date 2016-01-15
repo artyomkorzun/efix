@@ -1,6 +1,5 @@
 package org.f1x.engine;
 
-import org.f1x.FIXVersion;
 import org.f1x.SessionSettings;
 import org.f1x.connector.Connector;
 import org.f1x.connector.channel.Channel;
@@ -14,6 +13,7 @@ import org.f1x.state.SessionState;
 import org.f1x.state.SessionStatus;
 import org.f1x.store.MessageStore;
 import org.f1x.util.ByteSequence;
+import org.f1x.util.CloseHelper;
 import org.f1x.util.EpochClock;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
@@ -23,6 +23,7 @@ import org.f1x.util.concurrent.RingBuffer;
 import org.f1x.util.concurrent.Worker;
 
 import static org.f1x.engine.SessionUtil.*;
+import static org.f1x.message.AdminMessageTypes.isAdmin;
 import static org.f1x.state.SessionStatus.*;
 
 public class SessionProcessor implements Worker {
@@ -88,10 +89,10 @@ public class SessionProcessor implements Worker {
 
     @Override
     public void onClose() {
-        state.close();
-        store.close();
-        log.close();
-        connector.close();
+        CloseHelper.close(state);
+        CloseHelper.close(store);
+        CloseHelper.close(log);
+        CloseHelper.close(connector);
     }
 
     @Override
@@ -107,8 +108,8 @@ public class SessionProcessor implements Worker {
         int work = 0;
 
         work += checkSession(clock.time());
-        work += processInboundMessages();
-        work += processOutboundMessages();
+        work += processInMessages();
+        work += processOutMessages();
         work += processTimers(clock.time());
 
         return work;
@@ -122,56 +123,70 @@ public class SessionProcessor implements Worker {
 
     protected int checkSession(long now) {
         int work = 0;
+
         try {
             if (state.getStatus() == DISCONNECTED)
                 work += checkSessionStart(now);
             else
                 work += checkSessionEnd(now);
-        } catch (Throwable e) {
-            onError(e);
+        } catch (Exception e) {
             work += 1;
+            onError(e);
         }
 
         return work;
     }
 
-    protected int processInboundMessages() {
-        if (state.getStatus() == DISCONNECTED)
-            return 0;
+    protected int processInMessages() {
+        int work = 0;
 
-        try {
-            int bytesRead = receiver.receive(inMessageHandler);
-            if (bytesRead == -1) {
-                disconnect("No more data");
-                return 1;
+        if (state.getStatus() != DISCONNECTED) {
+            try {
+                int bytesRead = receiver.receive(inMessageHandler);
+                if (bytesRead == -1) {
+                    disconnect("No more data");
+                    work += 1;
+                } else {
+                    work += bytesRead;
+                }
+            } catch (Exception e) {
+                work += 1;
+                onError(e);
             }
-
-            return bytesRead;
-        } catch (Throwable e) {
-            onError(e);
-            return 1;
         }
+
+        return work;
     }
 
-    protected int processOutboundMessages() {
+    protected int processOutMessages() {
+        int work = 0;
+
         try {
-            return messageQueue.read(outMessageHandler);
-        } catch (Throwable e) {
+            work += messageQueue.read(outMessageHandler);
+        } catch (Exception e) {
+            work += 1;
             onError(e);
-            return 1;
         }
+
+        return work;
     }
 
     protected int processTimers(long now) {
         int work = 0;
-        SessionStatus status = state.getStatus();
-        if (status == SOCKET_CONNECTED || status == LOGON_SENT) {
-            work += checkLogonTimeout(now);
-        } else if (status == APPLICATION_CONNECTED) {
-            work += checkInHeartbeatTimeout(now);
-            work += checkOutHeartbeatTimeout(now);
-        } else if (status == LOGOUT_SENT) {
-            work += checkLogoutTimeout(now);
+
+        try {
+            SessionStatus status = state.getStatus();
+            if (status == SOCKET_CONNECTED || status == LOGON_SENT) {
+                work += checkLogonTimeout(now);
+            } else if (status == APPLICATION_CONNECTED) {
+                work += checkInHeartbeatTimeout(now);
+                work += checkOutHeartbeatTimeout(now);
+            } else if (status == LOGOUT_SENT) {
+                work += checkLogoutTimeout(now);
+            }
+        } catch (Exception e) {
+            work += 1;
+            onError(e);
         }
 
         return work;
@@ -197,7 +212,7 @@ public class SessionProcessor implements Worker {
                 work += 1;
             }
         } else if (connector.isConnectionPending()) {
-            disconnect("Session expired");
+            connector.disconnect();
             work += 1;
         }
 
@@ -240,7 +255,6 @@ public class SessionProcessor implements Worker {
         long elapsed = now - state.getLastSentTime();
         int timeout = settings.getLogoutTimeout();
         if (elapsed >= timeout) {
-            sendLogout("Logout timeout");
             disconnect("Logout timeout");
             work += 1;
         }
@@ -282,7 +296,7 @@ public class SessionProcessor implements Worker {
         if (connected) {
             receiver.setChannel(channel);
             sender.setChannel(channel);
-            setStatus(SOCKET_CONNECTED);
+            updateStatus(SOCKET_CONNECTED);
         }
 
         return connected;
@@ -290,17 +304,14 @@ public class SessionProcessor implements Worker {
 
     protected void disconnect(CharSequence cause) {
         SessionStatus status = state.getStatus();
-        if (status != DISCONNECTED && status != SOCKET_CONNECTED)
-            setStatus(SOCKET_CONNECTED);
+        if (status != SOCKET_CONNECTED)
+            updateStatus(SOCKET_CONNECTED);
 
-        if (connector.isConnected() || connector.isConnectionPending()) {
-            connector.disconnect();
-            receiver.setChannel(null);
-            sender.setChannel(null);
-        }
+        connector.disconnect();
+        receiver.setChannel(null);
+        sender.setChannel(null);
 
-        if (status != DISCONNECTED)
-            setStatus(DISCONNECTED);
+        updateStatus(DISCONNECTED);
     }
 
     protected void processMessage(Buffer buffer, int offset, int length) {
@@ -308,19 +319,22 @@ public class SessionProcessor implements Worker {
         state.setLastReceivedTime(time);
         log.log(true, time, buffer, offset, length);
 
+        MessageParser parser = this.parser;
         parser.wrap(buffer, offset, length);
-        parseHeader(parser, FIXVersion.FIX44, header);
+
+        Header header = parseHeader(parser, this.header);
         validateHeader(header);
+
         parser.reset();
 
-        if (AdminMessageTypes.isAdmin(header.getMsgType()))
+        if (isAdmin(header.msgType()))
             processAdminMessage(header, parser);
         else
             processAppMessage(header, parser);
     }
 
     protected void processAdminMessage(Header header, MessageParser parser) {
-        switch (header.getMsgType().charAt(0)) {
+        switch (header.msgType().charAt(0)) {
             case AdminMessageTypes.LOGON:
                 processLogon(header, parser);
                 break;
@@ -346,7 +360,7 @@ public class SessionProcessor implements Worker {
     }
 
     protected void processLogon(Header header, MessageParser parser) {
-        assertStatus(SOCKET_CONNECTED, LOGON_SENT, APPLICATION_CONNECTED);
+        assertStatus(SOCKET_CONNECTED, LOGON_SENT);
         assertNotDuplicate(header.possDup(), "Logon with PossDup(44)=Y");
 
         Logon logon = parseLogon(parser, this.logon);
@@ -354,42 +368,38 @@ public class SessionProcessor implements Worker {
         if (resetSeqNums)
             state.setNextTargetSeqNum(1);
 
-        state.setSeqNumsSynchronized(false);
         int msgSeqNum = header.msgSeqNum();
         boolean expectedSeqNum = checkTargetSeqNum(msgSeqNum, resetSeqNums);
+
+        state.setTargetSeqNumSynchronized(false);
         if (expectedSeqNum)
             state.setNextTargetSeqNum(msgSeqNum + 1);
 
         validateLogon(logon);
         onAdminMessage(header, parser.reset());
 
-        SessionStatus status = state.getStatus();
-        setStatus(LOGON_RECEIVED);
-        if (status == SOCKET_CONNECTED || status == APPLICATION_CONNECTED)
+        if (updateStatus(LOGON_RECEIVED) == SOCKET_CONNECTED)
             sendLogon(resetSeqNums);
 
         if (!expectedSeqNum)
             sendResendRequest(state.getNextTargetSeqNum(), 0);
 
         sendTestRequest("MsgSeqNum check");
-        setStatus(APPLICATION_CONNECTED);
+        updateStatus(APPLICATION_CONNECTED);
     }
 
     protected void processHeartbeat(Header header, MessageParser parser) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
         assertNotDuplicate(header.possDup(), "Heartbeat with PossDup(44)=Y");
 
-        state.setTestRequestSent(false);
         int msgSeqNum = header.msgSeqNum();
-        boolean expectedSeqNum = checkTargetSeqNum(msgSeqNum, state.isSeqNumsSynchronized());
-        if (expectedSeqNum) {
-            state.setNextTargetSeqNum(msgSeqNum + 1);
-            state.setSeqNumsSynchronized(true);
-        }
+        checkTargetSeqNum(msgSeqNum, true);
+
+        state.setNextTargetSeqNum(msgSeqNum + 1);
+        state.setTestRequestSent(false);
+        state.setTargetSeqNumSynchronized(true);
 
         onAdminMessage(header, parser);
-        if (!expectedSeqNum)
-            sendResendRequest(state.getNextTargetSeqNum(), 0);
     }
 
     protected void processTestRequest(Header header, MessageParser parser) {
@@ -397,7 +407,7 @@ public class SessionProcessor implements Worker {
         assertNotDuplicate(header.possDup(), "TestRequest with PossDup(44)=Y");
 
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.isSeqNumsSynchronized()))
+        if (checkTargetSeqNum(msgSeqNum, state.isTargetSeqNumSynchronized()))
             state.setNextTargetSeqNum(msgSeqNum + 1);
 
         TestRequest request = parseTestRequest(parser, testRequest);
@@ -413,11 +423,12 @@ public class SessionProcessor implements Worker {
         assertNotDuplicate(header.possDup(), "ResendRequest with PossDup(44)=Y");
 
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.isSeqNumsSynchronized()))
+        if (checkTargetSeqNum(msgSeqNum, state.isTargetSeqNumSynchronized()))
             state.setNextTargetSeqNum(msgSeqNum + 1);
 
         ResendRequest request = parseResendRequest(parser, resendRequest);
         validateResendRequest(request);
+
         onAdminMessage(header, parser.reset());
         resendMessages(request.beginSeqNo(), request.endSeqNo() == 0 ? (state.getNextSenderSeqNum() - 1) : request.endSeqNo());
     }
@@ -425,11 +436,8 @@ public class SessionProcessor implements Worker {
     protected void processReject(Header header, MessageParser parser) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        if (header.possDup())
-            state.setSeqNumsSynchronized(true);
-
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.isSeqNumsSynchronized())) {
+        if (checkTargetSeqNum(msgSeqNum, state.isTargetSeqNumSynchronized())) {
             state.setNextTargetSeqNum(msgSeqNum + 1);
             onAdminMessage(header, parser);
         }
@@ -445,7 +453,6 @@ public class SessionProcessor implements Worker {
 
         validateSequenceReset(reset);
         onAdminMessage(header, parser.reset());
-        state.setSeqNumsSynchronized(true);
         state.setNextTargetSeqNum(reset.newSeqNo());
     }
 
@@ -453,15 +460,13 @@ public class SessionProcessor implements Worker {
         assertStatus(LOGON_SENT, APPLICATION_CONNECTED, LOGOUT_SENT);
         assertNotDuplicate(header.possDup(), "Logout with PossDup(44)=Y");
 
-        boolean expectedSeqNum = checkTargetSeqNum(header.msgSeqNum(), state.isSeqNumsSynchronized());
+        boolean expectedSeqNum = checkTargetSeqNum(header.msgSeqNum(), state.isTargetSeqNumSynchronized());
         if (expectedSeqNum)
             state.setNextTargetSeqNum(header.msgSeqNum() + 1);
 
         onAdminMessage(header, parser);
 
-        SessionStatus status = state.getStatus();
-        setStatus(LOGOUT_RECEIVED);
-        if (status == APPLICATION_CONNECTED)
+        if (updateStatus(LOGOUT_RECEIVED) == APPLICATION_CONNECTED)
             sendLogout("Responding to Logout");
 
         disconnect("Logout");
@@ -470,22 +475,17 @@ public class SessionProcessor implements Worker {
     protected void processAppMessage(Header header, MessageParser parser) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        if (header.possDup())
-            state.setSeqNumsSynchronized(true);
-
-        if (checkTargetSeqNum(header.msgSeqNum(), state.isSeqNumsSynchronized())) {
+        if (checkTargetSeqNum(header.msgSeqNum(), state.isTargetSeqNumSynchronized())) {
             state.setNextTargetSeqNum(header.msgSeqNum() + 1);
             onAppMessage(header, parser);
         }
     }
 
     protected void validateHeader(Header header) {
+        // TODO
     }
 
     protected void validateLogon(Logon logon) {
-        if (state.getStatus() == APPLICATION_CONNECTED && !logon.resetSeqNums())
-            throw new FieldException(FixTags.ResetSeqNumFlag, "In-session logon should contain ResetSeqNumFlag(141)=Y");
-
         SessionUtil.validateLogon(settings.getHeartbeatInterval(), logon);
     }
 
@@ -510,14 +510,14 @@ public class SessionProcessor implements Worker {
         builder.wrap(buffer);
         makeLogon(resetSeqNums, builder);
         sendMessage(true, buffer, 0, builder.length());
-        setStatus(LOGON_SENT);
+        updateStatus(LOGON_SENT);
     }
 
     protected void sendLogout(CharSequence text) {
         builder.wrap(buffer);
         makeLogout(text, builder);
         sendMessage(true, buffer, 0, builder.length());
-        setStatus(LOGOUT_SENT);
+        updateStatus(LOGOUT_SENT);
     }
 
     protected void sendHeartbeat(CharSequence testReqID) {
@@ -527,10 +527,10 @@ public class SessionProcessor implements Worker {
     }
 
     protected void sendTestRequest(CharSequence testReqID) {
-        state.setTestRequestSent(true);
         builder.wrap(buffer);
         makeTestRequest(testReqID, builder);
         sendMessage(true, buffer, 0, builder.length());
+        state.setTestRequestSent(true);
     }
 
     protected void sendResendRequest(int beginSeqNo, int endSeqNo) {
@@ -627,15 +627,14 @@ public class SessionProcessor implements Worker {
         SessionUtil.makeLogout(text, builder);
     }
 
-    protected void setStatus(SessionStatus status) {
-        SessionStatus current = state.getStatus();
-        if (current != status) {
-            state.setStatus(status);
-            onStatusUpdate(current, status);
-        }
+    protected SessionStatus updateStatus(SessionStatus status) {
+        SessionStatus old = state.getStatus();
+        state.setStatus(status);
+        onStatusUpdate(old, status);
+        return old;
     }
 
-    protected void onStatusUpdate(SessionStatus old, SessionStatus fresh) {
+    protected void onStatusUpdate(SessionStatus old, SessionStatus updated) {
     }
 
     protected void onAdminMessage(Header header, MessageParser parser) {
@@ -645,7 +644,7 @@ public class SessionProcessor implements Worker {
     }
 
     protected boolean onStoreMessage(int seqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
-        return !AdminMessageTypes.isAdmin(msgType) || msgType.charAt(0) == AdminMessageTypes.REJECT;
+        return !isAdmin(msgType) || msgType.charAt(0) == AdminMessageTypes.REJECT;
     }
 
     protected boolean onResendMessage(int seqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
@@ -653,7 +652,8 @@ public class SessionProcessor implements Worker {
     }
 
     protected void onError(Throwable e) {
-        disconnect("Error occurred");
+        if (state.getStatus() != DISCONNECTED)
+            disconnect("Error occurred");
     }
 
     protected MessageHandler createInMessageHandler() {
@@ -664,7 +664,7 @@ public class SessionProcessor implements Worker {
         return (messageType, buffer, offset, length) -> {
             try {
                 sendAppMessage(buffer, offset, length);
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 onError(e);
             }
         };

@@ -15,8 +15,9 @@ public final class MutableInt {
         return value;
     }
 
-    public void value(int newValue) {
+    public MutableInt value(int newValue) {
         value = newValue;
+        return this;
     }
 
 }

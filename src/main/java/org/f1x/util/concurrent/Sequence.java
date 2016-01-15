@@ -11,7 +11,7 @@ public final class Sequence {
 
     static {
         try {
-            VALUE_FIELD_OFFSET = UNSAFE.objectFieldOffset(Sequence.class.getField("value"));
+            VALUE_FIELD_OFFSET = UNSAFE.objectFieldOffset(Sequence.class.getDeclaredField("value"));
         } catch (NoSuchFieldException e) {
             throw LangUtil.rethrowUnchecked(e);
         }

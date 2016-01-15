@@ -26,7 +26,7 @@ public class InitiatorConnector extends SocketChannelConnector {
     }
 
     @Override
-    protected void doConnect() {
+    protected NioSocketChannel doConnect() {
         long now = clock.time();
         if (canConnect(now)) {
             try {
@@ -37,17 +37,19 @@ public class InitiatorConnector extends SocketChannelConnector {
                 }
 
                 if (channel.finishConnect())
-                    nioChannel = new NioSocketChannel(channel);
+                    return new NioSocketChannel(channel);
             } catch (IOException e) {
                 errorTime = now;
                 disconnect();
                 throw new ConnectionException(e);
             }
         }
+
+        return null;
     }
 
     @Override
-    public void close() throws ConnectionException {
+    public void close() {
         disconnect();
     }
 

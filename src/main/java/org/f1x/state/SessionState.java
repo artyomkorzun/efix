@@ -10,9 +10,9 @@ public interface SessionState extends SessionComponent {
     void setStatus(SessionStatus status);
 
 
-    boolean isSeqNumsSynchronized();
+    boolean isTargetSeqNumSynchronized();
 
-    void setSeqNumsSynchronized(boolean seqNumsSynchronized);
+    void setTargetSeqNumSynchronized(boolean targetSeqNumSynchronized);
 
 
     int getNextSenderSeqNum();

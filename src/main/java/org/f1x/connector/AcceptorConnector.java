@@ -42,17 +42,19 @@ public class AcceptorConnector extends SocketChannelConnector {
     }
 
     @Override
-    protected void doConnect() {
+    protected NioSocketChannel doConnect() {
         try {
             channel = acceptor.accept();
             if (channel != null) {
                 configure(channel);
-                nioChannel = new NioSocketChannel(channel);
+                return new NioSocketChannel(channel);
             }
         } catch (IOException e) {
             disconnect();
             throw new ConnectionException(e);
         }
+
+        return null;
     }
 
 }

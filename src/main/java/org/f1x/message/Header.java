@@ -8,7 +8,7 @@ public class Header {
     protected int msgSeqNum;
     protected boolean possDup;
 
-    public ByteSequence getMsgType() {
+    public ByteSequence msgType() {
         return msgType;
     }
 

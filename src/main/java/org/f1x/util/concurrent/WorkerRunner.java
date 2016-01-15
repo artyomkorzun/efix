@@ -12,7 +12,7 @@ public class WorkerRunner implements Runnable, AutoCloseable {
     protected final AtomicReference<Thread> thread = new AtomicReference<>();
     protected final Worker worker;
 
-    protected volatile boolean active;
+    protected volatile boolean active = true;
 
     public WorkerRunner(Worker worker) {
         this.worker = Objects.requireNonNull(worker);
