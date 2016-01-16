@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-public class MemoryMappedSessionState extends AbstractSessionState {
+public class MappedSessionState extends AbstractSessionState {
 
     protected static final int LENGTH = 2 * BitUtil.SIZE_OF_INT + BitUtil.SIZE_OF_LONG;
 
@@ -25,7 +25,7 @@ public class MemoryMappedSessionState extends AbstractSessionState {
     protected MappedByteBuffer byteBuffer;
     protected MutableBuffer buffer;
 
-    public MemoryMappedSessionState(Path path) {
+    public MappedSessionState(Path path) {
         this.path = checkFile(path);
     }
 
@@ -63,7 +63,7 @@ public class MemoryMappedSessionState extends AbstractSessionState {
     public void open() {
         boolean justCreated = !Files.exists(path);
         try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
-            byteBuffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, LENGTH);
+            byteBuffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, LENGTH).load();
             buffer = new UnsafeBuffer(byteBuffer);
         } catch (IOException e) {
             LangUtil.rethrowUnchecked(e);
@@ -78,13 +78,12 @@ public class MemoryMappedSessionState extends AbstractSessionState {
 
     @Override
     public void flush() {
-        byteBuffer.force();
     }
 
     @Override
     public void close() {
         try {
-            flush();
+            byteBuffer.force();
         } finally {
             byteBuffer = null;
             buffer = null;

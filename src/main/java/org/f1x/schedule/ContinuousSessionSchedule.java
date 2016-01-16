@@ -16,4 +16,5 @@ public final class ContinuousSessionSchedule implements SessionSchedule {
     public long getEndTime(long time) {
         return Long.MAX_VALUE;
     }
+
 }

@@ -6,7 +6,7 @@ public interface Buffer {
 
     long addressOffset();
 
-    int offset();
+    int offset(); // TODO: remove
 
     int capacity();
 
