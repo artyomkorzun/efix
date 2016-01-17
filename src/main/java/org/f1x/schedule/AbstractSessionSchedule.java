@@ -65,34 +65,22 @@ public abstract class AbstractSessionSchedule implements SessionSchedule {
 
     protected static ZonedDateTime dateTimeAfter(LocalTime newTime, ZonedDateTime now) {
         ZonedDateTime date = dateWithTime(now, newTime);
-        if (date.isBefore(now))
-            date.plusDays(1);
-
-        return date;
+        return date.isBefore(now) ? date.plusDays(1) : date;
     }
 
     protected static ZonedDateTime dateTimeAfter(LocalTime newTime, DayOfWeek newDay, ZonedDateTime now) {
         ZonedDateTime date = dateWithTime(now, newTime).with(nextOrSame(newDay));
-        if (date.isBefore(now))
-            date.plusWeeks(1);
-
-        return date;
+        return date.isBefore(now) ? date.plusWeeks(1) : date;
     }
 
     protected static ZonedDateTime dateTimeBefore(LocalTime newTime, ZonedDateTime now) {
         ZonedDateTime date = dateWithTime(now, newTime);
-        if (date.isAfter(now))
-            date.minusDays(1);
-
-        return date;
+        return date.isAfter(now) ? date.minusDays(1) : date;
     }
 
     protected static ZonedDateTime dateTimeBefore(LocalTime newTime, DayOfWeek newDay, ZonedDateTime now) {
         ZonedDateTime date = dateWithTime(now, newTime).with(previousOrSame(newDay));
-        if (date.isAfter(now))
-            date.minusWeeks(1);
-
-        return now;
+        return date.isAfter(now) ? date.minusWeeks(1) : date;
     }
 
 }
