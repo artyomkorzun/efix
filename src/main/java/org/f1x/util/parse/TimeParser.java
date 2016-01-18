@@ -1,8 +1,8 @@
 package org.f1x.util.parse;
 
-import org.f1x.message.fields.type.TimeType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
+import org.f1x.util.type.TimeType;
 
 import static org.f1x.util.parse.IntParser.parse2DigitUInt;
 import static org.f1x.util.parse.IntParser.parse3DigitUInt;

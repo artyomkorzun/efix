@@ -5,11 +5,11 @@ import org.f1x.SessionID;
 import org.f1x.message.FieldUtil;
 import org.f1x.message.builder.MessageBuilder;
 import org.f1x.message.fields.FixTags;
-import org.f1x.message.fields.type.TimestampType;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.format.IntFormatter;
+import org.f1x.util.type.TimestampType;
 
 public class MessagePacker {
 

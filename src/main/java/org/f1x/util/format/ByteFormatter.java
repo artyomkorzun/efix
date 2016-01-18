@@ -1,9 +1,9 @@
 package org.f1x.util.format;
 
-import org.f1x.message.fields.type.ByteType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
+import org.f1x.util.type.ByteType;
 
 import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
 

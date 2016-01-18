@@ -1,9 +1,9 @@
 package org.f1x.log.layout;
 
-import org.f1x.message.fields.type.TimestampType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
+import org.f1x.util.type.TimestampType;
 
 import static org.f1x.util.format.ByteFormatter.formatBytes;
 import static org.f1x.util.format.CharFormatter.formatChar;

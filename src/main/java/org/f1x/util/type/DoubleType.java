@@ -1,4 +1,4 @@
-package org.f1x.message.fields.type;
+package org.f1x.util.type;
 
 public class DoubleType {
 

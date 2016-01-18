@@ -1,8 +1,8 @@
 package org.f1x.util.parse;
 
-import org.f1x.message.fields.type.LongType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
+import org.f1x.util.type.LongType;
 
 import static org.f1x.util.parse.ParserUtil.*;
 

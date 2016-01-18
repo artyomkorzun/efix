@@ -1,8 +1,8 @@
 package org.f1x.util.format;
 
-import org.f1x.message.fields.type.TimestampType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
+import org.f1x.util.type.TimestampType;
 
 import static org.f1x.util.format.DateFormatter.formatDate;
 import static org.f1x.util.format.FormatterUtil.checkFreeSpace;

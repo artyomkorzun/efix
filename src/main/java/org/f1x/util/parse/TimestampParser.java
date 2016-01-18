@@ -1,9 +1,9 @@
 package org.f1x.util.parse;
 
-import org.f1x.message.fields.type.TimeType;
-import org.f1x.message.fields.type.TimestampType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
+import org.f1x.util.type.TimeType;
+import org.f1x.util.type.TimestampType;
 
 import static org.f1x.util.parse.IntParser.parse3DigitUInt;
 import static org.f1x.util.parse.ParserUtil.checkByte;

@@ -1,10 +1,10 @@
 package org.f1x.util.format;
 
-import org.f1x.message.fields.type.DoubleType;
 import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
+import org.f1x.util.type.DoubleType;
 import org.junit.Test;
 
 import java.math.BigDecimal;
