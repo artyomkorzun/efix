@@ -1,8 +1,8 @@
 package org.f1x.engine;
 
 import org.f1x.util.buffer.Buffer;
-import org.f1x.util.concurrent.RingBuffer;
 import org.f1x.util.concurrent.WorkerRunner;
+import org.f1x.util.concurrent.buffer.RingBuffer;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

@@ -1,4 +1,4 @@
-package org.f1x.util.concurrent;
+package org.f1x.util.concurrent.queue;
 
 import java.util.Objects;
 import java.util.function.Consumer;

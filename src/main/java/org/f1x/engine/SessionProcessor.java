@@ -17,10 +17,10 @@ import org.f1x.util.CloseHelper;
 import org.f1x.util.EpochClock;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.concurrent.IdleStrategy;
-import org.f1x.util.concurrent.MessageHandler;
-import org.f1x.util.concurrent.RingBuffer;
 import org.f1x.util.concurrent.Worker;
+import org.f1x.util.concurrent.buffer.MessageHandler;
+import org.f1x.util.concurrent.buffer.RingBuffer;
+import org.f1x.util.concurrent.strategy.IdleStrategy;
 
 import static org.f1x.engine.SessionUtil.*;
 import static org.f1x.message.AdminMessageTypes.isAdmin;

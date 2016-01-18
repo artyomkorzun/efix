@@ -1,6 +1,8 @@
-package org.f1x.util.concurrent;
+package org.f1x.util.concurrent.queue;
 
 import org.f1x.util.BitUtil;
+import org.f1x.util.concurrent.AtomicLong;
+import org.f1x.util.concurrent.UnsafeArray;
 
 public abstract class AbstractQueue<E> implements Queue<E> {
 

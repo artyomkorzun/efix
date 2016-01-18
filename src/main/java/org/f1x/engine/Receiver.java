@@ -5,7 +5,7 @@ import org.f1x.message.FieldUtil;
 import org.f1x.message.parser.MessageParser;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.concurrent.MessageHandler;
+import org.f1x.util.concurrent.buffer.MessageHandler;
 
 import static org.f1x.engine.SessionUtil.parseBeginString;
 import static org.f1x.engine.SessionUtil.parseBodyLength;

@@ -1,4 +1,4 @@
-package org.f1x.util.concurrent;
+package org.f1x.util.concurrent.buffer;
 
 import org.f1x.util.buffer.AtomicBuffer;
 import org.f1x.util.buffer.Buffer;

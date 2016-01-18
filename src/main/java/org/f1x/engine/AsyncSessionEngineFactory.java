@@ -1,9 +1,17 @@
 package org.f1x.engine;
 
+import org.f1x.FIXVersion;
+import org.f1x.SessionID;
+import org.f1x.SessionIDBean;
 import org.f1x.SessionSettings;
+import org.f1x.connector.AcceptorConnector;
 import org.f1x.connector.Connector;
+import org.f1x.connector.InitiatorConnector;
+import org.f1x.connector.channel.SocketOptions;
 import org.f1x.log.EmptyMessageLog;
+import org.f1x.log.FileMessageLog;
 import org.f1x.log.MessageLog;
+import org.f1x.log.layout.TimeLayout;
 import org.f1x.message.builder.FastMessageBuilder;
 import org.f1x.message.builder.MessageBuilder;
 import org.f1x.message.parser.FastMessageParser;
@@ -19,9 +27,14 @@ import org.f1x.util.EpochClock;
 import org.f1x.util.Factory;
 import org.f1x.util.SystemEpochClock;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.concurrent.IdleStrategy;
-import org.f1x.util.concurrent.MPSCRingBuffer;
-import org.f1x.util.concurrent.RingBuffer;
+import org.f1x.util.concurrent.buffer.MPSCRingBuffer;
+import org.f1x.util.concurrent.buffer.RingBuffer;
+import org.f1x.util.concurrent.strategy.IdleStrategy;
+
+import java.net.InetSocketAddress;
+import java.nio.file.Paths;
+import java.util.Scanner;
+import java.util.concurrent.locks.LockSupport;
 
 import static java.util.Objects.requireNonNull;
 
@@ -118,7 +131,6 @@ public class AsyncSessionEngineFactory implements Factory<AsyncSessionEngine> {
 
     protected void conclude() {
         requireNonNull(settings);
-        requireNonNull(connector);
 
         if (clock == null)
             clock = SystemEpochClock.INSTANCE;
@@ -142,7 +154,7 @@ public class AsyncSessionEngineFactory implements Factory<AsyncSessionEngine> {
             messageQueue = new MPSCRingBuffer(BufferUtil.allocateDirect(DEFAULT_MESSAGE_QUEUE_CAPACITY));
 
         if (idleStrategy == null)
-            idleStrategy = null; // TODO:
+            idleStrategy = workCount -> LockSupport.parkNanos(1000000); // TODO:
 
         if (parser == null)
             parser = new FastMessageParser();
@@ -159,6 +171,33 @@ public class AsyncSessionEngineFactory implements Factory<AsyncSessionEngine> {
         if (sender == null)
             sender = new Sender();
 
+        if (connector == null)
+            connector = settings.isInitiator() ?
+                    new InitiatorConnector(15000, clock, new InetSocketAddress(25000), new SocketOptions()) :
+                    new AcceptorConnector(new InetSocketAddress(25000), new SocketOptions());
+
+    }
+
+    public static void main(String[] args) {
+        SessionID sessionID = new SessionIDBean("TTDEV14O", "DELTIX");
+        SessionSettings settings = new SessionSettings();
+        settings.setSessionID(sessionID);
+
+        settings.setFixVersion(FIXVersion.FIX42);
+        settings.resetSeqNumsOnEachLogon(true);
+        settings.setInitiator(false);
+
+        AsyncSessionEngineFactory factory = new AsyncSessionEngineFactory();
+        factory.setSettings(settings);
+        factory.setLog(new FileMessageLog(1 << 22, Paths.get("D:/f1x-log.messages"), new TimeLayout()));
+
+        AsyncSessionEngine engine = factory.create();
+        engine.start();
+
+        System.out.println("Close?");
+        Scanner scanner = new Scanner(System.in);
+        scanner.next();
+        engine.close();
     }
 
 }

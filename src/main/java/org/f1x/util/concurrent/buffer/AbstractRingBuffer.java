@@ -1,7 +1,8 @@
-package org.f1x.util.concurrent;
+package org.f1x.util.concurrent.buffer;
 
 import org.f1x.util.BitUtil;
 import org.f1x.util.buffer.AtomicBuffer;
+import org.f1x.util.concurrent.AtomicLong;
 
 public abstract class AbstractRingBuffer implements RingBuffer {
 

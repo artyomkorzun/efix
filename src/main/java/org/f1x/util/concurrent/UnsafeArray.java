@@ -4,7 +4,7 @@ import org.f1x.util.BitUtil;
 
 import static org.f1x.util.UnsafeAccess.UNSAFE;
 
-final class UnsafeArray<E> {
+public final class UnsafeArray<E> {
 
     private static final int ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset(Object[].class);
     private static final int ARRAY_INDEX_SHIFT = BitUtil.calculateShift(UNSAFE.arrayIndexScale(Object[].class));
