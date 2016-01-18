@@ -21,10 +21,30 @@ public abstract class AbstractQueue<E> implements Queue<E> {
         return capacity;
     }
 
+    @Override
+    public E poll() {
+        long tail = tailSequence.get();
+        int index = mask(tail);
+        E e = array.getObjectVolatile(index);
+        if (e != null) {
+            array.setObject(index, null);
+            tailSequence.setOrdered(tail + 1);
+        }
+
+        return e;
+    }
+
     public int size() {
         long head = headSequence.getVolatile();
         long tail = tailSequence.getVolatile();
         return (int) (head - tail);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        long head = headSequence.getVolatile();
+        long tail = tailSequence.getVolatile();
+        return tail == head;
     }
 
     protected int mask(long sequence) {

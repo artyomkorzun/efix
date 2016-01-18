@@ -34,19 +34,6 @@ public class MPSCQueue<E> extends AbstractQueue<E> {
     }
 
     @Override
-    public E poll() {
-        long tail = tailSequence.get();
-        int index = mask(tail);
-        E e = array.getObjectVolatile(index);
-        if (e != null) {
-            array.setObject(index, null);
-            tailSequence.setOrdered(tail + 1);
-        }
-
-        return e;
-    }
-
-    @Override
     public int drain(Consumer<E> handler) {
         int readMessages = 0;
         long tail = tailSequence.get();
