@@ -4,9 +4,9 @@ import org.f1x.util.BitUtil;
 
 public abstract class AbstractQueue<E> implements Queue<E> {
 
-    protected final Sequence headSequence = new Sequence();
-    protected final Sequence tailSequence = new Sequence();
-    protected final Sequence tailCacheSequence = new Sequence();
+    protected final AtomicLong headSequence = new AtomicLong();
+    protected final AtomicLong tailSequence = new AtomicLong();
+    protected final AtomicLong tailCacheSequence = new AtomicLong();
     protected final UnsafeArray<E> array;
     protected final int mask;
     protected final int capacity;

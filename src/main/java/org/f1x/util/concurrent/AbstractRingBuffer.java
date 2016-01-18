@@ -13,13 +13,13 @@ public abstract class AbstractRingBuffer implements RingBuffer {
 
     protected static final int HEADER_LENGTH = 2 * BitUtil.SIZE_OF_INT;
 
-    protected final Sequence headSequence = new Sequence();
-    protected final Sequence tailSequence = new Sequence();
+    protected final AtomicLong headSequence = new AtomicLong();
+    protected final AtomicLong tailSequence = new AtomicLong();
     protected final AtomicBuffer buffer;
     protected final int capacity;
     protected final int mask;
     protected final int maxMessageLength;
-    protected final Sequence tailCacheSequence = new Sequence();
+    protected final AtomicLong tailCacheSequence = new AtomicLong();
 
     public AbstractRingBuffer(AtomicBuffer buffer) {
         this.buffer = checkBuffer(buffer);

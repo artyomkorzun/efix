@@ -5,13 +5,13 @@ import sun.misc.Contended;
 
 import static org.f1x.util.UnsafeAccess.UNSAFE;
 
-public final class Sequence {
+public final class AtomicLong {
 
     private static final long VALUE_FIELD_OFFSET;
 
     static {
         try {
-            VALUE_FIELD_OFFSET = UNSAFE.objectFieldOffset(Sequence.class.getDeclaredField("value"));
+            VALUE_FIELD_OFFSET = UNSAFE.objectFieldOffset(AtomicLong.class.getDeclaredField("value"));
         } catch (NoSuchFieldException e) {
             throw LangUtil.rethrowUnchecked(e);
         }
@@ -20,10 +20,10 @@ public final class Sequence {
     @Contended
     private long value;
 
-    public Sequence() {
+    public AtomicLong() {
     }
 
-    public Sequence(long value) {
+    public AtomicLong(long value) {
         this.value = value;
     }
 
