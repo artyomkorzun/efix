@@ -1,5 +1,6 @@
 package org.f1x.util.parse;
 
+import org.f1x.message.fields.type.DoubleType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
@@ -8,18 +9,13 @@ import static org.f1x.util.parse.ParserUtil.*;
 @SuppressWarnings("Duplicates")
 public class DoubleParser {
 
-    protected static final int MAX_UNSIGNED_INTEGER_LENGTH = 15;
-    protected static final int MAX_NEGATIVE_INTEGER_LENGTH = MAX_UNSIGNED_INTEGER_LENGTH + 1;
-    protected static final int MAX_UNSIGNED_FRACTIONAL_LENGTH = MAX_UNSIGNED_INTEGER_LENGTH + 1;
-    protected static final int MAX_NEGATIVE_FRACTIONAL_LENGTH = MAX_UNSIGNED_FRACTIONAL_LENGTH + 1;
-
     private static final double[] INVERSE_POW_10 = {1E0, 1E-1, 1E-2, 1E-3, 1E-4, 1E-5, 1E-6, 1E-7, 1E-8, 1E-9, 1E-10, 1E-11, 1E-12, 1E-13, 1E-14};
 
     public static double parseDouble(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
         int off = start;
 
-        checkFreeSpace(end - off, ParserUtil.MIN_LENGTH);
+        checkFreeSpace(end - off, DoubleType.MIN_LENGTH + 1);
 
         byte b = buffer.getByte(off++);
         if (isDigit(b)) {
@@ -37,7 +33,7 @@ public class DoubleParser {
                         if (isDigit(b)) {
                             value = (value << 3) + (value << 1) + digit(b);
                         } else if (b == separator) {
-                            checkValueLength(off - start - 1, MAX_UNSIGNED_FRACTIONAL_LENGTH);
+                            checkValueLength(off - start - 1, DoubleType.MAX_UNSIGNED_FRACTIONAL_LENGTH);
                             offset.value(off);
                             return computeDouble(value, off - fractionalOffset - 1);
                         } else {
@@ -46,7 +42,7 @@ public class DoubleParser {
                     }
 
                 } else if (b == separator) {
-                    checkValueLength(off - start - 1, MAX_UNSIGNED_INTEGER_LENGTH);
+                    checkValueLength(off - start - 1, DoubleType.MAX_UNSIGNED_INTEGER_LENGTH);
                     offset.value(off);
                     return value;
                 } else {
@@ -71,7 +67,7 @@ public class DoubleParser {
                             if (isDigit(b)) {
                                 value = (value << 3) + (value << 1) + digit(b);
                             } else if (b == separator) {
-                                checkValueLength(off - start - 1, MAX_NEGATIVE_FRACTIONAL_LENGTH);
+                                checkValueLength(off - start - 1, DoubleType.MAX_NEGATIVE_FRACTIONAL_LENGTH);
                                 offset.value(off);
                                 return -computeDouble(value, off - fractionalOffset - 1);
                             } else {
@@ -80,7 +76,7 @@ public class DoubleParser {
                         }
 
                     } else if (b == separator) {
-                        checkValueLength(off - start - 1, MAX_NEGATIVE_INTEGER_LENGTH);
+                        checkValueLength(off - start - 1, DoubleType.MAX_NEGATIVE_INTEGER_LENGTH);
                         offset.value(off);
                         return -((double) value);
                     } else {

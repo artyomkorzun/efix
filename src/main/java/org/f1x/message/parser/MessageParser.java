@@ -1,6 +1,6 @@
 package org.f1x.message.parser;
 
-import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.buffer.Buffer;
 
 public interface MessageParser {
@@ -20,7 +20,7 @@ public interface MessageParser {
 
     CharSequence parseCharSequence();
 
-    void parseByteSequence(ByteSequence sequence);
+    void parseByteSequence(ByteSequenceWrapper sequence);
 
     int parseTime();
 

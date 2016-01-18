@@ -7,7 +7,7 @@ import org.f1x.message.fields.FixTags;
 import org.f1x.message.fields.MsgType;
 import org.f1x.message.parser.MessageParser;
 import org.f1x.state.SessionStatus;
-import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
 
 import static org.f1x.message.FieldUtil.*;
 
@@ -129,7 +129,7 @@ public class SessionUtil {
     }
 
     public static TestRequest parseTestRequest(MessageParser parser, TestRequest request) {
-        ByteSequence testReqID = request.testReqID().clear();
+        ByteSequenceWrapper testReqID = request.testReqID().clear();
 
         while (parser.hasRemaining()) {
             int tag = parser.parseTag();
@@ -202,7 +202,7 @@ public class SessionUtil {
         parser.parseValue();
     }
 
-    public static CharSequence parseMessageType(MessageParser parser, ByteSequence out) {
+    public static CharSequence parseMessageType(MessageParser parser, ByteSequenceWrapper out) {
         checkTag(parser.parseTag(), FixTags.MsgType);
         parser.parseByteSequence(out);
         return out;

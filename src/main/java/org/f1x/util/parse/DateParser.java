@@ -1,5 +1,6 @@
 package org.f1x.util.parse;
 
+import org.f1x.message.fields.type.DateType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
@@ -7,12 +8,6 @@ import static org.f1x.util.parse.ParserUtil.checkByte;
 import static org.f1x.util.parse.ParserUtil.checkFreeSpace;
 
 public class DateParser {
-
-    protected static final int DATE_LENGTH = 8;
-
-    protected static final int YEAR_OFFSET = 0;
-    protected static final int MONTH_OFFSET = 4;
-    protected static final int DAY_OFFSET = 6;
 
     protected static final int DAYS_TO_EPOCH = 1969 * 365 + 1969 / 4 - 1969 / 100 + 1969 / 400;
     protected static final long DAY_IN_MILLIS = 24 * 60 * 60 * 1000;
@@ -27,19 +22,19 @@ public class DateParser {
     public static long parseDate(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.value();
 
-        checkFreeSpace(end - off, DATE_LENGTH + 1);
+        checkFreeSpace(end - off, DateType.LENGTH + 1);
         long time = parseDate(buffer, off);
 
-        checkByte(buffer.getByte(off + DATE_LENGTH), separator);
-        offset.value(off + DATE_LENGTH + 1);
+        checkByte(buffer.getByte(off + DateType.LENGTH), separator);
+        offset.value(off + DateType.LENGTH + 1);
 
         return time;
     }
 
     protected static long parseDate(Buffer buffer, int offset) {
-        int year = IntParser.parse4DigitUInt(buffer, offset + YEAR_OFFSET);
-        int month = IntParser.parse2DigitUInt(buffer, offset + MONTH_OFFSET);
-        int day = IntParser.parse2DigitUInt(buffer, offset + DAY_OFFSET);
+        int year = IntParser.parse4DigitUInt(buffer, offset + DateType.YEAR_OFFSET);
+        int month = IntParser.parse2DigitUInt(buffer, offset + DateType.MONTH_OFFSET);
+        int day = IntParser.parse2DigitUInt(buffer, offset + DateType.DAY_OFFSET);
 
         checkMonth(month);
 

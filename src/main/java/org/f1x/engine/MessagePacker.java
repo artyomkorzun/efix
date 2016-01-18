@@ -5,11 +5,11 @@ import org.f1x.SessionID;
 import org.f1x.message.FieldUtil;
 import org.f1x.message.builder.MessageBuilder;
 import org.f1x.message.fields.FixTags;
+import org.f1x.message.fields.type.TimestampType;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.format.IntFormatter;
-import org.f1x.util.format.TimestampFormatter;
 
 public class MessagePacker {
 
@@ -93,7 +93,7 @@ public class MessagePacker {
         int bodyLength = 0;
 
         bodyLength += computeBodyLength(msgSeqNum, sendingTime, msgType, length);
-        bodyLength += 5 + TimestampFormatter.TIMESTAMP_LENGTH;
+        bodyLength += 5 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
         bodyLength += 5;
 
         return bodyLength;
@@ -112,7 +112,7 @@ public class MessagePacker {
         if (sessionID.getTargetSubId() != null)
             bodyLength += 4 + sessionID.getTargetSubId().length();
 
-        bodyLength += 4 + TimestampFormatter.TIMESTAMP_LENGTH;
+        bodyLength += 4 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
         bodyLength += length;
 
         return bodyLength;

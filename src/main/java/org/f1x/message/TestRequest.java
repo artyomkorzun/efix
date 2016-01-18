@@ -1,12 +1,12 @@
 package org.f1x.message;
 
-import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
 
 public class TestRequest {
 
-    protected final ByteSequence testReqID = new ByteSequence();
+    protected final ByteSequenceWrapper testReqID = new ByteSequenceWrapper();
 
-    public ByteSequence testReqID() {
+    public ByteSequenceWrapper testReqID() {
         return testReqID;
     }
 

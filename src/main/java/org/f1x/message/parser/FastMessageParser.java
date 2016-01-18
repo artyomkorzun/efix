@@ -1,6 +1,6 @@
 package org.f1x.message.parser;
 
-import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.parse.*;
@@ -10,7 +10,7 @@ import static org.f1x.message.FieldUtil.TAG_VALUE_SEPARATOR;
 
 public class FastMessageParser implements MessageParser {
 
-    protected final ByteSequence sequence = new ByteSequence();
+    protected final ByteSequenceWrapper sequence = new ByteSequenceWrapper();
     protected final MutableInt offset = new MutableInt();
 
     protected Buffer buffer;
@@ -54,7 +54,7 @@ public class FastMessageParser implements MessageParser {
     }
 
     @Override
-    public void parseByteSequence(ByteSequence sequence) {
+    public void parseByteSequence(ByteSequenceWrapper sequence) {
         ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, sequence);
     }
 

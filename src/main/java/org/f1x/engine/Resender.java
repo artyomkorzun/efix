@@ -28,7 +28,6 @@ public class Resender implements MessageStore.Visitor {
             processor.resendMessage(seqNum, sendingTime, msgType, body, offset, length);
             lastSeqNum = seqNum;
         }
-
     }
 
 }

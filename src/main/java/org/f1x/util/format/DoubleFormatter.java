@@ -1,15 +1,17 @@
 package org.f1x.util.format;
 
+import org.f1x.message.fields.type.DoubleType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
+
+import static org.f1x.util.format.CharFormatter.formatChar;
+import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
+import static org.f1x.util.format.LongFormatter.*;
 
 public class DoubleFormatter {
 
     protected static final int MAX_PRECISION = 15;
     protected static final int MAX_LENGTH = 17;
-    protected static final double MAX_VALUE = 1E15 - 1;
-    protected static final double MIN_VALUE = -MAX_VALUE;
-
 
     private static final long[] MULTIPLIER = {
             0,
@@ -40,34 +42,34 @@ public class DoubleFormatter {
 
         if (precision <= 0) {
             long integer = round(value, roundHalfUp);
-            LongFormatter.formatLong(integer, buffer, offset, end);
+            formatLong(integer, buffer, offset, end);
             return;
         }
 
-        FormatterUtil.checkFreeSpace(end - offset.value(), MAX_LENGTH);
+        checkFreeSpace(end - offset.value(), DoubleType.MAX_LENGTH);
 
         long integer = (long) value;
         if (integer < 0) {
             value = -value;
             integer = -integer;
-            CharFormatter.formatChar('-', buffer, offset, end);
+            formatChar('-', buffer, offset, end);
         }
 
-        int length = LongFormatter.ulongLength(integer);
+        int length = ulongLength(integer);
         if (precision > MAX_PRECISION - length)
             throw new FormatterException(String.format("value %s contains more than 15 significant digits, precision %s", value, precision));
 
-        LongFormatter.formatULong(integer, buffer, offset, end);
+        formatULong(integer, buffer, offset, end);
         long fractional = round((value - integer) * MULTIPLIER[precision], roundHalfUp);
 
         if (fractional > 0) {
-            CharFormatter.formatChar('.', buffer, offset, end);
+            formatChar('.', buffer, offset, end);
 
-            int leadingZeros = precision - LongFormatter.ulongLength(fractional);
+            int leadingZeros = precision - ulongLength(fractional);
             for (int i = 0; i < leadingZeros; i++)
-                CharFormatter.formatChar('0', buffer, offset, end);
+                formatChar('0', buffer, offset, end);
 
-            LongFormatter.formatULong(truncateZeros(fractional), buffer, offset, end);
+            formatULong(truncateZeros(fractional), buffer, offset, end);
         }
     }
 
@@ -90,7 +92,7 @@ public class DoubleFormatter {
      * Checks value bounds. Note: checks NaN and infinities as well
      */
     protected static void checkValue(double value) {
-        if (!(MIN_VALUE <= value && value <= MAX_VALUE))
+        if (!(DoubleType.MIN_VALUE <= value && value <= DoubleType.MAX_VALUE))
             throw new FormatterException("invalid value " + value);
     }
 

@@ -12,7 +12,7 @@ import org.f1x.schedule.SessionSchedule;
 import org.f1x.state.SessionState;
 import org.f1x.state.SessionStatus;
 import org.f1x.store.MessageStore;
-import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.CloseHelper;
 import org.f1x.util.EpochClock;
 import org.f1x.util.buffer.Buffer;
@@ -51,7 +51,7 @@ public class SessionProcessor implements Worker {
     protected final TestRequest testRequest = new TestRequest();
     protected final ResendRequest resendRequest = new ResendRequest();
     protected final SequenceReset sequenceReset = new SequenceReset();
-    protected final ByteSequence outMsgType = new ByteSequence();
+    protected final ByteSequenceWrapper outMsgType = new ByteSequenceWrapper();
 
     protected final MessageHandler inMessageHandler = createInMessageHandler();
     protected final MessageHandler outMessageHandler = createOutMessageHandler();

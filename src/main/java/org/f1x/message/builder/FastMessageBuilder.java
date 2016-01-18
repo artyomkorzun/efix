@@ -206,7 +206,7 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder appendByteSequence(ByteSequence value, int offset, int length) {
-        return appendBytes(value.wrapper(), offset, length);
+        return appendBytes(value.buffer(), offset, length);
     }
 
     @Override

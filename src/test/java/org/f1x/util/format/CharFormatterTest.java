@@ -1,6 +1,6 @@
 package org.f1x.util.format;
 
-import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -34,7 +34,7 @@ public class CharFormatterTest extends AbstractFormatterTest {
         CharFormatter.formatChars(value, offset, length, buffer, new MutableInt(), length);
 
         String expected = value.substring(offset, offset + length);
-        String actual = new ByteSequence(buffer).toString();
+        String actual = new ByteSequenceWrapper(buffer).toString();
 
         assertEquals("Fail to format " + value, expected, actual);
     }

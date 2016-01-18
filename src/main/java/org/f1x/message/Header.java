@@ -1,14 +1,14 @@
 package org.f1x.message;
 
-import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
 
 public class Header {
 
-    protected final ByteSequence msgType = new ByteSequence();
+    protected final ByteSequenceWrapper msgType = new ByteSequenceWrapper();
     protected int msgSeqNum;
     protected boolean possDup;
 
-    public ByteSequence msgType() {
+    public ByteSequenceWrapper msgType() {
         return msgType;
     }
 

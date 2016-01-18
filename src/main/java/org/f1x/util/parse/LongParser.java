@@ -1,5 +1,6 @@
 package org.f1x.util.parse;
 
+import org.f1x.message.fields.type.LongType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
@@ -8,14 +9,11 @@ import static org.f1x.util.parse.ParserUtil.*;
 @SuppressWarnings("Duplicates")
 public class LongParser {
 
-    protected static final int MAX_UNSIGNED_LONG_LENGTH = 18;
-    protected static final int MAX_NEGATIVE_LONG_LENGTH = MAX_UNSIGNED_LONG_LENGTH + 1;
-
     public static long parseLong(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
         int off = start;
 
-        checkFreeSpace(end - off, MIN_LENGTH);
+        checkFreeSpace(end - off, LongType.MIN_LENGTH + 1);
 
         byte b = buffer.getByte(off++);
         if (isDigit(b)) { // fast path
@@ -26,7 +24,7 @@ public class LongParser {
                 if (isDigit(b)) {
                     value = (value << 3) + (value << 1) + digit(b);
                 } else if (b == separator) {
-                    checkValueLength(off - start - 1, MAX_UNSIGNED_LONG_LENGTH);
+                    checkValueLength(off - start - 1, LongType.MAX_UNSIGNED_LONG_LENGTH);
                     offset.value(off);
                     return value;
                 } else {
@@ -44,7 +42,7 @@ public class LongParser {
                     if (isDigit(b)) {
                         value = (value << 3) + (value << 1) + digit(b);
                     } else if (b == separator) {
-                        checkValueLength(off - start - 1, MAX_NEGATIVE_LONG_LENGTH);
+                        checkValueLength(off - start - 1, LongType.MAX_NEGATIVE_LONG_LENGTH);
                         offset.value(off);
                         return -value;
                     } else {
@@ -66,7 +64,7 @@ public class LongParser {
         int start = offset.value();
         int off = start;
 
-        checkFreeSpace(end - off, MIN_LENGTH);
+        checkFreeSpace(end - off, LongType.MIN_LENGTH + 1);
 
         long value = 0;
         byte b = buffer.getByte(off++);
@@ -80,7 +78,7 @@ public class LongParser {
             if (isDigit(b)) {
                 value = (value << 3) + (value << 1) + digit(b);
             } else if (b == separator) {
-                checkValueLength(off - start - 1, MAX_UNSIGNED_LONG_LENGTH);
+                checkValueLength(off - start - 1, LongType.MAX_UNSIGNED_LONG_LENGTH);
                 offset.value(off);
                 return value;
             } else {

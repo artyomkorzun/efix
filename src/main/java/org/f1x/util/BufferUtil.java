@@ -24,7 +24,7 @@ public class BufferUtil {
     }
 
     public static String toString(Buffer buffer, int offset, int length) {
-        return new ByteSequence(buffer, offset, length).toString();
+        return new ByteSequenceWrapper(buffer, offset, length).toString();
     }
 
 }

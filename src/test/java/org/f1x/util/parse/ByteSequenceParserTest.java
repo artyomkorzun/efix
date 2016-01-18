@@ -1,7 +1,7 @@
 package org.f1x.util.parse;
 
 import org.f1x.util.BufferUtil;
-import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.junit.Test;
@@ -29,7 +29,7 @@ public class ByteSequenceParserTest extends AbstractParserTest {
         MutableInt offset = new MutableInt();
         int end = buffer.capacity();
 
-        ByteSequence sequence = new ByteSequence();
+        ByteSequenceWrapper sequence = new ByteSequenceWrapper();
         ByteSequenceParser.parseByteSequence(SEPARATOR, buffer, offset, end, sequence);
         String actual = sequence.toString();
 
@@ -44,7 +44,7 @@ public class ByteSequenceParserTest extends AbstractParserTest {
 
     protected static void shouldFailParse(String string) {
         Parser<Object> sequenceParser = (separator, buffer, offset, end) -> {
-            ByteSequenceParser.parseByteSequence(separator, buffer, offset, end, new ByteSequence());
+            ByteSequenceParser.parseByteSequence(separator, buffer, offset, end, new ByteSequenceWrapper());
             return null;
         };
 

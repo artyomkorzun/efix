@@ -1,5 +1,6 @@
 package org.f1x.util.parse;
 
+import org.f1x.message.fields.type.IntType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
@@ -8,14 +9,11 @@ import static org.f1x.util.parse.ParserUtil.*;
 @SuppressWarnings("Duplicates")
 public class IntParser {
 
-    protected static final int MAX_UNSIGNED_INT_LENGTH = 10;
-    protected static final int MAX_NEGATIVE_INT_LENGTH = MAX_UNSIGNED_INT_LENGTH + 1;
-
     public static int parseInt(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.value();
         int off = start;
 
-        checkFreeSpace(end - off, MIN_LENGTH);
+        checkFreeSpace(end - off, IntType.MIN_LENGTH + 1);
 
         byte b = buffer.getByte(off++);
         if (isDigit(b)) { // fast path
@@ -67,7 +65,7 @@ public class IntParser {
         int start = offset.value();
         int off = start;
 
-        checkFreeSpace(end - off, MIN_LENGTH);
+        checkFreeSpace(end - off, IntType.MIN_LENGTH + 1);
 
         long value = 0;
         byte b = buffer.getByte(off++);
@@ -114,12 +112,12 @@ public class IntParser {
     }
 
     protected static void checkUnsignedValue(long value, int length) {
-        if (length > MAX_UNSIGNED_INT_LENGTH || value > Integer.MAX_VALUE)
+        if (length > IntType.MAX_UNSIGNED_INT_LENGTH || value > Integer.MAX_VALUE)
             throw new ParserException(String.format("number is too big, length %s", length));
     }
 
     protected static void checkNegativeValue(long value, int length) {
-        if (length > MAX_NEGATIVE_INT_LENGTH || value < Integer.MIN_VALUE)
+        if (length > IntType.MAX_NEGATIVE_INT_LENGTH || value < Integer.MIN_VALUE)
             throw new ParserException(String.format("number is too small, length %s", length));
     }
 

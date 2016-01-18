@@ -1,5 +1,6 @@
 package org.f1x.util.parse;
 
+import org.f1x.message.fields.type.TimeType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
@@ -10,35 +11,24 @@ import static org.f1x.util.parse.ParserUtil.checkFreeSpace;
 
 public class TimeParser {
 
-    protected static final int SECOND_TIME_LENGTH = 8;
-    protected static final int MILLISECOND_TIME_LENGTH = 12;
-
-    protected static final int HOUR_OFFSET = 0;
-    protected static final int FIRST_COLON_OFFSET = 2;
-    protected static final int MINUTE_OFFSET = 3;
-    protected static final int SECOND_COLON_OFFSET = 5;
-    protected static final int SECOND_OFFSET = 6;
-    protected static final int DOT_OFFSET = 8;
-    protected static final int MILLISECOND_OFFSET = 9;
-
     /**
      * Parses time in format HH:MM:SS or HH:MM:SS.sss without leap seconds
      */
     public static int parseTime(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.value();
-        int length = end - off;
+        int free = end - off;
 
-        checkFreeSpace(length, SECOND_TIME_LENGTH + 1);
+        checkFreeSpace(free, TimeType.SECOND_TIME_LENGTH + 1);
         int time = parseSecondTime(buffer, off);
 
-        byte b = buffer.getByte(off + DOT_OFFSET);
+        byte b = buffer.getByte(off + TimeType.DOT_OFFSET);
         if (b == '.') {
-            checkFreeSpace(length, MILLISECOND_TIME_LENGTH + 1);
-            time += parse3DigitUInt(buffer, off + MILLISECOND_OFFSET);
-            b = buffer.getByte(off + MILLISECOND_TIME_LENGTH);
-            off += MILLISECOND_TIME_LENGTH + 1;
+            checkFreeSpace(free, TimeType.MILLISECOND_TIME_LENGTH + 1);
+            time += parse3DigitUInt(buffer, off + TimeType.MILLISECOND_OFFSET);
+            b = buffer.getByte(off + TimeType.MILLISECOND_TIME_LENGTH);
+            off += TimeType.MILLISECOND_TIME_LENGTH + 1;
         } else {
-            off += SECOND_TIME_LENGTH + 1;
+            off += TimeType.SECOND_TIME_LENGTH + 1;
         }
 
         checkByte(b, separator);
@@ -48,15 +38,15 @@ public class TimeParser {
     }
 
     protected static int parseSecondTime(Buffer buffer, int offset) {
-        int hour = parse2DigitUInt(buffer, offset + HOUR_OFFSET);
+        int hour = parse2DigitUInt(buffer, offset + TimeType.HOUR_OFFSET);
         checkHour(hour);
-        checkByte(buffer.getByte(offset + FIRST_COLON_OFFSET), (byte) ':');
+        checkByte(buffer.getByte(offset + TimeType.FIRST_COLON_OFFSET), (byte) ':');
 
-        int minute = parse2DigitUInt(buffer, offset + MINUTE_OFFSET);
+        int minute = parse2DigitUInt(buffer, offset + TimeType.MINUTE_OFFSET);
         checkMinute(minute);
-        checkByte(buffer.getByte(offset + SECOND_COLON_OFFSET), (byte) ':');
+        checkByte(buffer.getByte(offset + TimeType.SECOND_COLON_OFFSET), (byte) ':');
 
-        int second = parse2DigitUInt(buffer, offset + SECOND_OFFSET);
+        int second = parse2DigitUInt(buffer, offset + TimeType.SECOND_OFFSET);
         checkSecond(second);
 
         //return ((hour * 60 + minute) * 60 + second) * 1000;
@@ -66,21 +56,21 @@ public class TimeParser {
     }
 
     protected static int checkHour(int hour) {
-        if (hour > 23)
+        if (hour > TimeType.MAX_HOUR_VALUE)
             throw new ParserException("invalid hour " + hour);
 
         return hour;
     }
 
     protected static int checkMinute(int minute) {
-        if (minute > 59)
+        if (minute > TimeType.MAX_MINUTE_VALUE)
             throw new ParserException("invalid minute " + minute);
 
         return minute;
     }
 
     protected static int checkSecond(int second) {
-        if (second > 59)
+        if (second > TimeType.MAX_SECOND_VALUE)
             throw new ParserException("invalid second " + second);
 
         return second;

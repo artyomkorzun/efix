@@ -1,6 +1,7 @@
 package org.f1x.util.parse;
 
-import org.f1x.util.ByteSequence;
+import org.f1x.message.fields.type.ByteSequenceType;
+import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 
@@ -8,10 +9,10 @@ import static org.f1x.util.parse.ParserUtil.*;
 
 public class ByteSequenceParser {
 
-    public static void parseByteSequence(byte separator, Buffer buffer, MutableInt offset, int end, ByteSequence sequence) {
+    public static void parseByteSequence(byte separator, Buffer buffer, MutableInt offset, int end, ByteSequenceWrapper sequence) {
         int off = offset.value();
         int start = off;
-        checkFreeSpace(end - off, ParserUtil.MIN_LENGTH);
+        checkFreeSpace(end - off, ByteSequenceType.MIN_LENGTH + 1);
         checkByteNotEqual(buffer.getByte(off++), separator);
 
         do {
@@ -27,7 +28,7 @@ public class ByteSequenceParser {
 
     public static void parseByteSequence(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.value();
-        checkFreeSpace(end - off, ParserUtil.MIN_LENGTH);
+        checkFreeSpace(end - off, ByteSequenceType.MIN_LENGTH + 1);
         checkByteNotEqual(buffer.getByte(off++), separator);
 
         do {

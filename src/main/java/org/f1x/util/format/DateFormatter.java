@@ -1,14 +1,14 @@
 package org.f1x.util.format;
 
+import org.f1x.message.fields.type.DateType;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
 
-public class DateFormatter {
+import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
+import static org.f1x.util.format.IntFormatter.format2DigitUInt;
+import static org.f1x.util.format.IntFormatter.format4DigitUInt;
 
-    protected static final int DATE_LENGTH = 8;
-    protected static final int YEAR_OFFSET = 0;
-    protected static final int MONTH_OFFSET = 4;
-    protected static final int DAY_OFFSET = 6;
+public class DateFormatter {
 
     protected static final long DAY_MILLIS = 24 * 60 * 60 * 1000;
     protected static final int DAYS_IN_YEAR = 365;
@@ -57,9 +57,9 @@ public class DateFormatter {
 
     public static void formatDate(long timestamp, MutableBuffer buffer, MutableInt offset, int end) {
         int off = offset.value();
-        FormatterUtil.checkFreeSpace(end - off, DATE_LENGTH);
+        checkFreeSpace(end - off, DateType.LENGTH);
         formatDate(timestamp, buffer, off);
-        offset.value(off + DATE_LENGTH);
+        offset.value(off + DateType.LENGTH);
     }
 
     // TODO: add support for 0-1904 and 2100-9999 years + optimize
@@ -92,9 +92,9 @@ public class DateFormatter {
             day = days - MONTH_TO_DAY_OFFSET[month] + 1;
         }
 
-        IntFormatter.format4DigitUInt(year, buffer, offset + YEAR_OFFSET);
-        IntFormatter.format2DigitUInt(month, buffer, offset + MONTH_OFFSET);
-        IntFormatter.format2DigitUInt(day, buffer, offset + DAY_OFFSET);
+        format4DigitUInt(year, buffer, offset + DateType.YEAR_OFFSET);
+        format2DigitUInt(month, buffer, offset + DateType.MONTH_OFFSET);
+        format2DigitUInt(day, buffer, offset + DateType.DAY_OFFSET);
     }
 
     private static int daysToYear(int year) {

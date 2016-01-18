@@ -2,7 +2,7 @@ package org.f1x.message.builder;
 
 import org.f1x.message.fields.FixTags;
 import org.f1x.util.BufferUtil;
-import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.junit.Test;
@@ -33,7 +33,7 @@ public class MessageBuilderTest {
                 .addDouble(FixTags.HeartBtInt, 30.0, 1, false)
                 .addBoolean(FixTags.ResetSeqNumFlag, true)
                 .addCharSequence(FixTags.Username, "-username-", 1, 8)
-                .addByteSequence(FixTags.Password, new ByteSequence(fromString("-password-")), 1, 8)
+                .addByteSequence(FixTags.Password, new ByteSequenceWrapper(fromString("-password-")), 1, 8)
                 .addInt(FixTags.CheckSum, 202);
 
         String actual = BufferUtil.toString(buffer, 0, builder.length());
@@ -60,7 +60,7 @@ public class MessageBuilderTest {
                 .addDate(10, parseDate("19700101"))
                 .addBytes(11, asciiBytes("array"))
                 .addBytes(12, fromString("buffer"))
-                .addByteSequence(13, new ByteSequence(fromString("byte sequence")))
+                .addByteSequence(13, new ByteSequenceWrapper(fromString("byte sequence")))
                 .addCharSequence(14, "char sequence")
                 .startField(15).appendBoolean(false).endField()
                 .startField(16).appendByte((byte) 'b').endField()
@@ -74,7 +74,7 @@ public class MessageBuilderTest {
                 .startField(24).appendDate(parseDate("20000101")).endField()
                 .startField(25).appendBytes(asciiBytes("array")).endField()
                 .startField(26).appendBytes(fromString("buffer")).endField()
-                .startField(27).appendByteSequence(new ByteSequence(fromString("sequence"))).endField()
+                .startField(27).appendByteSequence(new ByteSequenceWrapper(fromString("sequence"))).endField()
                 .startField(28).appendCharSequence("sequence").endField()
         ;
 

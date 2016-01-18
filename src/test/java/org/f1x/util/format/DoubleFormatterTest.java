@@ -1,6 +1,7 @@
 package org.f1x.util.format;
 
-import org.f1x.util.ByteSequence;
+import org.f1x.message.fields.type.DoubleType;
+import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -19,8 +20,8 @@ public class DoubleFormatterTest extends AbstractFormatterTest {
         shouldFormat(0.0, 1);
         shouldFormat(-0.0, 0);
         shouldFormat(-0.0, 1);
-        shouldFormat(DoubleFormatter.MAX_VALUE, 0);
-        shouldFormat(DoubleFormatter.MIN_VALUE, 0);
+        shouldFormat(DoubleType.MAX_VALUE, 0);
+        shouldFormat(DoubleType.MIN_VALUE, 0);
         shouldFormat(99999999999999.5, 1);
         shouldFormat(-99999999999999.5, 1);
         shouldFormat(99999999999999.140625, 1);
@@ -31,7 +32,7 @@ public class DoubleFormatterTest extends AbstractFormatterTest {
     @Test
     public void shouldFormatRandomDoubles() {
         for (int i = 0; i < 10000000; i++) {
-            double value = generateDouble(DoubleFormatter.MIN_VALUE, DoubleFormatter.MAX_VALUE);
+            double value = generateDouble(DoubleType.MIN_VALUE, DoubleType.MAX_VALUE);
             int digits = digits((long) value);
             shouldFormat(value, 15 - digits);
             shouldFormat(value, 0);
@@ -49,7 +50,7 @@ public class DoubleFormatterTest extends AbstractFormatterTest {
         int end = buffer.capacity();
 
         DoubleFormatter.formatDouble(value, precision, roundUp, buffer, offset, end);
-        String actual = new ByteSequence().wrap(buffer, 0, offset.value()).toString();
+        String actual = new ByteSequenceWrapper().wrap(buffer, 0, offset.value()).toString();
         String expected = verifier(value, precision, roundUp);
 
         String message = String.format("Fail to parse double %s, precision %s", value, precision);

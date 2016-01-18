@@ -2,8 +2,6 @@ package org.f1x.util.parse;
 
 public class ParserUtil {
 
-    public static final int MIN_LENGTH = 2;
-
     public static void checkFreeSpace(int free, int required) {
         if (free < required)
             throw new ParserException(String.format("free %s < required %s", free, required));
