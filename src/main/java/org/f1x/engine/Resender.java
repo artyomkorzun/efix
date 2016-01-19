@@ -1,6 +1,7 @@
 package org.f1x.engine;
 
 import org.f1x.store.MessageStore;
+import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.Buffer;
 
 public class Resender implements MessageStore.Visitor {
@@ -20,7 +21,7 @@ public class Resender implements MessageStore.Visitor {
     }
 
     @Override
-    public void onMessage(int seqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
+    public void onMessage(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
         if (processor.onResendMessage(seqNum, sendingTime, msgType, body, offset, length)) {
             if (seqNum - lastSeqNum > 1)
                 processor.sendSequenceReset(true, lastSeqNum + 1, seqNum);

@@ -2,9 +2,11 @@ package org.f1x.engine;
 
 import org.f1x.connector.channel.Channel;
 import org.f1x.message.FieldUtil;
+import org.f1x.message.parser.FastMessageParser;
 import org.f1x.message.parser.MessageParser;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
+import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.concurrent.buffer.MessageHandler;
 
 import static org.f1x.engine.SessionUtil.parseBeginString;
@@ -18,29 +20,29 @@ public class Receiver {
     protected Channel channel;
     protected int offset;
 
-    public Receiver(MessageParser parser, MutableBuffer buffer) {
-        this.parser = parser;
-        this.buffer = buffer;
+    public Receiver(int bufferSize) {
+        this.parser = new FastMessageParser();
+        this.buffer = UnsafeBuffer.allocateDirect(bufferSize);
     }
 
     public int receive(MessageHandler handler) {
         MutableBuffer buffer = this.buffer;
         int offset = this.offset;
 
-        int bytesRead = channel.read(buffer, offset, buffer.capacity() - offset);
-        if (bytesRead > 0) {
-            int length = offset + bytesRead;
-            int bytesProcessed = processMessages(handler, buffer, length);
-            if (bytesProcessed > 0) {
-                int remaining = length - bytesProcessed;
+        int bytesReceived = channel.read(buffer, offset, buffer.capacity() - offset);
+        if (bytesReceived > 0) {
+            int length = offset + bytesReceived;
+            int bytesRead = processMessages(handler, buffer, length);
+            if (bytesRead > 0) {
+                int remaining = length - bytesRead;
                 if (remaining > 0)
-                    buffer.putBytes(0, buffer, bytesProcessed, remaining);
+                    buffer.putBytes(0, buffer, bytesRead, remaining);
 
                 this.offset = remaining;
             }
         }
 
-        return bytesRead;
+        return bytesReceived;
     }
 
     public void setChannel(Channel channel) {

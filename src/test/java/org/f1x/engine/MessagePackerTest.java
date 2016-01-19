@@ -2,9 +2,9 @@ package org.f1x.engine;
 
 import org.f1x.FIXVersion;
 import org.f1x.SessionIDBean;
-import org.f1x.message.builder.FastMessageBuilder;
 import org.f1x.util.BufferUtil;
-import org.f1x.util.buffer.Buffer;
+import org.f1x.util.ByteSequenceWrapper;
+import org.f1x.util.buffer.UnsafeBuffer;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -44,10 +44,11 @@ public class MessagePackerTest {
         SessionIDBean id = new SessionIDBean(senderCompID, senderSubId, targetCompID, targetSubId);
         body = normalize(body);
 
-        MessagePacker packer = new MessagePacker(FIXVersion.FIX44, id, new FastMessageBuilder(), BufferUtil.allocateHeap(1024));
-        Buffer buffer = packer.pack(msgSeqNum, parseTimestamp(sendingTime), msgType, fromString(body), 0, body.length());
+        UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
+        MessagePacker packer = new MessagePacker(id, FIXVersion.FIX44, buffer);
+        int length = packer.pack(msgSeqNum, parseTimestamp(sendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
-        String actual = BufferUtil.toString(buffer);
+        String actual = BufferUtil.toString(buffer, 0, length);
         expected = normalize(expected);
         Assert.assertEquals("should pack message " + expected, expected, actual);
     }
@@ -58,10 +59,11 @@ public class MessagePackerTest {
         SessionIDBean id = new SessionIDBean(senderCompID, senderSubId, targetCompID, targetSubId);
         body = normalize(body);
 
-        MessagePacker packer = new MessagePacker(FIXVersion.FIX44, id, new FastMessageBuilder(), BufferUtil.allocateHeap(1024));
-        Buffer buffer = packer.pack(msgSeqNum, parseTimestamp(sendingTime), parseTimestamp(origSendingTime), msgType, fromString(body), 0, body.length());
+        UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
+        MessagePacker packer = new MessagePacker(id, FIXVersion.FIX44, buffer);
+        int length = packer.pack(msgSeqNum, parseTimestamp(sendingTime), parseTimestamp(origSendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
-        String actual = BufferUtil.toString(buffer);
+        String actual = BufferUtil.toString(buffer, 0, length);
         expected = normalize(expected);
         Assert.assertEquals("should pack message " + expected, expected, actual);
     }

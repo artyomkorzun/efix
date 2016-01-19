@@ -1,5 +1,6 @@
 package org.f1x.store;
 
+import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.Buffer;
 
 public final class EmptyMessageStore implements MessageStore {
@@ -10,7 +11,7 @@ public final class EmptyMessageStore implements MessageStore {
     }
 
     @Override
-    public void write(int seqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
+    public void write(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
     }
 
     @Override

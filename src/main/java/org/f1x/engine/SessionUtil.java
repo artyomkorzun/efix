@@ -7,6 +7,7 @@ import org.f1x.message.field.MsgType;
 import org.f1x.message.field.Tag;
 import org.f1x.message.parser.MessageParser;
 import org.f1x.state.SessionStatus;
+import org.f1x.util.ByteSequence;
 import org.f1x.util.ByteSequenceWrapper;
 
 import static org.f1x.message.FieldUtil.*;
@@ -202,7 +203,7 @@ public class SessionUtil {
         parser.parseValue();
     }
 
-    public static CharSequence parseMessageType(MessageParser parser, ByteSequenceWrapper out) {
+    public static ByteSequence parseMessageType(MessageParser parser, ByteSequenceWrapper out) {
         checkTag(parser.parseTag(), Tag.MsgType);
         parser.parseByteSequence(out);
         return out;

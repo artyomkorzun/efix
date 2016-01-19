@@ -7,5 +7,4 @@ public class BooleanType {
     public static final byte TRUE = 'Y';
     public static final byte FALSE = 'N';
 
-
 }

@@ -3,32 +3,30 @@ package org.f1x.engine;
 import org.f1x.FIXVersion;
 import org.f1x.SessionID;
 import org.f1x.message.FieldUtil;
+import org.f1x.message.builder.FastMessageBuilder;
 import org.f1x.message.builder.MessageBuilder;
 import org.f1x.message.field.Tag;
+import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.format.IntFormatter;
 import org.f1x.util.type.TimestampType;
 
 public class MessagePacker {
 
-    protected final String beginString;
+    protected final MessageBuilder builder = new FastMessageBuilder();
+    protected final ByteSequence beginString;
     protected final SessionID sessionID;
-    protected final MessageBuilder builder;
     protected final MutableBuffer buffer;
-    protected final MutableBuffer wrapper;
 
-    public MessagePacker(FIXVersion version, SessionID sessionID, MessageBuilder builder, MutableBuffer buffer) {
-        this.beginString = version.getBeginString();
+    public MessagePacker(SessionID sessionID, FIXVersion FIXVersion, MutableBuffer buffer) {
+        this.beginString = FIXVersion.beginString();
         this.sessionID = sessionID;
-        this.builder = builder;
         this.buffer = buffer;
-        this.wrapper = new UnsafeBuffer(buffer);
     }
 
-    public Buffer pack(int msgSeqNum, long sendingTime, CharSequence msgType,
-                       Buffer body, int offset, int length) {
+    public int pack(int msgSeqNum, long sendingTime, ByteSequence msgType,
+                    Buffer body, int offset, int length) {
         int bodyLength = computeBodyLength(msgSeqNum, sendingTime, msgType, length);
         int messageLength = computeMessageLength(bodyLength);
         checkMessageLength(messageLength);
@@ -38,12 +36,11 @@ public class MessagePacker {
         builder.appendBytes(body, offset, length);
         addCheckSum(builder);
 
-        wrapper.wrap(buffer, 0, builder.length());
-        return wrapper;
+        return messageLength;
     }
 
-    public Buffer pack(int msgSeqNum, long sendingTime, long origSendingTime,
-                       CharSequence msgType, Buffer body, int offset, int length) {
+    public int pack(int msgSeqNum, long sendingTime, long origSendingTime,
+                    ByteSequence msgType, Buffer body, int offset, int length) {
 
         int bodyLength = computeBodyLength(msgSeqNum, sendingTime, origSendingTime, msgType, length);
         int messageLength = computeMessageLength(bodyLength);
@@ -56,23 +53,22 @@ public class MessagePacker {
         builder.appendBytes(body, offset, length);
         addCheckSum(builder);
 
-        wrapper.wrap(buffer, 0, builder.length());
-        return wrapper;
+        return messageLength;
     }
 
     protected void addStandardHeader(int bodyLength, int msgSeqNum, long sendingTime, CharSequence msgType, MessageBuilder builder) {
-        builder.addCharSequence(Tag.BeginString, beginString);
+        builder.addByteSequence(Tag.BeginString, beginString);
         builder.addInt(Tag.BodyLength, bodyLength);
         builder.addCharSequence(Tag.MsgType, msgType);
         builder.addInt(Tag.MsgSeqNum, msgSeqNum);
 
-        builder.addCharSequence(Tag.SenderCompID, sessionID.getSenderCompId());
-        if (sessionID.getSenderSubId() != null)
-            builder.addCharSequence(Tag.SenderSubID, sessionID.getSenderSubId());
+        builder.addCharSequence(Tag.SenderCompID, sessionID.senderCompId());
+        if (sessionID.senderSubId() != null)
+            builder.addCharSequence(Tag.SenderSubID, sessionID.senderSubId());
 
-        builder.addCharSequence(Tag.TargetCompID, sessionID.getTargetCompId());
-        if (sessionID.getTargetSubId() != null)
-            builder.addCharSequence(Tag.TargetSubID, sessionID.getTargetSubId());
+        builder.addCharSequence(Tag.TargetCompID, sessionID.targetCompId());
+        if (sessionID.targetSubId() != null)
+            builder.addCharSequence(Tag.TargetSubID, sessionID.targetSubId());
 
         builder.addTimestamp(Tag.SendingTime, sendingTime);
     }
@@ -104,13 +100,13 @@ public class MessagePacker {
 
         bodyLength += 4 + msgType.length();
         bodyLength += 4 + IntFormatter.uintLength(msgSeqNum);
-        bodyLength += 4 + sessionID.getSenderCompId().length();
-        if (sessionID.getSenderSubId() != null)
-            bodyLength += 4 + sessionID.getSenderSubId().length();
+        bodyLength += 4 + sessionID.senderCompId().length();
+        if (sessionID.senderSubId() != null)
+            bodyLength += 4 + sessionID.senderSubId().length();
 
-        bodyLength += 4 + sessionID.getTargetCompId().length();
-        if (sessionID.getTargetSubId() != null)
-            bodyLength += 4 + sessionID.getTargetSubId().length();
+        bodyLength += 4 + sessionID.targetCompId().length();
+        if (sessionID.targetSubId() != null)
+            bodyLength += 4 + sessionID.targetSubId().length();
 
         bodyLength += 4 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
         bodyLength += length;

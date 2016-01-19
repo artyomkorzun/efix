@@ -20,8 +20,6 @@ public final class UnsafeBuffer implements AtomicBuffer {
     private byte[] byteArray;
     private ByteBuffer byteBuffer;
     private long addressOffset;
-
-    private int offset;
     private int capacity;
 
     public UnsafeBuffer(byte[] buffer) {
@@ -54,7 +52,6 @@ public final class UnsafeBuffer implements AtomicBuffer {
 
     public void wrap(byte[] buffer) {
         addressOffset = ARRAY_BASE_OFFSET;
-        offset = 0;
         capacity = buffer.length;
         byteArray = buffer;
         byteBuffer = null;
@@ -64,7 +61,6 @@ public final class UnsafeBuffer implements AtomicBuffer {
         checkBounds(buffer, offset, length);
 
         addressOffset = ARRAY_BASE_OFFSET + offset;
-        this.offset = offset;
         capacity = length;
         byteArray = buffer;
         byteBuffer = null;
@@ -81,7 +77,6 @@ public final class UnsafeBuffer implements AtomicBuffer {
             addressOffset = ((sun.nio.ch.DirectBuffer) buffer).address();
         }
 
-        offset = 0;
         capacity = buffer.capacity();
     }
 
@@ -98,13 +93,11 @@ public final class UnsafeBuffer implements AtomicBuffer {
             addressOffset = ((sun.nio.ch.DirectBuffer) buffer).address() + offset;
         }
 
-        this.offset = offset;
         capacity = length;
     }
 
     public void wrap(Buffer buffer) {
         addressOffset = buffer.addressOffset();
-        offset = buffer.offset();
         capacity = buffer.capacity();
         byteArray = buffer.byteArray();
         byteBuffer = buffer.byteBuffer();
@@ -114,7 +107,6 @@ public final class UnsafeBuffer implements AtomicBuffer {
         buffer.checkBounds(offset, length);
 
         addressOffset = buffer.addressOffset() + offset;
-        this.offset = buffer.offset() + offset;
         capacity = length;
         byteArray = buffer.byteArray();
         byteBuffer = buffer.byteBuffer();
@@ -127,7 +119,6 @@ public final class UnsafeBuffer implements AtomicBuffer {
         }
 
         addressOffset = address;
-        offset = 0;
         capacity = length;
         byteArray = null;
         byteBuffer = null;
@@ -143,10 +134,6 @@ public final class UnsafeBuffer implements AtomicBuffer {
 
     public long addressOffset() {
         return addressOffset;
-    }
-
-    public int offset() {
-        return offset;
     }
 
     public int capacity() {
@@ -456,6 +443,14 @@ public final class UnsafeBuffer implements AtomicBuffer {
             if (offset < 0 | length < 0 | end < 0 | end > capacity)
                 throw new IndexOutOfBoundsException(String.format("offset=%d, length=%d, capacity=%d", offset, length, capacity));
         }
+    }
+
+    public static UnsafeBuffer allocateHeap(int capacity) {
+        return new UnsafeBuffer(ByteBuffer.allocate(capacity));
+    }
+
+    public static UnsafeBuffer allocateDirect(int capacity) {
+        return new UnsafeBuffer(ByteBuffer.allocateDirect(capacity));
     }
 
 }

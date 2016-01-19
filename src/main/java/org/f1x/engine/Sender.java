@@ -12,9 +12,10 @@ public class Sender {
     }
 
     public void send(Buffer buffer, int offset, int length) {
-        for (int bytesWritten = 0; ; ) {
-            bytesWritten += channel.write(buffer, offset + bytesWritten, length - bytesWritten);
-            if (bytesWritten >= length)
+        int bytesSent = 0;
+        while (true) {
+            bytesSent += channel.write(buffer, offset + bytesSent, length - bytesSent);
+            if (bytesSent >= length)
                 break;
 
             Thread.yield();

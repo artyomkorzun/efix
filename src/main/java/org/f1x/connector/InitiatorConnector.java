@@ -15,7 +15,7 @@ public class InitiatorConnector extends SocketChannelConnector {
 
     protected long errorTime = Long.MIN_VALUE;
 
-    public InitiatorConnector(int reconnectInterval, EpochClock clock, SocketAddress address, SocketOptions options) {
+    public InitiatorConnector(SocketAddress address, SocketOptions options, EpochClock clock, int reconnectInterval) {
         super(address, options);
         this.clock = clock;
         this.reconnectInterval = reconnectInterval;
