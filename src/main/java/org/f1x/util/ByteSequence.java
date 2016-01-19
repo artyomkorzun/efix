@@ -12,4 +12,16 @@ public interface ByteSequence extends CharSequence {
         return (char) byteAt(index);
     }
 
+    default boolean equals(CharSequence sequence) {
+        int length = length();
+        if (sequence.length() != length)
+            return false;
+
+        for (int i = 0; i < length; i++)
+            if (byteAt(i) != sequence.charAt(i))
+                return false;
+
+        return true;
+    }
+
 }
