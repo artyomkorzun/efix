@@ -58,7 +58,17 @@ public class ByteSequenceWrapper implements ByteSequence {
     }
 
     @Override
+    public int hashCode() {
+        return buffer != null ? buffer.hashCode() : 0;
+    }
+
+    @Override
     public String toString() {
         return new StringBuilder(this).toString();
     }
+
+    public static ByteSequenceWrapper of(String string) {
+        return new ByteSequenceWrapper(BufferUtil.fromString(string));
+    }
+
 }

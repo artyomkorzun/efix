@@ -4,7 +4,7 @@ import org.f1x.FIXVersion;
 import org.f1x.SessionID;
 import org.f1x.message.FieldUtil;
 import org.f1x.message.builder.MessageBuilder;
-import org.f1x.message.fields.FixTags;
+import org.f1x.message.field.Tag;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -51,8 +51,8 @@ public class MessagePacker {
 
         builder.wrap(buffer);
         addStandardHeader(bodyLength, msgSeqNum, sendingTime, msgType, builder);
-        builder.addTimestamp(FixTags.OrigSendingTime, origSendingTime);
-        builder.addBoolean(FixTags.PossDupFlag, true);
+        builder.addTimestamp(Tag.OrigSendingTime, origSendingTime);
+        builder.addBoolean(Tag.PossDupFlag, true);
         builder.appendBytes(body, offset, length);
         addCheckSum(builder);
 
@@ -61,25 +61,25 @@ public class MessagePacker {
     }
 
     protected void addStandardHeader(int bodyLength, int msgSeqNum, long sendingTime, CharSequence msgType, MessageBuilder builder) {
-        builder.addCharSequence(FixTags.BeginString, beginString);
-        builder.addInt(FixTags.BodyLength, bodyLength);
-        builder.addCharSequence(FixTags.MsgType, msgType);
-        builder.addInt(FixTags.MsgSeqNum, msgSeqNum);
+        builder.addCharSequence(Tag.BeginString, beginString);
+        builder.addInt(Tag.BodyLength, bodyLength);
+        builder.addCharSequence(Tag.MsgType, msgType);
+        builder.addInt(Tag.MsgSeqNum, msgSeqNum);
 
-        builder.addCharSequence(FixTags.SenderCompID, sessionID.getSenderCompId());
+        builder.addCharSequence(Tag.SenderCompID, sessionID.getSenderCompId());
         if (sessionID.getSenderSubId() != null)
-            builder.addCharSequence(FixTags.SenderSubID, sessionID.getSenderSubId());
+            builder.addCharSequence(Tag.SenderSubID, sessionID.getSenderSubId());
 
-        builder.addCharSequence(FixTags.TargetCompID, sessionID.getTargetCompId());
+        builder.addCharSequence(Tag.TargetCompID, sessionID.getTargetCompId());
         if (sessionID.getTargetSubId() != null)
-            builder.addCharSequence(FixTags.TargetSubID, sessionID.getTargetSubId());
+            builder.addCharSequence(Tag.TargetSubID, sessionID.getTargetSubId());
 
-        builder.addTimestamp(FixTags.SendingTime, sendingTime);
+        builder.addTimestamp(Tag.SendingTime, sendingTime);
     }
 
     protected void addCheckSum(MessageBuilder builder) {
         int checkSum = computeCheckSum(buffer, 0, builder.length());
-        builder.startField(FixTags.CheckSum);
+        builder.startField(Tag.CheckSum);
         if (checkSum < 100) {
             builder.appendChar('0');
             if (checkSum < 10)

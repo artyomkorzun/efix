@@ -2,9 +2,9 @@ package org.f1x.engine;
 
 import org.f1x.message.*;
 import org.f1x.message.builder.MessageBuilder;
-import org.f1x.message.fields.EncryptMethod;
-import org.f1x.message.fields.FixTags;
-import org.f1x.message.fields.MsgType;
+import org.f1x.message.field.EncryptMethod;
+import org.f1x.message.field.MsgType;
+import org.f1x.message.field.Tag;
 import org.f1x.message.parser.MessageParser;
 import org.f1x.state.SessionStatus;
 import org.f1x.util.ByteSequenceWrapper;
@@ -14,84 +14,84 @@ import static org.f1x.message.FieldUtil.*;
 public class SessionUtil {
 
     public static void validateLogon(int heartBtInt, Logon logon) {
-        int actual = FieldUtil.checkPresent(FixTags.HeartBtInt, logon.heartBtInt(), -1);
+        int actual = checkPresent(Tag.HeartBtInt, logon.heartBtInt(), -1);
         if (actual != heartBtInt)
-            throw new FieldException(FixTags.HeartBtInt, String.format("HeartBtInt does not match, expected %s but received %s", heartBtInt, actual));
+            throw new FieldException(Tag.HeartBtInt, String.format("HeartBtInt does not match, expected %s but received %s", heartBtInt, actual));
     }
 
     public static void validateTestRequest(TestRequest request) {
-        checkPresent(FixTags.TestReqID, request.testReqID());
+        checkPresent(Tag.TestReqID, request.testReqID());
     }
 
     public static void validateResendRequest(ResendRequest request) {
         int beginSeqNo = request.beginSeqNo();
-        checkPresent(FixTags.BeginSeqNo, beginSeqNo, -1);
-        checkPositive(FixTags.BeginSeqNo, beginSeqNo);
+        checkPresent(Tag.BeginSeqNo, beginSeqNo, -1);
+        checkPositive(Tag.BeginSeqNo, beginSeqNo);
 
         int endSeqNo = request.endSeqNo();
-        checkPresent(FixTags.EndSeqNo, endSeqNo, -1);
-        checkPositive(FixTags.EndSeqNo, endSeqNo);
+        checkPresent(Tag.EndSeqNo, endSeqNo, -1);
+        checkPositive(Tag.EndSeqNo, endSeqNo);
 
         if (endSeqNo != 0 && beginSeqNo > endSeqNo)
-            throw new FieldException(FixTags.EndSeqNo, String.format("BeginSeqNo(7) %s is more EndSeqNo(16) %s", beginSeqNo, endSeqNo));
+            throw new FieldException(Tag.EndSeqNo, String.format("BeginSeqNo(7) %s is more EndSeqNo(16) %s", beginSeqNo, endSeqNo));
     }
 
     public static void validateSequenceReset(int targetSeqNum, SequenceReset reset) {
         int newSeqNo = reset.newSeqNo();
         if (newSeqNo < targetSeqNum)
-            throw new FieldException(FixTags.NewSeqNo, String.format("NewSeqNo(36) %s less expected MsgSeqNum %s", newSeqNo, targetSeqNum));
+            throw new FieldException(Tag.NewSeqNo, String.format("NewSeqNo(36) %s less expected MsgSeqNum %s", newSeqNo, targetSeqNum));
     }
 
     public static void makeLogon(boolean resetSeqNum, int heartBtInt, MessageBuilder builder) {
-        builder.addBytes(FixTags.MsgType, MsgType.LOGON.getBytes());
-        builder.addByte(FixTags.EncryptMethod, EncryptMethod.NONE_OTHER.getCode());
-        builder.addInt(FixTags.HeartBtInt, heartBtInt);
-        builder.addBoolean(FixTags.ResetSeqNumFlag, resetSeqNum);
+        builder.addByteSequence(Tag.MsgType, MsgType.LOGON);
+        builder.addInt(Tag.EncryptMethod, EncryptMethod.NONE_OTHER);
+        builder.addInt(Tag.HeartBtInt, heartBtInt);
+        builder.addBoolean(Tag.ResetSeqNumFlag, resetSeqNum);
     }
 
     public static void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {
-        builder.addBytes(FixTags.MsgType, MsgType.HEARTBEAT.getBytes());
+        builder.addByteSequence(Tag.MsgType, MsgType.HEARTBEAT);
         if (testReqID != null)
-            builder.addCharSequence(FixTags.TestReqID, testReqID);
+            builder.addCharSequence(Tag.TestReqID, testReqID);
     }
 
     public static void makeTestRequest(CharSequence testReqID, MessageBuilder builder) {
-        builder.addBytes(FixTags.MsgType, MsgType.TEST_REQUEST.getBytes());
-        builder.addCharSequence(FixTags.TestReqID, testReqID);
+        builder.addByteSequence(Tag.MsgType, MsgType.TEST_REQUEST);
+        builder.addCharSequence(Tag.TestReqID, testReqID);
     }
 
     public static void makeResendRequest(int beginSeqNo, int endSeqNo, MessageBuilder builder) {
-        builder.addBytes(FixTags.MsgType, MsgType.RESEND_REQUEST.getBytes());
-        builder.addInt(FixTags.BeginSeqNo, beginSeqNo);
-        builder.addInt(FixTags.EndSeqNo, endSeqNo);
+        builder.addByteSequence(Tag.MsgType, MsgType.RESEND_REQUEST);
+        builder.addInt(Tag.BeginSeqNo, beginSeqNo);
+        builder.addInt(Tag.EndSeqNo, endSeqNo);
     }
 
     public static void makeSequenceReset(boolean gapFill, int newSeqNo, MessageBuilder builder) {
-        builder.addBytes(FixTags.MsgType, MsgType.SEQUENCE_RESET.getBytes());
-        builder.addBoolean(FixTags.PossDupFlag, true);
-        builder.addInt(FixTags.NewSeqNo, newSeqNo);
-        builder.addBoolean(FixTags.GapFillFlag, gapFill);
+        builder.addByteSequence(Tag.MsgType, MsgType.SEQUENCE_RESET);
+        builder.addBoolean(Tag.PossDupFlag, true);
+        builder.addInt(Tag.NewSeqNo, newSeqNo);
+        builder.addBoolean(Tag.GapFillFlag, gapFill);
     }
 
     public static void makeLogout(CharSequence text, MessageBuilder builder) {
-        builder.addBytes(FixTags.MsgType, MsgType.LOGOUT.getBytes());
+        builder.addByteSequence(Tag.MsgType, MsgType.LOGOUT);
         if (text != null)
-            builder.addCharSequence(FixTags.Text, text);
+            builder.addCharSequence(Tag.Text, text);
     }
 
     public static boolean checkTargetSeqNum(int expected, int actual, boolean checkHigher) {
         if (actual < expected)
-            throw new FieldException(FixTags.MsgSeqNum, String.format("MsgSeqNum too low, expecting %s but received %s", expected, actual));
+            throw new FieldException(Tag.MsgSeqNum, String.format("MsgSeqNum too low, expecting %s but received %s", expected, actual));
 
         if (checkHigher && actual > expected)
-            throw new FieldException(FixTags.MsgSeqNum, String.format("MsgSeqNum too high, expecting %s but received %s", expected, actual));
+            throw new FieldException(Tag.MsgSeqNum, String.format("MsgSeqNum too high, expecting %s but received %s", expected, actual));
 
         return actual == expected;
     }
 
     public static void assertNotDuplicate(boolean possDup, String message) {
         if (possDup)
-            throw new FieldException(FixTags.PossDupFlag, message);
+            throw new FieldException(Tag.PossDupFlag, message);
     }
 
     public static void assertStatus(SessionStatus expected1, SessionStatus expected2, SessionStatus expected3, SessionStatus actual) {
@@ -111,10 +111,10 @@ public class SessionUtil {
         while (parser.hasRemaining()) {
             int tag = parser.parseTag();
             switch (tag) {
-                case FixTags.HeartBtInt:
+                case Tag.HeartBtInt:
                     heartBtInt = parser.parseInt();
                     break;
-                case FixTags.ResetSeqNumFlag:
+                case Tag.ResetSeqNumFlag:
                     resetSeqNum = parser.parseBoolean();
                     break;
                 default:
@@ -133,7 +133,7 @@ public class SessionUtil {
 
         while (parser.hasRemaining()) {
             int tag = parser.parseTag();
-            if (tag == FixTags.TestReqID)
+            if (tag == Tag.TestReqID)
                 parser.parseByteSequence(testReqID);
             else
                 parser.parseValue();
@@ -148,10 +148,10 @@ public class SessionUtil {
         while (parser.hasRemaining()) {
             int tag = parser.parseTag();
             switch (tag) {
-                case FixTags.BeginSeqNo:
+                case Tag.BeginSeqNo:
                     beginSeqNo = parser.parseInt();
                     break;
-                case FixTags.EndSeqNo:
+                case Tag.EndSeqNo:
                     endSeqNo = parser.parseInt();
                     break;
                 default:
@@ -172,10 +172,10 @@ public class SessionUtil {
         while (parser.hasRemaining()) {
             int tag = parser.parseTag();
             switch (tag) {
-                case FixTags.NewSeqNo:
+                case Tag.NewSeqNo:
                     newSeqNo = checkPositive(tag, parser.parseInt());
                     break;
-                case FixTags.GapFillFlag:
+                case Tag.GapFillFlag:
                     gapFillFlag = parser.parseBoolean();
                     break;
                 default:
@@ -198,19 +198,19 @@ public class SessionUtil {
     }
 
     public static void parseBeginString(MessageParser parser) {
-        checkTag(parser.parseTag(), FixTags.BeginString);
+        checkTag(parser.parseTag(), Tag.BeginString);
         parser.parseValue();
     }
 
     public static CharSequence parseMessageType(MessageParser parser, ByteSequenceWrapper out) {
-        checkTag(parser.parseTag(), FixTags.MsgType);
+        checkTag(parser.parseTag(), Tag.MsgType);
         parser.parseByteSequence(out);
         return out;
     }
 
     public static int parseBodyLength(MessageParser parser) {
-        checkTag(parser.parseTag(), FixTags.BodyLength);
-        return checkPositive(FixTags.BodyLength, parser.parseInt());
+        checkTag(parser.parseTag(), Tag.BodyLength);
+        return checkPositive(Tag.BodyLength, parser.parseInt());
     }
 
     public static void parseMsgSeqNumWithPossDup(MessageParser parser, Header header) {
@@ -220,11 +220,11 @@ public class SessionUtil {
 
         while (parser.hasRemaining()) {
             int tagNum = parser.parseTag();
-            if (tagNum == FixTags.MsgSeqNum) {
+            if (tagNum == Tag.MsgSeqNum) {
                 msgSeqNum = checkPositive(tagNum, parser.parseInt());
                 if (possDupFound)
                     break;
-            } else if (tagNum == FixTags.PossDupFlag) {
+            } else if (tagNum == Tag.PossDupFlag) {
                 possDup = parser.parseBoolean();
                 if (msgSeqNum > 0)
                     break;
@@ -238,7 +238,7 @@ public class SessionUtil {
             }
         }
 
-        checkPresent(FixTags.MsgSeqNum, msgSeqNum, -1);
+        checkPresent(Tag.MsgSeqNum, msgSeqNum, -1);
 
         header.msgSeqNum(msgSeqNum);
         header.possDup(possDup);
@@ -246,38 +246,38 @@ public class SessionUtil {
 
     public static boolean isHeaderField(int tag) {
         switch (tag) {
-            case FixTags.BeginString:
-            case FixTags.BodyLength:
-            case FixTags.MsgType:
-            case FixTags.SenderCompID:
-            case FixTags.SenderSubID:
-            case FixTags.TargetCompID:
-            case FixTags.TargetSubID:
-            case FixTags.OnBehalfOfCompID:
-            case FixTags.DeliverToCompID:
-            case FixTags.SecureData:
-            case FixTags.MsgSeqNum:
-            case FixTags.SenderLocationID:
-            case FixTags.TargetLocationID:
-            case FixTags.OnBehalfOfSubID:
-            case FixTags.OnBehalfOfLocationID:
-            case FixTags.DeliverToSubID:
-            case FixTags.DeliverToLocationID:
-            case FixTags.PossDupFlag:
-            case FixTags.PossResend:
-            case FixTags.SendingTime:
-            case FixTags.OrigSendingTime:
-            case FixTags.XmlDataLen:
-            case FixTags.XmlData:
-            case FixTags.MessageEncoding:
-            case FixTags.LastMsgSeqNumProcessed:
-            case FixTags.NoHops:
-            case FixTags.HopCompID:
-            case FixTags.HopSendingTime:
-            case FixTags.HopRefID:
-            case 1128:
-            case 1156:
-            case 1129:
+            case Tag.BeginString:
+            case Tag.BodyLength:
+            case Tag.MsgType:
+            case Tag.SenderCompID:
+            case Tag.SenderSubID:
+            case Tag.TargetCompID:
+            case Tag.TargetSubID:
+            case Tag.OnBehalfOfCompID:
+            case Tag.DeliverToCompID:
+            case Tag.SecureData:
+            case Tag.MsgSeqNum:
+            case Tag.SenderLocationID:
+            case Tag.TargetLocationID:
+            case Tag.OnBehalfOfSubID:
+            case Tag.OnBehalfOfLocationID:
+            case Tag.DeliverToSubID:
+            case Tag.DeliverToLocationID:
+            case Tag.PossDupFlag:
+            case Tag.PossResend:
+            case Tag.SendingTime:
+            case Tag.OrigSendingTime:
+            case Tag.XmlDataLen:
+            case Tag.XmlData:
+            case Tag.MessageEncoding:
+            case Tag.LastMsgSeqNumProcessed:
+            case Tag.NoHops:
+            case Tag.HopCompID:
+            case Tag.HopSendingTime:
+            case Tag.HopRefID:
+            case Tag.ApplVerID:
+            case Tag.CstmApplVerID:
+            case Tag.ApplExtID:
                 return true;
             default:
                 return false;

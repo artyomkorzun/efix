@@ -24,10 +24,10 @@ public class TimeFormatter {
 
     protected static void formatTime(long timestamp, MutableBuffer buffer, int offset) {
         int days = (int) (timestamp / DAY_MILLIS);
-        if (timestamp < 0)
-            days--;
 
         int millis = (int) (timestamp - days * DAY_MILLIS);
+        if (millis < 0)
+            millis += DAY_MILLIS;
 
         int hour = millis / HOUR_MILLIS;
         millis -= hour * HOUR_MILLIS;

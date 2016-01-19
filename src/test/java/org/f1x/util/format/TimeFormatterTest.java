@@ -17,6 +17,7 @@ public class TimeFormatterTest extends AbstractFormatterTest {
         shouldFormat(-1);
         shouldFormat(1);
         shouldFormat(System.currentTimeMillis());
+        shouldFormat(-639360000000L);
     }
 
     @Test

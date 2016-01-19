@@ -1,6 +1,6 @@
 package org.f1x.message.builder;
 
-import org.f1x.message.fields.FixTags;
+import org.f1x.message.field.Tag;
 import org.f1x.util.BufferUtil;
 import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.buffer.MutableBuffer;
@@ -22,19 +22,19 @@ public class MessageBuilderTest {
 
         MutableBuffer buffer = new UnsafeBuffer(new byte[1024]);
         builder.wrap(buffer)
-                .addCharSequence(FixTags.BeginString, "FIX.4.4")
-                .addInt(FixTags.BodyLength, 116)
-                .addByte(FixTags.MsgType, (byte) 'A')
-                .addLong(FixTags.MsgSeqNum, 1L)
-                .addBytes(FixTags.SenderCompID, asciiBytes("DEMO2Kweoj_DEMOFIX"))
-                .addTimestamp(FixTags.SendingTime, parseTimestamp("20121009-13:14:57.089"))
-                .addBytes(FixTags.TargetCompID, fromString("DUKASCOPYFIX"))
-                .addDouble(FixTags.EncryptMethod, 0.0, 0)
-                .addDouble(FixTags.HeartBtInt, 30.0, 1, false)
-                .addBoolean(FixTags.ResetSeqNumFlag, true)
-                .addCharSequence(FixTags.Username, "-username-", 1, 8)
-                .addByteSequence(FixTags.Password, new ByteSequenceWrapper(fromString("-password-")), 1, 8)
-                .addInt(FixTags.CheckSum, 202);
+                .addCharSequence(Tag.BeginString, "FIX.4.4")
+                .addInt(Tag.BodyLength, 116)
+                .addByte(Tag.MsgType, (byte) 'A')
+                .addLong(Tag.MsgSeqNum, 1L)
+                .addBytes(Tag.SenderCompID, asciiBytes("DEMO2Kweoj_DEMOFIX"))
+                .addTimestamp(Tag.SendingTime, parseTimestamp("20121009-13:14:57.089"))
+                .addBytes(Tag.TargetCompID, fromString("DUKASCOPYFIX"))
+                .addDouble(Tag.EncryptMethod, 0.0, 0)
+                .addDouble(Tag.HeartBtInt, 30.0, 1, false)
+                .addBoolean(Tag.ResetSeqNumFlag, true)
+                .addCharSequence(Tag.Username, "-username-", 1, 8)
+                .addByteSequence(Tag.Password, new ByteSequenceWrapper(fromString("-password-")), 1, 8)
+                .addInt(Tag.CheckSum, 202);
 
         String actual = BufferUtil.toString(buffer, 0, builder.length());
         assertMessage(expected, actual);

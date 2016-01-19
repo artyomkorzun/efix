@@ -6,7 +6,7 @@ import org.f1x.connector.channel.Channel;
 import org.f1x.log.MessageLog;
 import org.f1x.message.*;
 import org.f1x.message.builder.MessageBuilder;
-import org.f1x.message.fields.FixTags;
+import org.f1x.message.field.Tag;
 import org.f1x.message.parser.MessageParser;
 import org.f1x.schedule.SessionSchedule;
 import org.f1x.state.SessionState;
@@ -604,7 +604,7 @@ public class SessionProcessor implements Worker {
     protected void makeLogon(boolean resetSeqNum, MessageBuilder builder) {
         SessionUtil.makeLogon(resetSeqNum, settings.getHeartbeatInterval(), builder);
         if (settings.isLogonWithNextExpectedSeqNum())
-            builder.addInt(FixTags.NextExpectedMsgSeqNum, state.getNextTargetSeqNum());
+            builder.addInt(Tag.NextExpectedMsgSeqNum, state.getNextTargetSeqNum());
     }
 
     protected void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {

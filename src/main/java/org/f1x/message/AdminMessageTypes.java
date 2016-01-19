@@ -1,6 +1,11 @@
 package org.f1x.message;
 
+import org.f1x.util.BufferUtil;
+import org.f1x.util.ByteSequence;
+import org.f1x.util.ByteSequenceWrapper;
+
 public class AdminMessageTypes {
+
     public static final byte LOGON = 'A';
     public static final byte HEARTBEAT = '0';
     public static final byte TEST = '1';
@@ -17,4 +22,16 @@ public class AdminMessageTypes {
         return HEARTBEAT <= charMsgType && charMsgType <= LOGOUT ||
                 charMsgType == LOGON;
     }
+
+}
+
+class Symbol {
+
+    public static final ByteSequence EXCHANGE = ByteSequenceWrapper.of("dsds");
+
+    private static ByteSequenceWrapper byteSequence(String value) {
+        return new ByteSequenceWrapper(BufferUtil.fromString(value));
+    }
+
+
 }

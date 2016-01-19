@@ -8,6 +8,10 @@ import java.nio.ByteBuffer;
 public class BufferUtil {
 
     public static UnsafeBuffer allocate(int capacity) {
+        return new UnsafeBuffer(new byte[capacity]);
+    }
+
+    public static UnsafeBuffer allocateHeap(int capacity) {
         return new UnsafeBuffer(ByteBuffer.allocate(capacity));
     }
 
