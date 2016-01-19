@@ -32,8 +32,10 @@ public class FileMessageLog implements MessageLog {
     @Override
     public void log(boolean inbound, long time, Buffer buffer, int offset, int length) {
         int size = layout.size(inbound, time, buffer, offset, length);
-        if (byteBuffer.remaining() < size)
+        if (byteBuffer.remaining() < size) {
             flush();
+            checkEntrySize(size);
+        }
 
         int position = byteBuffer.position();
         layout.format(inbound, time, buffer, offset, this.buffer, position, length);
@@ -82,6 +84,11 @@ public class FileMessageLog implements MessageLog {
         } catch (IOException e) {
             LangUtil.rethrowUnchecked(e);
         }
+    }
+
+    protected void checkEntrySize(int size) {
+        if (byteBuffer.remaining() < size)
+            throw new IllegalArgumentException(String.format("entry too long %s, but buffer size %s", size, byteBuffer.remaining()));
     }
 
 }
