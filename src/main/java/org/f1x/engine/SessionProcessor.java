@@ -132,7 +132,11 @@ public class SessionProcessor implements Worker {
     }
 
     protected void close() {
-        CloseHelper.close(openResources);
+        try {
+            CloseHelper.close(openResources);
+        } finally {
+            openResources.clear();
+        }
     }
 
     @Override
