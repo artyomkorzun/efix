@@ -1,5 +1,6 @@
 package org.f1x.engine;
 
+import org.f1x.SessionComponent;
 import org.f1x.connector.Connector;
 import org.f1x.connector.channel.Channel;
 import org.f1x.log.MessageLog;
@@ -11,10 +12,7 @@ import org.f1x.schedule.SessionSchedule;
 import org.f1x.state.SessionState;
 import org.f1x.state.SessionStatus;
 import org.f1x.store.MessageStore;
-import org.f1x.util.ByteSequence;
-import org.f1x.util.ByteSequenceWrapper;
-import org.f1x.util.CloseHelper;
-import org.f1x.util.EpochClock;
+import org.f1x.util.*;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -22,6 +20,8 @@ import org.f1x.util.concurrent.Worker;
 import org.f1x.util.concurrent.buffer.MessageHandler;
 import org.f1x.util.concurrent.buffer.RingBuffer;
 import org.f1x.util.concurrent.strategy.IdleStrategy;
+
+import java.util.ArrayList;
 
 import static org.f1x.engine.SessionUtil.*;
 import static org.f1x.message.AdminMessageTypes.isAdmin;
@@ -68,6 +68,8 @@ public class SessionProcessor implements Worker {
     protected final boolean resetSeqNumsOnLogon;
     protected final boolean logonWithNextExpectedSeqNum;
 
+    protected final ArrayList<Disposable> openResources = new ArrayList<>();
+
     public SessionProcessor(SessionContext context) {
         context.conclude();
 
@@ -103,29 +105,45 @@ public class SessionProcessor implements Worker {
 
     @Override
     public void onStart() {
-        // TODO: catch exceptions
-        state.open();
-        store.open();
-        log.open();
-        connector.open();
+        try {
+            open();
+        } catch (Exception e) {
+            onError(e);
+            throw e;
+        }
+    }
+
+    protected void open() {
+        Disposable[] resources = {state, store, log, connector};
+        for (Disposable resource : resources) {
+            resource.open();
+            openResources.add(resource);
+        }
     }
 
     @Override
     public void onClose() {
-        CloseHelper.close(state);
-        CloseHelper.close(store);
-        CloseHelper.close(log);
-        CloseHelper.close(connector);
+        try {
+            close();
+        } catch (Exception e) {
+            onError(e);
+            throw e;
+        }
+    }
+
+    protected void close() {
+        CloseHelper.close(openResources);
     }
 
     @Override
     public void doWork() {
         int work = work();
-        if (work == 0)
+        if (work <= 0)
             flush();
 
         idleStrategy.idle(work);
     }
+
 
     protected int work() {
         int work = 0;
@@ -139,9 +157,17 @@ public class SessionProcessor implements Worker {
     }
 
     protected void flush() {
-        state.flush();
-        store.flush();
-        log.flush();
+        flush(state);
+        flush(store);
+        flush(log);
+    }
+
+    protected void flush(SessionComponent component) {
+        try {
+            component.flush();
+        } catch (Exception e) {
+            onError(e);
+        }
     }
 
     protected int checkSession(long now) {
@@ -263,11 +289,8 @@ public class SessionProcessor implements Worker {
     protected int checkLogonTimeout(long now) {
         int work = 0;
         long elapsed = now - state.getSessionStartTime();
-        if (elapsed >= logonTimeout) {
-            sendLogout("Logon timeout");
-            disconnect("Logon timeout");
-            work += 1;
-        }
+        if (elapsed >= logonTimeout)
+            throw new TimeoutException(String.format("Logon timeout %s ms. Elapsed %s ms", logonTimeout, elapsed));
 
         return work;
     }
@@ -275,10 +298,8 @@ public class SessionProcessor implements Worker {
     protected int checkLogoutTimeout(long now) {
         int work = 0;
         long elapsed = now - state.getLastSentTime();
-        if (elapsed >= logoutTimeout) {
-            disconnect("Logout timeout");
-            work += 1;
-        }
+        if (elapsed >= logoutTimeout)
+            throw new TimeoutException(String.format("Logout timeout %s ms. Elapsed %s ms", logoutTimeout, elapsed));
 
         return work;
     }
@@ -286,11 +307,10 @@ public class SessionProcessor implements Worker {
     protected int checkInHeartbeatTimeout(long now) {
         int work = 0;
         long elapsed = now - state.getLastReceivedTime();
-        if (elapsed >= 2 * heartbeatTimeout) {
-            sendLogout("Heartbeat timeout");
-            disconnect("Heartbeat timeout");
-            work += 1;
-        } else if (elapsed >= heartbeatTimeout && !state.isTestRequestSent()) {
+        if (elapsed >= 2 * heartbeatTimeout)
+            throw new TimeoutException(String.format("Heartbeat timeout %s ms. Elapsed %s ms", heartbeatTimeout, elapsed));
+
+        if (elapsed >= heartbeatTimeout && !state.isTestRequestSent()) {
             sendTestRequest("Heartbeat timeout");
             work += 1;
         }
@@ -501,7 +521,6 @@ public class SessionProcessor implements Worker {
     }
 
     protected void validateHeader(Header header) {
-        // TODO
     }
 
     protected void validateLogon(Logon logon) {
@@ -660,15 +679,15 @@ public class SessionProcessor implements Worker {
     protected void onAppMessage(Header header, MessageParser parser) {
     }
 
-    protected boolean onStoreMessage(int seqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
+    protected boolean onStoreMessage(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
         return !isAdmin(msgType) || msgType.charAt(0) == AdminMessageTypes.REJECT;
     }
 
-    protected boolean onResendMessage(int seqNum, long sendingTime, CharSequence msgType, Buffer body, int offset, int length) {
+    protected boolean onResendMessage(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
         return true;
     }
 
-    protected void onError(Throwable e) {
+    protected void onError(Exception exception) {
         if (state.getStatus() != DISCONNECTED)
             disconnect("Error occurred");
     }

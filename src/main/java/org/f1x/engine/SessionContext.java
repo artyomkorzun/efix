@@ -35,6 +35,11 @@ import static java.util.Objects.requireNonNull;
 
 public class SessionContext {
 
+    protected static final int BACKOFF_IDLE_STRATEGY_MAX_SPINS = 20;
+    protected static final int BACKOFF_IDLE_STRATEGY_MAX_YIELDS = 50;
+    protected static final int BACKOFF_IDLE_STRATEGY_MIN_PARK_PERIOD_NS = 1;
+    protected static final int BACKOFF_IDLE_STRATEGY_MAX_PARK_PERIOD_NS = 10000;
+
     protected EpochClock clock;
     protected SessionSchedule schedule;
     protected SessionState state;
@@ -43,7 +48,7 @@ public class SessionContext {
 
     protected RingBuffer messageQueue;
     protected ProducerType producerType = ProducerType.MULTI;
-    protected int messageQueueSize = 1 << 22;
+    protected int messageQueueSize = Configuration.MESSAGE_QUEUE_SIZE;
     protected IdleStrategy idleStrategy;
 
     protected MessageParser parser;
@@ -51,29 +56,30 @@ public class SessionContext {
 
     protected Connector connector;
     protected InetSocketAddress address;
-    protected int reconnectInterval = 15000;
-    protected int socketReceiveBufferSize = 1 << 20;
-    protected int socketSendBufferSize = 1 << 20;
+    protected int reconnectInterval = Configuration.RECONNECT_INTERVAL;
+    protected int socketReceiveBufferSize = Configuration.SOCKET_RECEIVE_BUFFER_SIZE;
+    protected int socketSendBufferSize = Configuration.SOCKET_SEND_BUFFER_SIZE;
+    protected boolean socketTcpNoDelay = Configuration.SOCKET_TCP_NO_DELAY;
 
-    protected int messageBufferSize = 1 << 20;
-    protected int receiveBufferSize = 1 << 20;
-    protected int sendBufferSize = 1 << 20;
+    protected int messageBufferSize = Configuration.MESSAGE_BUFFER_SIZE;
+    protected int receiveBufferSize = Configuration.RECEIVE_BUFFER_SIZE;
+    protected int sendBufferSize = Configuration.SEND_BUFFER_SIZE;
 
     protected SessionID sessionID;
     protected FIXVersion fixVersion;
     protected boolean initiator = true;
-    protected int heartbeatInterval = 30;
-    protected int heartbeatTimeout = 1000 * (heartbeatInterval + 1);
-    protected int logonTimeout = 2000;
-    protected int logoutTimeout = 2000;
+    protected int heartbeatInterval = Configuration.HEARTBEAT_INTERVAL;
+    protected int heartbeatTimeout = Configuration.HEARTBEAT_TIMEOUT;
+    protected int logonTimeout = Configuration.LOGON_TIMEOUT;
+    protected int logoutTimeout = Configuration.LOGOUT_TIMEOUT;
     protected boolean resetSeqNumsOnLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
-    public SessionContext(InetSocketAddress address, SessionID sessionID, FIXVersion fixVersion, boolean initiator) {
+    public SessionContext(boolean initiator, InetSocketAddress address, SessionID sessionID, FIXVersion fixVersion) {
+        this.initiator = initiator;
         this.address = address;
         this.fixVersion = fixVersion;
         this.sessionID = sessionID;
-        this.initiator = initiator;
     }
 
     public EpochClock clock() {
@@ -220,6 +226,15 @@ public class SessionContext {
         return this;
     }
 
+    public boolean socketTcpNoDelay() {
+        return socketTcpNoDelay;
+    }
+
+    public SessionContext socketTcpNoDelay(boolean socketTcpNoDelay) {
+        this.socketTcpNoDelay = socketTcpNoDelay;
+        return this;
+    }
+
     public int messageBufferSize() {
         return messageBufferSize;
     }
@@ -354,8 +369,14 @@ public class SessionContext {
             messageQueue = (producerType == ProducerType.SINGLE) ? new SPSCRingBuffer(buffer) : new MPSCRingBuffer(buffer);
         }
 
-        if (idleStrategy == null)
-            idleStrategy = new BackoffIdleStrategy(20, 50, 1, 10000);
+        if (idleStrategy == null) {
+            idleStrategy = new BackoffIdleStrategy(
+                    BACKOFF_IDLE_STRATEGY_MAX_SPINS,
+                    BACKOFF_IDLE_STRATEGY_MAX_YIELDS,
+                    BACKOFF_IDLE_STRATEGY_MIN_PARK_PERIOD_NS,
+                    BACKOFF_IDLE_STRATEGY_MAX_PARK_PERIOD_NS
+            );
+        }
 
         if (parser == null)
             parser = new FastMessageParser();
@@ -365,9 +386,10 @@ public class SessionContext {
 
         if (connector == null) {
             SocketOptions options = new SocketOptions();
-            options.add(StandardSocketOptions.TCP_NODELAY, true);
+            options.add(StandardSocketOptions.TCP_NODELAY, socketTcpNoDelay);
             options.add(StandardSocketOptions.SO_RCVBUF, socketReceiveBufferSize);
             options.add(StandardSocketOptions.SO_SNDBUF, socketSendBufferSize);
+
             connector = initiator ?
                     new InitiatorConnector(address, options, clock, reconnectInterval) :
                     new AcceptorConnector(address, options);

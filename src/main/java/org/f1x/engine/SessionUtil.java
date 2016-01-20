@@ -12,6 +12,7 @@ import org.f1x.util.ByteSequenceWrapper;
 
 import static org.f1x.message.FieldUtil.*;
 
+
 public class SessionUtil {
 
     public static void validateLogon(int heartBtInt, Logon logon) {

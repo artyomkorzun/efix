@@ -23,8 +23,8 @@ public class WorkerRunner implements Runnable, AutoCloseable {
         if (!thread.compareAndSet(null, Thread.currentThread()))
             throw new IllegalStateException();
 
-        onStart();
         try {
+            onStart();
             work();
         } finally {
             onClose();

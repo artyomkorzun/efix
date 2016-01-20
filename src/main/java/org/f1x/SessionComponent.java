@@ -1,11 +1,9 @@
 package org.f1x;
 
-public interface SessionComponent extends AutoCloseable {
+import org.f1x.util.Disposable;
 
-    void open();
+public interface SessionComponent extends Disposable {
 
     void flush();
-
-    void close();
 
 }

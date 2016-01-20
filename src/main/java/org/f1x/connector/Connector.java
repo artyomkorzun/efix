@@ -1,8 +1,9 @@
 package org.f1x.connector;
 
 import org.f1x.connector.channel.Channel;
+import org.f1x.util.Disposable;
 
-public interface Connector extends AutoCloseable {
+public interface Connector extends Disposable {
 
     void open() throws ConnectionException;
 
