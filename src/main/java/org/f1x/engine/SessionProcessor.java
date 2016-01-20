@@ -108,7 +108,7 @@ public class SessionProcessor implements Worker {
         try {
             open();
         } catch (Exception e) {
-            onError(e);
+            handleError(e);
             throw e;
         }
     }
@@ -126,7 +126,7 @@ public class SessionProcessor implements Worker {
         try {
             close();
         } catch (Exception e) {
-            onError(e);
+            handleError(e);
             throw e;
         }
     }
@@ -166,7 +166,7 @@ public class SessionProcessor implements Worker {
         try {
             component.flush();
         } catch (Exception e) {
-            onError(e);
+            handleError(e);
         }
     }
 
@@ -180,7 +180,7 @@ public class SessionProcessor implements Worker {
                 work += checkSessionEnd(now);
         } catch (Exception e) {
             work += 1;
-            onError(e);
+            handleError(e);
         }
 
         return work;
@@ -200,7 +200,7 @@ public class SessionProcessor implements Worker {
                 }
             } catch (Exception e) {
                 work += 1;
-                onError(e);
+                handleError(e);
             }
         }
 
@@ -214,7 +214,7 @@ public class SessionProcessor implements Worker {
             work += messageQueue.read(outMessageHandler);
         } catch (Exception e) {
             work += 1;
-            onError(e);
+            handleError(e);
         }
 
         return work;
@@ -235,7 +235,7 @@ public class SessionProcessor implements Worker {
             }
         } catch (Exception e) {
             work += 1;
-            onError(e);
+            handleError(e);
         }
 
         return work;
@@ -670,6 +670,13 @@ public class SessionProcessor implements Worker {
         return old;
     }
 
+    protected void handleError(Exception exception) {
+        if (state.getStatus() != DISCONNECTED)
+            disconnect(exception.getMessage());
+
+        onError(exception);
+    }
+
     protected void onStatusUpdate(SessionStatus old, SessionStatus updated) {
     }
 
@@ -688,8 +695,7 @@ public class SessionProcessor implements Worker {
     }
 
     protected void onError(Exception exception) {
-        if (state.getStatus() != DISCONNECTED)
-            disconnect("Error occurred");
+
     }
 
     protected MessageHandler createInMessageHandler() {
@@ -701,7 +707,7 @@ public class SessionProcessor implements Worker {
             try {
                 sendAppMessage(buffer, offset, length);
             } catch (Exception e) {
-                onError(e);
+                handleError(e);
             }
         };
     }

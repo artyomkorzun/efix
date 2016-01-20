@@ -38,6 +38,8 @@ public interface MessageParser {
     MessageParser reset();
 
 
+    Buffer buffer();
+
     int offset();
 
     int length();

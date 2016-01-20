@@ -241,6 +241,11 @@ public class FastMessageBuilder implements MessageBuilder {
     }
 
     @Override
+    public MutableBuffer buffer() {
+        return buffer;
+    }
+
+    @Override
     public int offset() {
         return offset.value();
     }

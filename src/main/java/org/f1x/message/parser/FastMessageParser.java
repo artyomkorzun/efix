@@ -99,6 +99,11 @@ public class FastMessageParser implements MessageParser {
     }
 
     @Override
+    public Buffer buffer() {
+        return buffer;
+    }
+
+    @Override
     public int offset() {
         return offset.value();
     }

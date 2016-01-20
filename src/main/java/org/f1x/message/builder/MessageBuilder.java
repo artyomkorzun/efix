@@ -106,6 +106,8 @@ public interface MessageBuilder {
     MessageBuilder wrap(MutableBuffer buffer, int offset, int length);
 
 
+    MutableBuffer buffer();
+
     int offset();
 
     int length();
