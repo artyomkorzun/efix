@@ -24,7 +24,7 @@ import org.f1x.util.concurrent.strategy.IdleStrategy;
 import java.util.ArrayList;
 
 import static org.f1x.engine.SessionUtil.*;
-import static org.f1x.message.AdminMessageTypes.isAdmin;
+import static org.f1x.message.AdminMsgType.isAdmin;
 import static org.f1x.state.SessionStatus.*;
 
 public class SessionProcessor implements Worker {
@@ -378,25 +378,25 @@ public class SessionProcessor implements Worker {
 
     protected void processAdminMessage(Header header, MessageParser parser) {
         switch (header.msgType().charAt(0)) {
-            case AdminMessageTypes.LOGON:
+            case AdminMsgType.LOGON:
                 processLogon(header, parser);
                 break;
-            case AdminMessageTypes.HEARTBEAT:
+            case AdminMsgType.HEARTBEAT:
                 processHeartbeat(header, parser);
                 break;
-            case AdminMessageTypes.TEST:
+            case AdminMsgType.TEST:
                 processTestRequest(header, parser);
                 break;
-            case AdminMessageTypes.RESEND:
+            case AdminMsgType.RESEND:
                 processResendRequest(header, parser);
                 break;
-            case AdminMessageTypes.REJECT:
+            case AdminMsgType.REJECT:
                 processReject(header, parser);
                 break;
-            case AdminMessageTypes.RESET:
+            case AdminMsgType.RESET:
                 processSequenceReset(header, parser);
                 break;
-            case AdminMessageTypes.LOGOUT:
+            case AdminMsgType.LOGOUT:
                 processLogout(header, parser);
                 break;
         }
@@ -690,7 +690,7 @@ public class SessionProcessor implements Worker {
     }
 
     protected boolean onStoreMessage(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
-        return !isAdmin(msgType) || msgType.charAt(0) == AdminMessageTypes.REJECT;
+        return !isAdmin(msgType) || msgType.charAt(0) == AdminMsgType.REJECT;
     }
 
     protected boolean onResendMessage(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {

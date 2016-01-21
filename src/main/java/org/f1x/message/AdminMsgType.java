@@ -3,7 +3,7 @@ package org.f1x.message;
 import org.f1x.util.ByteSequence;
 
 
-public class AdminMessageTypes {
+public class AdminMsgType {
 
     public static final byte LOGON = 'A';
     public static final byte HEARTBEAT = '0';
