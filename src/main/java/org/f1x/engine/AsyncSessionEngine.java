@@ -14,8 +14,8 @@ public class AsyncSessionEngine implements SessionEngine {
     protected final WorkerRunner runner;
     protected final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    public AsyncSessionEngine(SessionProcessor processor, RingBuffer messageQueue) {
-        this.messageQueue = messageQueue;
+    public AsyncSessionEngine(SessionContext context, SessionProcessor processor) {
+        this.messageQueue = context.messageQueue();
         this.processor = processor;
         this.runner = new WorkerRunner(processor);
     }

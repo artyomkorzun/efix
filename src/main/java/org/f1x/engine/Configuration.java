@@ -7,6 +7,8 @@ public class Configuration {
 
     public static final String MESSAGE_QUEUE_SIZE_PROP_NAME = "f1x.message.queue.size";
     public static final String RECONNECT_INTERVAL_PROP_NAME = "f1x.reconnect.interval";
+
+    public static final String MESSAGE_STORE_SIZE_PROP_NAME = "f1x.message.store.size";
     public static final String MESSAGE_BUFFER_SIZE_PROP_NAME = "f1x.message.buffer.size";
 
     public static final String RECEIVE_BUFFER_SIZE_PROP_NAME = "f1x.receive.buffer.size";
@@ -24,6 +26,8 @@ public class Configuration {
 
     protected static final int MESSAGE_QUEUE_SIZE = getInteger(MESSAGE_QUEUE_SIZE_PROP_NAME, 1 << 20);
     protected static final int RECONNECT_INTERVAL = getInteger(RECONNECT_INTERVAL_PROP_NAME, 15000);
+
+    protected static final int MESSAGE_STORE_SIZE = getInteger(MESSAGE_STORE_SIZE_PROP_NAME, 1 << 20);
     protected static final int MESSAGE_BUFFER_SIZE = getInteger(MESSAGE_BUFFER_SIZE_PROP_NAME, 1 << 10);
 
     protected static final int RECEIVE_BUFFER_SIZE = getInteger(RECEIVE_BUFFER_SIZE_PROP_NAME, 1 << 16);

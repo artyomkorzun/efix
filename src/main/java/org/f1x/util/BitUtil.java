@@ -2,9 +2,6 @@ package org.f1x.util;
 
 public final class BitUtil {
 
-    public static final String CACHE_LINE_LENGTH_PROP_KEY = "f1x.cache.line.length";
-    public static final int CACHE_LINE_LENGTH = Integer.getInteger(CACHE_LINE_LENGTH_PROP_KEY, 64);
-
     public static final int SIZE_OF_BYTE = 1;
     public static final int SIZE_OF_BOOLEAN = 1;
     public static final int SIZE_OF_CHAR = 2;
@@ -14,7 +11,7 @@ public final class BitUtil {
     public static final int SIZE_OF_LONG = 8;
     public static final int SIZE_OF_DOUBLE = 8;
 
-    public static int findNextPowerOfTwo(int value) {
+    public static int nextPowerOfTwo(int value) {
         return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
     }
 

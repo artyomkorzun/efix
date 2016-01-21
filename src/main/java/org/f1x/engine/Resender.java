@@ -21,12 +21,12 @@ public class Resender implements MessageStore.Visitor {
     }
 
     @Override
-    public void onMessage(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
-        if (processor.onResendMessage(seqNum, sendingTime, msgType, body, offset, length)) {
+    public void onMessage(int seqNum, long time, ByteSequence msgType, Buffer body, int offset, int length) {
+        if (processor.onResendMessage(seqNum, time, msgType, body, offset, length)) {
             if (seqNum - lastSeqNum > 1)
                 processor.sendSequenceReset(true, lastSeqNum + 1, seqNum);
 
-            processor.resendMessage(seqNum, sendingTime, msgType, body, offset, length);
+            processor.resendMessage(seqNum, time, msgType, body, offset, length);
             lastSeqNum = seqNum;
         }
     }

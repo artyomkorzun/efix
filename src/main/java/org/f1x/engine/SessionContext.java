@@ -16,11 +16,10 @@ import org.f1x.schedule.ContinuousSessionSchedule;
 import org.f1x.schedule.SessionSchedule;
 import org.f1x.state.MemorySessionState;
 import org.f1x.state.SessionState;
-import org.f1x.store.EmptyMessageStore;
+import org.f1x.store.MemoryMessageStore;
 import org.f1x.store.MessageStore;
 import org.f1x.util.EpochClock;
 import org.f1x.util.SystemEpochClock;
-import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.concurrent.ProducerType;
 import org.f1x.util.concurrent.buffer.MPSCRingBuffer;
 import org.f1x.util.concurrent.buffer.RingBuffer;
@@ -356,7 +355,7 @@ public class SessionContext {
             state = new MemorySessionState();
 
         if (store == null)
-            store = EmptyMessageStore.INSTANCE; // TODO replace by Memory
+            store = new MemoryMessageStore(Configuration.MESSAGE_STORE_SIZE);
 
         if (schedule == null)
             schedule = ContinuousSessionSchedule.INSTANCE;
@@ -364,10 +363,9 @@ public class SessionContext {
         if (log == null)
             log = EmptyMessageLog.INSTANCE;
 
-        if (messageQueue == null) {
-            UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(messageQueueSize);
-            messageQueue = (producerType == ProducerType.SINGLE) ? new SPSCRingBuffer(buffer) : new MPSCRingBuffer(buffer);
-        }
+        if (messageQueue == null)
+            messageQueue = (producerType == ProducerType.SINGLE) ? new SPSCRingBuffer(messageQueueSize) : new MPSCRingBuffer(messageQueueSize);
+
 
         if (idleStrategy == null) {
             idleStrategy = new BackoffIdleStrategy(

@@ -14,7 +14,7 @@ public abstract class AbstractQueue<E> implements Queue<E> {
     protected final int capacity;
 
     public AbstractQueue(int requestedCapacity) {
-        capacity = BitUtil.findNextPowerOfTwo(requestedCapacity);
+        capacity = BitUtil.nextPowerOfTwo(requestedCapacity);
         mask = capacity - 1;
         array = new UnsafeArray<>(capacity);
     }

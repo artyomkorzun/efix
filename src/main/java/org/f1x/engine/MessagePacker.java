@@ -7,6 +7,7 @@ import org.f1x.message.builder.FastMessageBuilder;
 import org.f1x.message.builder.MessageBuilder;
 import org.f1x.message.field.Tag;
 import org.f1x.util.ByteSequence;
+import org.f1x.util.InsufficientSpaceException;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.format.IntFormatter;
@@ -25,30 +26,30 @@ public class MessagePacker {
         this.buffer = buffer;
     }
 
-    public int pack(int msgSeqNum, long sendingTime, ByteSequence msgType,
+    public int pack(int msgSeqNum, long time, ByteSequence msgType,
                     Buffer body, int offset, int length) {
-        int bodyLength = computeBodyLength(msgSeqNum, sendingTime, msgType, length);
+        int bodyLength = computeBodyLength(msgSeqNum, time, msgType, length);
         int messageLength = computeMessageLength(bodyLength);
         checkMessageLength(messageLength);
 
         builder.wrap(buffer);
-        addStandardHeader(bodyLength, msgSeqNum, sendingTime, msgType, builder);
+        addStandardHeader(bodyLength, msgSeqNum, time, msgType, builder);
         builder.appendBytes(body, offset, length);
         addCheckSum(builder);
 
         return messageLength;
     }
 
-    public int pack(int msgSeqNum, long sendingTime, long origSendingTime,
+    public int pack(int msgSeqNum, long time, long origTime,
                     ByteSequence msgType, Buffer body, int offset, int length) {
 
-        int bodyLength = computeBodyLength(msgSeqNum, sendingTime, origSendingTime, msgType, length);
+        int bodyLength = computeBodyLength(msgSeqNum, time, origTime, msgType, length);
         int messageLength = computeMessageLength(bodyLength);
         checkMessageLength(messageLength);
 
         builder.wrap(buffer);
-        addStandardHeader(bodyLength, msgSeqNum, sendingTime, msgType, builder);
-        builder.addTimestamp(Tag.OrigSendingTime, origSendingTime);
+        addStandardHeader(bodyLength, msgSeqNum, time, msgType, builder);
+        builder.addTimestamp(Tag.OrigSendingTime, origTime);
         builder.addBoolean(Tag.PossDupFlag, true);
         builder.appendBytes(body, offset, length);
         addCheckSum(builder);
@@ -56,7 +57,7 @@ public class MessagePacker {
         return messageLength;
     }
 
-    protected void addStandardHeader(int bodyLength, int msgSeqNum, long sendingTime, CharSequence msgType, MessageBuilder builder) {
+    protected void addStandardHeader(int bodyLength, int msgSeqNum, long time, CharSequence msgType, MessageBuilder builder) {
         builder.addByteSequence(Tag.BeginString, beginString);
         builder.addInt(Tag.BodyLength, bodyLength);
         builder.addCharSequence(Tag.MsgType, msgType);
@@ -70,7 +71,7 @@ public class MessagePacker {
         if (sessionID.targetSubId() != null)
             builder.addCharSequence(Tag.TargetSubID, sessionID.targetSubId());
 
-        builder.addTimestamp(Tag.SendingTime, sendingTime);
+        builder.addTimestamp(Tag.SendingTime, time);
     }
 
     protected void addCheckSum(MessageBuilder builder) {
@@ -85,17 +86,17 @@ public class MessagePacker {
         builder.appendInt(checkSum).endField();
     }
 
-    protected int computeBodyLength(int msgSeqNum, long sendingTime, long origSendingTime, CharSequence msgType, int length) {
+    protected int computeBodyLength(int msgSeqNum, long time, long origTime, CharSequence msgType, int length) {
         int bodyLength = 0;
 
-        bodyLength += computeBodyLength(msgSeqNum, sendingTime, msgType, length);
+        bodyLength += computeBodyLength(msgSeqNum, time, msgType, length);
         bodyLength += 5 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
         bodyLength += 5;
 
         return bodyLength;
     }
 
-    protected int computeBodyLength(int msgSeqNum, long sendingTime, CharSequence msgType, int length) {
+    protected int computeBodyLength(int msgSeqNum, long time, CharSequence msgType, int length) {
         int bodyLength = 0;
 
         bodyLength += 4 + msgType.length();
@@ -132,7 +133,7 @@ public class MessagePacker {
     protected void checkMessageLength(int length) {
         int capacity = buffer.capacity();
         if (length > capacity)
-            throw new IllegalArgumentException(String.format("Message length %s exceeds buffer capacity %s", length, capacity));
+            throw new InsufficientSpaceException(String.format("Message length %s exceeds buffer size %s", length, capacity));
     }
 
 }

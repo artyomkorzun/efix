@@ -2,6 +2,7 @@ package org.f1x.log;
 
 import org.f1x.log.layout.Layout;
 import org.f1x.util.CloseHelper;
+import org.f1x.util.InsufficientSpaceException;
 import org.f1x.util.LangUtil;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
@@ -88,7 +89,7 @@ public class FileMessageLog implements MessageLog {
 
     protected void checkEntrySize(int size) {
         if (byteBuffer.remaining() < size)
-            throw new IllegalArgumentException(String.format("entry too long %s, but buffer size %s", size, byteBuffer.remaining()));
+            throw new InsufficientSpaceException(String.format("Entry size %s exceeds buffer size %s", size, byteBuffer.remaining()));
     }
 
 }

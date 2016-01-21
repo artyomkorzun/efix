@@ -5,8 +5,8 @@ import org.f1x.util.buffer.Buffer;
 
 public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
 
-    public SPSCRingBuffer(AtomicBuffer buffer) {
-        super(buffer);
+    public SPSCRingBuffer(int capacity) {
+        super(capacity);
     }
 
     @Override

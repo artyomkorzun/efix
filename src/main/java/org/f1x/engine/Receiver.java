@@ -4,6 +4,7 @@ import org.f1x.connector.channel.Channel;
 import org.f1x.message.FieldUtil;
 import org.f1x.message.parser.FastMessageParser;
 import org.f1x.message.parser.MessageParser;
+import org.f1x.util.InsufficientSpaceException;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -54,8 +55,10 @@ public class Receiver {
         int remaining = length;
         while (remaining >= FieldUtil.MIN_MESSAGE_LENGTH) {
             int messageLength = parseMessageLength(buffer, offset, remaining);
-            if (messageLength > remaining)
+            if (messageLength > remaining) {
+                checkMessageLength(messageLength);
                 break;
+            }
 
             handler.onMessage(EventTypes.INBOUND_MESSAGE, buffer, offset, messageLength);
 
@@ -72,6 +75,12 @@ public class Receiver {
         int bodyLength = parseBodyLength(parser);
         int headerLength = parser.offset() - offset;
         return headerLength + bodyLength + FieldUtil.CHECK_SUM_FIELD_LENGTH;
+    }
+
+    protected void checkMessageLength(int messageLength) {
+        int capacity = buffer.capacity();
+        if (messageLength > capacity)
+            throw new InsufficientSpaceException(String.format("Message length %s exceeds buffer size %s", messageLength, capacity));
     }
 
 }

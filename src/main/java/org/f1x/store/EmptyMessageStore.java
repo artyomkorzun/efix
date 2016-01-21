@@ -11,12 +11,11 @@ public final class EmptyMessageStore implements MessageStore {
     }
 
     @Override
-    public void write(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
+    public void write(int seqNum, long time, ByteSequence msgType, Buffer body, int offset, int length) {
     }
 
     @Override
-    public int read(int seqNum, Visitor visitor) {
-        return 0;
+    public void read(int seqNum, Visitor visitor) {
     }
 
     @Override

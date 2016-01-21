@@ -1,8 +1,12 @@
 package org.f1x.util.concurrent.buffer;
 
 import org.f1x.util.BitUtil;
+import org.f1x.util.InsufficientSpaceException;
 import org.f1x.util.buffer.AtomicBuffer;
+import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.concurrent.AtomicLong;
+
+import static org.f1x.util.BitUtil.nextPowerOfTwo;
 
 public abstract class AbstractRingBuffer implements RingBuffer {
 
@@ -16,17 +20,19 @@ public abstract class AbstractRingBuffer implements RingBuffer {
 
     protected final AtomicLong headSequence = new AtomicLong();
     protected final AtomicLong tailSequence = new AtomicLong();
+
     protected final AtomicBuffer buffer;
     protected final int capacity;
     protected final int mask;
     protected final int maxMessageLength;
     protected final AtomicLong tailCacheSequence = new AtomicLong();
 
-    public AbstractRingBuffer(AtomicBuffer buffer) {
-        this.buffer = checkBuffer(buffer);
-        this.capacity = buffer.capacity();
+    public AbstractRingBuffer(int capacity) {
+        capacity = capacity(capacity);
+        this.capacity = capacity;
         this.mask = capacity - 1;
         this.maxMessageLength = capacity >>> 3;
+        this.buffer = UnsafeBuffer.allocateHeap(capacity);
     }
 
     @Override
@@ -84,21 +90,20 @@ public abstract class AbstractRingBuffer implements RingBuffer {
 
     protected void checkMessageLength(int length) {
         if (length > maxMessageLength)
-            throw new IllegalArgumentException(String.format("Message length %s is more than max %d", length, maxMessageLength));
+            throw new InsufficientSpaceException(String.format("Message length %s exceeds max %d", length, maxMessageLength));
     }
 
     protected void checkMessageType(int messageType) {
         if (messageType < 1)
-            throw new IllegalArgumentException(String.format("Message type: %s is non positive", messageType));
+            throw new IllegalArgumentException(String.format("Message type %s is non positive", messageType));
     }
 
-    protected static AtomicBuffer checkBuffer(AtomicBuffer buffer) {
-        int capacity = buffer.capacity();
-        if (!BitUtil.isPowerOfTwo(capacity) || capacity < MIN_CAPACITY)
-            throw new IllegalArgumentException(String.format("Capacity: %s must be a power of 2 and not less: %s", capacity, MIN_CAPACITY));
+    protected static int capacity(int capacity) {
+        capacity = nextPowerOfTwo(capacity);
+        if (capacity < MIN_CAPACITY)
+            throw new IllegalArgumentException(String.format("Capacity %s < %s", capacity, MIN_CAPACITY));
 
-        buffer.checkAlignment();
-        return buffer;
+        return capacity;
     }
 
 }

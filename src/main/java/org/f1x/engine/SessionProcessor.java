@@ -488,7 +488,6 @@ public class SessionProcessor implements Worker {
 
     protected void processSequenceReset(Header header, MessageParser parser) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
-        assertNotDuplicate(header.possDup(), "Sequence Reset with PossDup(44)=Y");
 
         SequenceReset reset = parseSequenceReset(parser, sequenceReset);
         if (reset.isGapFill())
@@ -609,9 +608,9 @@ public class SessionProcessor implements Worker {
         resender.resendMessages(beginSeqNo, endSeqNo, store);
     }
 
-    protected void resendMessage(int seqNum, long origSendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
+    protected void resendMessage(int seqNum, long origTime, ByteSequence msgType, Buffer body, int offset, int length) {
         long time = clock.time();
-        int messageLength = packer.pack(seqNum, time, origSendingTime, msgType, body, offset, length);
+        int messageLength = packer.pack(seqNum, time, origTime, msgType, body, offset, length);
         sendMessage(time, sendBuffer, 0, messageLength);
     }
 
@@ -674,14 +673,14 @@ public class SessionProcessor implements Worker {
         return old;
     }
 
-    protected void handleError(Exception exception) {
+    protected void handleError(Exception e) {
         if (state.getStatus() != DISCONNECTED)
-            disconnect(exception.getMessage());
+            disconnect(e.getMessage());
 
-        onError(exception);
+        onError(e);
     }
 
-    protected void onStatusUpdate(SessionStatus old, SessionStatus updated) {
+    protected void onStatusUpdate(SessionStatus previous, SessionStatus current) {
     }
 
     protected void onAdminMessage(Header header, MessageParser parser) {
@@ -698,8 +697,7 @@ public class SessionProcessor implements Worker {
         return true;
     }
 
-    protected void onError(Exception exception) {
-
+    protected void onError(Exception e) {
     }
 
     protected MessageHandler createInMessageHandler() {

@@ -16,7 +16,7 @@ import static org.f1x.message.FieldUtil.*;
 public class SessionUtil {
 
     public static void validateLogon(int heartBtInt, Logon logon) {
-        int actual = checkPresent(Tag.HeartBtInt, logon.heartBtInt(), -1);
+        int actual = checkPresent(Tag.HeartBtInt, logon.heartBtInt());
         if (actual != heartBtInt)
             throw new FieldException(Tag.HeartBtInt, String.format("HeartBtInt does not match, expected %s but received %s", heartBtInt, actual));
     }
@@ -27,21 +27,21 @@ public class SessionUtil {
 
     public static void validateResendRequest(ResendRequest request) {
         int beginSeqNo = request.beginSeqNo();
-        checkPresent(Tag.BeginSeqNo, beginSeqNo, -1);
+        checkPresent(Tag.BeginSeqNo, beginSeqNo);
         checkPositive(Tag.BeginSeqNo, beginSeqNo);
 
         int endSeqNo = request.endSeqNo();
-        checkPresent(Tag.EndSeqNo, endSeqNo, -1);
-        checkPositive(Tag.EndSeqNo, endSeqNo);
+        checkPresent(Tag.EndSeqNo, endSeqNo);
+        checkNonNegative(Tag.EndSeqNo, endSeqNo);
 
         if (endSeqNo != 0 && beginSeqNo > endSeqNo)
-            throw new FieldException(Tag.EndSeqNo, String.format("BeginSeqNo(7) %s is more EndSeqNo(16) %s", beginSeqNo, endSeqNo));
+            throw new FieldException(Tag.EndSeqNo, String.format("BeginSeqNo(7) %s more EndSeqNo(16) %s", beginSeqNo, endSeqNo));
     }
 
     public static void validateSequenceReset(int targetSeqNum, SequenceReset reset) {
-        int newSeqNo = reset.newSeqNo();
+        int newSeqNo = checkPresent(Tag.BeginSeqNo, reset.newSeqNo());
         if (newSeqNo < targetSeqNum)
-            throw new FieldException(Tag.NewSeqNo, String.format("NewSeqNo(36) %s less expected MsgSeqNum %s", newSeqNo, targetSeqNum));
+            throw new FieldException(Tag.NewSeqNo, String.format("NewSeqNo(36) %s less expected target MsgSeqNum %s", newSeqNo, targetSeqNum));
     }
 
     public static void makeLogon(boolean resetSeqNum, int heartBtInt, MessageBuilder builder) {
@@ -107,7 +107,7 @@ public class SessionUtil {
     }
 
     public static Logon parseLogon(MessageParser parser, Logon logon) {
-        int heartBtInt = -1;
+        int heartBtInt = INT_NULL;
         boolean resetSeqNum = false;
 
         while (parser.hasRemaining()) {
@@ -145,8 +145,8 @@ public class SessionUtil {
     }
 
     public static ResendRequest parseResendRequest(MessageParser parser, ResendRequest request) {
-        int beginSeqNo = -1;
-        int endSeqNo = -1;
+        int beginSeqNo = INT_NULL;
+        int endSeqNo = INT_NULL;
         while (parser.hasRemaining()) {
             int tag = parser.parseTag();
             switch (tag) {
@@ -168,17 +168,17 @@ public class SessionUtil {
     }
 
     public static SequenceReset parseSequenceReset(MessageParser parser, SequenceReset reset) {
-        int newSeqNo = -1;
-        boolean gapFillFlag = false;
+        int newSeqNo = INT_NULL;
+        boolean gapFill = false;
 
         while (parser.hasRemaining()) {
             int tag = parser.parseTag();
             switch (tag) {
                 case Tag.NewSeqNo:
-                    newSeqNo = checkPositive(tag, parser.parseInt());
+                    newSeqNo = parser.parseInt();
                     break;
                 case Tag.GapFillFlag:
-                    gapFillFlag = parser.parseBoolean();
+                    gapFill = parser.parseBoolean();
                     break;
                 default:
                     parser.parseValue();
@@ -186,7 +186,7 @@ public class SessionUtil {
         }
 
         reset.newSeqNo(newSeqNo);
-        reset.gapFill(gapFillFlag);
+        reset.gapFill(gapFill);
 
         return reset;
     }
@@ -200,23 +200,23 @@ public class SessionUtil {
     }
 
     public static void parseBeginString(MessageParser parser) {
-        checkTag(parser.parseTag(), Tag.BeginString);
+        checkTag(Tag.BeginString, parser.parseTag());
         parser.parseValue();
     }
 
+    public static int parseBodyLength(MessageParser parser) {
+        checkTag(Tag.BodyLength, parser.parseTag());
+        return checkPositive(Tag.BodyLength, parser.parseInt());
+    }
+
     public static ByteSequence parseMessageType(MessageParser parser, ByteSequenceWrapper out) {
-        checkTag(parser.parseTag(), Tag.MsgType);
+        checkTag(Tag.MsgType, parser.parseTag());
         parser.parseByteSequence(out);
         return out;
     }
 
-    public static int parseBodyLength(MessageParser parser) {
-        checkTag(parser.parseTag(), Tag.BodyLength);
-        return checkPositive(Tag.BodyLength, parser.parseInt());
-    }
-
     public static void parseMsgSeqNumWithPossDup(MessageParser parser, Header header) {
-        int msgSeqNum = -1;
+        int msgSeqNum = INT_NULL;
         boolean possDup = false;
         boolean possDupFound = false;
 
@@ -226,9 +226,10 @@ public class SessionUtil {
                 msgSeqNum = checkPositive(tagNum, parser.parseInt());
                 if (possDupFound)
                     break;
+
             } else if (tagNum == Tag.PossDupFlag) {
                 possDup = parser.parseBoolean();
-                if (msgSeqNum > 0)
+                if (msgSeqNum != INT_NULL)
                     break;
 
                 possDupFound = true;
@@ -240,7 +241,7 @@ public class SessionUtil {
             }
         }
 
-        checkPresent(Tag.MsgSeqNum, msgSeqNum, -1);
+        checkPresent(Tag.MsgSeqNum, msgSeqNum);
 
         header.msgSeqNum(msgSeqNum);
         header.possDup(possDup);

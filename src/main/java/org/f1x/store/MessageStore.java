@@ -6,9 +6,9 @@ import org.f1x.util.buffer.Buffer;
 
 public interface MessageStore extends SessionComponent {
 
-    void write(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length);
+    void write(int seqNum, long time, ByteSequence msgType, Buffer body, int offset, int length);
 
-    int read(int seqNum, Visitor visitor);
+    void read(int seqNum, Visitor visitor);
 
     void read(int fromSeqNum, int toSeqNum, Visitor visitor);
 
@@ -16,7 +16,7 @@ public interface MessageStore extends SessionComponent {
 
     interface Visitor {
 
-        void onMessage(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length);
+        void onMessage(int seqNum, long time, ByteSequence msgType, Buffer body, int offset, int length);
 
     }
 
