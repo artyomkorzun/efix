@@ -234,7 +234,7 @@ public class SessionUtil {
 
                 possDupFound = true;
             } else {
-                if (!isHeaderField(tagNum))
+                if (!isHeader(tagNum))
                     break;
 
                 parser.parseValue();
@@ -245,46 +245,6 @@ public class SessionUtil {
 
         header.msgSeqNum(msgSeqNum);
         header.possDup(possDup);
-    }
-
-    public static boolean isHeaderField(int tag) {
-        switch (tag) {
-            case Tag.BeginString:
-            case Tag.BodyLength:
-            case Tag.MsgType:
-            case Tag.SenderCompID:
-            case Tag.SenderSubID:
-            case Tag.TargetCompID:
-            case Tag.TargetSubID:
-            case Tag.OnBehalfOfCompID:
-            case Tag.DeliverToCompID:
-            case Tag.SecureData:
-            case Tag.MsgSeqNum:
-            case Tag.SenderLocationID:
-            case Tag.TargetLocationID:
-            case Tag.OnBehalfOfSubID:
-            case Tag.OnBehalfOfLocationID:
-            case Tag.DeliverToSubID:
-            case Tag.DeliverToLocationID:
-            case Tag.PossDupFlag:
-            case Tag.PossResend:
-            case Tag.SendingTime:
-            case Tag.OrigSendingTime:
-            case Tag.XmlDataLen:
-            case Tag.XmlData:
-            case Tag.MessageEncoding:
-            case Tag.LastMsgSeqNumProcessed:
-            case Tag.NoHops:
-            case Tag.HopCompID:
-            case Tag.HopSendingTime:
-            case Tag.HopRefID:
-            case Tag.ApplVerID:
-            case Tag.CstmApplVerID:
-            case Tag.ApplExtID:
-                return true;
-            default:
-                return false;
-        }
     }
 
 }

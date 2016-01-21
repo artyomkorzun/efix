@@ -1,8 +1,7 @@
 package org.f1x.message;
 
-import org.f1x.util.BufferUtil;
 import org.f1x.util.ByteSequence;
-import org.f1x.util.ByteSequenceWrapper;
+
 
 public class AdminMessageTypes {
 
@@ -14,24 +13,13 @@ public class AdminMessageTypes {
     public static final byte RESET = '4';
     public static final byte LOGOUT = '5';
 
-    public static boolean isAdmin(CharSequence msgType) {
+    public static boolean isAdmin(ByteSequence msgType) {
         if (msgType.length() != 1)
             return false;
 
-        char charMsgType = msgType.charAt(0);
-        return HEARTBEAT <= charMsgType && charMsgType <= LOGOUT ||
-                charMsgType == LOGON;
+        byte type = msgType.byteAt(0);
+        return HEARTBEAT <= type && type <= LOGOUT ||
+                type == LOGON;
     }
-
-}
-
-class Symbol {
-
-    public static final ByteSequence EXCHANGE = ByteSequenceWrapper.of("dsds");
-
-    private static ByteSequenceWrapper byteSequence(String value) {
-        return new ByteSequenceWrapper(BufferUtil.fromString(value));
-    }
-
 
 }
