@@ -27,9 +27,9 @@ public class MPSCQueue<E> extends AbstractQueue<E> {
 
                 tailCacheSequence.setOrdered(tail);
             }
-        } while (!headSequence.compareAndSwap(head, head + 1));
+        } while (!headSequence.compareAndSet(head, head + 1));
 
-        array.setOrderedObject(mask(head), e);
+        array.setOrdered(mask(head), e);
 
         return true;
     }
@@ -40,13 +40,13 @@ public class MPSCQueue<E> extends AbstractQueue<E> {
         long tail = tailSequence.get();
         while (readMessages < capacity) {
             int index = mask(tail + readMessages);
-            E e = array.getObjectVolatile(index);
+            E e = array.getVolatile(index);
             if (e == null)
                 break;
 
             readMessages++;
 
-            array.setObject(index, null);
+            array.set(index, null);
             tailSequence.setOrdered(tail + readMessages);
 
             handler.accept(e);

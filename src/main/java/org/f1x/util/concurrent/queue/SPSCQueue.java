@@ -25,7 +25,7 @@ public class SPSCQueue<E> extends AbstractQueue<E> {
             tailCacheSequence.set(tail);
         }
 
-        array.setOrderedObject(mask(head), e);
+        array.setOrdered(mask(head), e);
         headSequence.setOrdered(head + 1);
 
         return true;
@@ -39,11 +39,11 @@ public class SPSCQueue<E> extends AbstractQueue<E> {
         int available = (int) (head - tail);
         while (readMessages < available) {
             int index = mask(tail + readMessages);
-            E e = array.getObject(index);
+            E e = array.get(index);
 
             readMessages++;
 
-            array.setObject(index, null);
+            array.set(index, null);
             tailSequence.setOrdered(tail + readMessages);
 
             handler.accept(e);

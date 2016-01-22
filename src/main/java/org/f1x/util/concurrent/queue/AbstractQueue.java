@@ -27,9 +27,9 @@ public abstract class AbstractQueue<E> implements Queue<E> {
     public E poll() {
         long tail = tailSequence.get();
         int index = mask(tail);
-        E e = array.getObjectVolatile(index);
+        E e = array.getVolatile(index);
         if (e != null) {
-            array.setObject(index, null);
+            array.set(index, null);
             tailSequence.setOrdered(tail + 1);
         }
 

@@ -18,33 +18,37 @@ public final class UnsafeArray<E> {
         array = (E[]) new Object[capacity];
     }
 
-    public void setObject(int index, E e) {
-        UNSAFE.putObject(array, elementAddress(index), e);
+    public void set(int index, E e) {
+        UNSAFE.putObject(array, address(index), e);
     }
 
-    public void setOrderedObject(int index, E e) {
-        UNSAFE.putOrderedObject(array, elementAddress(index), e);
+    public void setOrdered(int index, E e) {
+        UNSAFE.putOrderedObject(array, address(index), e);
     }
 
-    public void setObjectVolatile(int index, E e) {
-        UNSAFE.putObjectVolatile(array, elementAddress(index), e);
-    }
-
-    @SuppressWarnings("unchecked")
-    public E getObject(int index) {
-        return (E) UNSAFE.getObject(array, elementAddress(index));
+    public void setVolatile(int index, E e) {
+        UNSAFE.putObjectVolatile(array, address(index), e);
     }
 
     @SuppressWarnings("unchecked")
-    public E getObjectVolatile(int index) {
-        return (E) UNSAFE.getObjectVolatile(array, elementAddress(index));
+    public E get(int index) {
+        return (E) UNSAFE.getObject(array, address(index));
     }
 
-    public boolean compareAndSetObject(int index, E expected, E updated) {
-        return UNSAFE.compareAndSwapObject(array, elementAddress(index), expected, updated);
+    @SuppressWarnings("unchecked")
+    public E getVolatile(int index) {
+        return (E) UNSAFE.getObjectVolatile(array, address(index));
     }
 
-    private static long elementAddress(int index) {
+    public boolean compareAndSet(int index, E expected, E updated) {
+        return UNSAFE.compareAndSwapObject(array, address(index), expected, updated);
+    }
+
+    public int length() {
+        return array.length;
+    }
+
+    private static long address(int index) {
         return ARRAY_BASE_OFFSET + ((long) index << ARRAY_INDEX_SHIFT);
     }
 

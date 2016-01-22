@@ -47,7 +47,7 @@ public final class AtomicLong {
         UNSAFE.putLongVolatile(this, VALUE_FIELD_OFFSET, value);
     }
 
-    public boolean compareAndSwap(long expected, long updated) {
+    public boolean compareAndSet(long expected, long updated) {
         return UNSAFE.compareAndSwapLong(this, VALUE_FIELD_OFFSET, expected, updated);
     }
 

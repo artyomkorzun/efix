@@ -99,7 +99,7 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
 
                 padding = continuous;
             }
-        } while (!headSequence.compareAndSwap(head, head + required + padding));
+        } while (!headSequence.compareAndSet(head, head + required + padding));
 
         if (padding != 0) {
             buffer.putInt(messageTypeOffset(headIndex), MESSAGE_TYPE_PADDING);
