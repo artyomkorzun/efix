@@ -1,12 +1,13 @@
 package org.f1x.engine;
 
 import org.f1x.util.Command;
+import org.f1x.util.Disposable;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.concurrent.WorkerRunner;
 import org.f1x.util.concurrent.buffer.RingBuffer;
 import org.f1x.util.concurrent.queue.Queue;
 
-public class SingleSessionEngine implements AutoCloseable {
+public class SingleSessionEngine implements Disposable {
 
     protected final Queue<Command<SessionProcessor>> commandQueue;
     protected final RingBuffer messageQueue;
@@ -23,7 +24,8 @@ public class SingleSessionEngine implements AutoCloseable {
         this.thread = new Thread(runner, threadName(context));
     }
 
-    public void start() {
+    @Override
+    public void open() {
         thread.start();
     }
 
