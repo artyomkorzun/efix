@@ -63,13 +63,13 @@ public class MessagePacker {
         builder.addCharSequence(Tag.MsgType, msgType);
         builder.addInt(Tag.MsgSeqNum, msgSeqNum);
 
-        builder.addCharSequence(Tag.SenderCompID, sessionID.senderCompId());
+        builder.addByteSequence(Tag.SenderCompID, sessionID.senderCompId());
         if (sessionID.senderSubId() != null)
-            builder.addCharSequence(Tag.SenderSubID, sessionID.senderSubId());
+            builder.addByteSequence(Tag.SenderSubID, sessionID.senderSubId());
 
-        builder.addCharSequence(Tag.TargetCompID, sessionID.targetCompId());
+        builder.addByteSequence(Tag.TargetCompID, sessionID.targetCompId());
         if (sessionID.targetSubId() != null)
-            builder.addCharSequence(Tag.TargetSubID, sessionID.targetSubId());
+            builder.addByteSequence(Tag.TargetSubID, sessionID.targetSubId());
 
         builder.addTimestamp(Tag.SendingTime, time);
     }

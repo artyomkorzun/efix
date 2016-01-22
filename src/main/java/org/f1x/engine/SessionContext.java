@@ -2,6 +2,7 @@ package org.f1x.engine;
 
 import org.f1x.FIXVersion;
 import org.f1x.SessionID;
+import org.f1x.SessionType;
 import org.f1x.connector.AcceptorConnector;
 import org.f1x.connector.Connector;
 import org.f1x.connector.InitiatorConnector;
@@ -69,9 +70,9 @@ public class SessionContext {
     protected int receiveBufferSize = Configuration.RECEIVE_BUFFER_SIZE;
     protected int sendBufferSize = Configuration.SEND_BUFFER_SIZE;
 
-    protected SessionID sessionID;
+    protected SessionType sessionType;
     protected FIXVersion fixVersion;
-    protected boolean initiator = true;
+    protected SessionID sessionID;
     protected int heartbeatInterval = Configuration.HEARTBEAT_INTERVAL;
     protected int heartbeatTimeout = Configuration.HEARTBEAT_TIMEOUT;
     protected int logonTimeout = Configuration.LOGON_TIMEOUT;
@@ -79,9 +80,9 @@ public class SessionContext {
     protected boolean resetSeqNumsOnLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
-    public SessionContext(boolean initiator, InetSocketAddress address, SessionID sessionID, FIXVersion fixVersion) {
-        this.initiator = initiator;
+    public SessionContext(InetSocketAddress address, SessionType sessionType, FIXVersion fixVersion, SessionID sessionID) {
         this.address = address;
+        this.sessionType = sessionType;
         this.fixVersion = fixVersion;
         this.sessionID = sessionID;
     }
@@ -275,6 +276,15 @@ public class SessionContext {
         return this;
     }
 
+    public SessionType sessionType() {
+        return sessionType;
+    }
+
+    public SessionContext sessionType(SessionType sessionType) {
+        this.sessionType = sessionType;
+        return this;
+    }
+
     public SessionID sessionID() {
         return sessionID;
     }
@@ -290,15 +300,6 @@ public class SessionContext {
 
     public SessionContext fixVersion(FIXVersion fixVersion) {
         this.fixVersion = fixVersion;
-        return this;
-    }
-
-    public boolean initiator() {
-        return initiator;
-    }
-
-    public SessionContext initiator(boolean initiator) {
-        this.initiator = initiator;
         return this;
     }
 
@@ -357,6 +358,7 @@ public class SessionContext {
     }
 
     public SessionContext conclude() {
+        requireNonNull(sessionType);
         requireNonNull(fixVersion);
         requireNonNull(sessionID);
         requireNonNull(sessionID.senderCompId());
@@ -405,7 +407,7 @@ public class SessionContext {
             options.add(StandardSocketOptions.SO_RCVBUF, socketReceiveBufferSize);
             options.add(StandardSocketOptions.SO_SNDBUF, socketSendBufferSize);
 
-            connector = initiator ?
+            connector = sessionType.initiator() ?
                     new InitiatorConnector(address, options, clock, reconnectInterval) :
                     new AcceptorConnector(address, options);
         }

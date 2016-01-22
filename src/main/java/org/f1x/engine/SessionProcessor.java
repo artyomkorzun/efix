@@ -1,6 +1,7 @@
 package org.f1x.engine;
 
 import org.f1x.SessionComponent;
+import org.f1x.SessionType;
 import org.f1x.connector.Connector;
 import org.f1x.connector.channel.Channel;
 import org.f1x.log.MessageLog;
@@ -62,11 +63,12 @@ public class SessionProcessor implements Worker {
     protected final SequenceReset sequenceReset = new SequenceReset();
     protected final ByteSequenceWrapper outMsgType = new ByteSequenceWrapper();
 
+
+    protected final SessionType sessionType;
     protected final int heartbeatInterval;
     protected final int heartbeatTimeout;
     protected final int logonTimeout;
     protected final int logoutTimeout;
-    protected final boolean initiator;
     protected final boolean resetSeqNumsOnLogon;
     protected final boolean logonWithNextExpectedSeqNum;
 
@@ -103,7 +105,7 @@ public class SessionProcessor implements Worker {
         this.heartbeatTimeout = context.heartbeatTimeout();
         this.logonTimeout = context.logonTimeout();
         this.logoutTimeout = context.logoutTimeout();
-        this.initiator = context.initiator();
+        this.sessionType = context.sessionType();
         this.resetSeqNumsOnLogon = context.resetSeqNumsOnLogon();
         this.logonWithNextExpectedSeqNum = context.logonWithNextExpectedSeqNum();
     }
@@ -276,7 +278,7 @@ public class SessionProcessor implements Worker {
 
                 state.setSessionStartTime(now);
 
-                if (initiator)
+                if (sessionType.initiator())
                     sendLogon(resetSeqNumsOnLogon);
 
                 work += 1;

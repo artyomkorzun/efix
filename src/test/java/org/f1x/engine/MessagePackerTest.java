@@ -1,7 +1,7 @@
 package org.f1x.engine;
 
 import org.f1x.FIXVersion;
-import org.f1x.SessionIDBean;
+import org.f1x.SessionID;
 import org.f1x.util.BufferUtil;
 import org.f1x.util.ByteSequenceWrapper;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -41,7 +41,7 @@ public class MessagePackerTest {
     protected static void shouldPackSendMessage(String expected, String senderCompID, String senderSubId, String targetCompID, String targetSubId,
                                                 int msgSeqNum, String sendingTime, String msgType, String body) {
 
-        SessionIDBean id = new SessionIDBean(senderCompID, senderSubId, targetCompID, targetSubId);
+        SessionID id = new SessionID(senderCompID, senderSubId, targetCompID, targetSubId);
         body = normalize(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
@@ -56,7 +56,7 @@ public class MessagePackerTest {
     protected static void shouldPackResendMessage(String expected, String senderCompID, String senderSubId, String targetCompID, String targetSubId,
                                                   int msgSeqNum, String sendingTime, String origSendingTime, String msgType, String body) {
 
-        SessionIDBean id = new SessionIDBean(senderCompID, senderSubId, targetCompID, targetSubId);
+        SessionID id = new SessionID(senderCompID, senderSubId, targetCompID, targetSubId);
         body = normalize(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
