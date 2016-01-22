@@ -1,6 +1,7 @@
 package org.f1x.util;
 
 import org.f1x.util.buffer.Buffer;
+import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 
@@ -46,7 +47,7 @@ public class ByteSequenceWrapper implements ByteSequence {
     }
 
     @Override
-    public CharSequence subSequence(int start, int end) {
+    public ByteSequence subSequence(int start, int end) {
         ByteSequenceWrapper sequence = new ByteSequenceWrapper();
         sequence.wrap(buffer, start, end - start);
         return sequence;
@@ -55,11 +56,6 @@ public class ByteSequenceWrapper implements ByteSequence {
     public ByteSequenceWrapper clear() {
         buffer.wrap(EMPTY);
         return this;
-    }
-
-    @Override
-    public int hashCode() {
-        return buffer != null ? buffer.hashCode() : 0;
     }
 
     @Override

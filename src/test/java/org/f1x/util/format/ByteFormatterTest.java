@@ -1,7 +1,7 @@
 package org.f1x.util.format;
 
-import org.f1x.util.BufferUtil;
 import org.f1x.util.MutableInt;
+import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.junit.Test;

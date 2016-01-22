@@ -28,21 +28,6 @@ public final class BitUtil {
         return value > 0 && ((value & (~value + 1)) == value);
     }
 
-    public static int next(int current, int max) {
-        int next = current + 1;
-        if (next == max)
-            next = 0;
-
-        return next;
-    }
-
-    public static int previous(int current, int max) {
-        if (0 == current)
-            return max - 1;
-
-        return current - 1;
-    }
-
     public static int calculateShift(int scale) {
         if (scale == 4)
             return 2;

@@ -2,15 +2,15 @@ package org.f1x.engine;
 
 import org.f1x.FIXVersion;
 import org.f1x.SessionID;
-import org.f1x.util.BufferUtil;
 import org.f1x.util.ByteSequenceWrapper;
+import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.f1x.util.BufferUtil.fromString;
 import static org.f1x.util.TestUtil.normalize;
 import static org.f1x.util.TestUtil.parseTimestamp;
+import static org.f1x.util.buffer.BufferUtil.fromString;
 
 public class MessagePackerTest {
 

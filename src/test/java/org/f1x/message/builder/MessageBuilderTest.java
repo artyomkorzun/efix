@@ -1,15 +1,15 @@
 package org.f1x.message.builder;
 
 import org.f1x.message.field.Tag;
-import org.f1x.util.BufferUtil;
 import org.f1x.util.ByteSequenceWrapper;
+import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.junit.Test;
 
-import static org.f1x.util.BufferUtil.fromString;
 import static org.f1x.util.StringUtil.asciiBytes;
 import static org.f1x.util.TestUtil.*;
+import static org.f1x.util.buffer.BufferUtil.fromString;
 import static org.junit.Assert.assertEquals;
 
 public class MessageBuilderTest {

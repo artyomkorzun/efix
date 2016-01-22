@@ -1,8 +1,8 @@
 package org.f1x.util.format;
 
-import org.f1x.util.BufferUtil;
 import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
+import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.MutableBuffer;
 
 import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
