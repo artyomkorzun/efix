@@ -60,7 +60,7 @@ public class Receiver {
                 break;
             }
 
-            handler.onMessage(EventTypes.INBOUND_MESSAGE, buffer, offset, messageLength);
+            handler.onMessage(EventType.INBOUND_MESSAGE, buffer, offset, messageLength);
 
             offset += messageLength;
             remaining -= messageLength;

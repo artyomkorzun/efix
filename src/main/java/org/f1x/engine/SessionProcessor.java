@@ -19,9 +19,10 @@ import org.f1x.util.buffer.UnsafeBuffer;
 import org.f1x.util.concurrent.Worker;
 import org.f1x.util.concurrent.buffer.MessageHandler;
 import org.f1x.util.concurrent.buffer.RingBuffer;
-import org.f1x.util.concurrent.strategy.IdleStrategy;
+import org.f1x.util.concurrent.queue.Queue;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 import static org.f1x.engine.SessionUtil.*;
 import static org.f1x.message.AdminMsgType.isAdmin;
@@ -29,14 +30,18 @@ import static org.f1x.state.SessionStatus.*;
 
 public class SessionProcessor implements Worker {
 
+    protected final Consumer<Command<SessionProcessor>> commandHandler = createCommandHandler();
+    protected final MessageHandler inMessageHandler = createInMessageHandler();
+    protected final MessageHandler outMessageHandler = createOutMessageHandler();
+
     protected final EpochClock clock;
     protected final SessionState state;
     protected final MessageStore store;
     protected final MessageLog log;
     protected final SessionSchedule schedule;
 
+    protected final Queue<Command<SessionProcessor>> commandQueue;
     protected final RingBuffer messageQueue;
-    protected final IdleStrategy idleStrategy;
 
     protected final MessageParser parser;
     protected final MessageBuilder builder;
@@ -57,9 +62,6 @@ public class SessionProcessor implements Worker {
     protected final SequenceReset sequenceReset = new SequenceReset();
     protected final ByteSequenceWrapper outMsgType = new ByteSequenceWrapper();
 
-    protected final MessageHandler inMessageHandler = createInMessageHandler();
-    protected final MessageHandler outMessageHandler = createOutMessageHandler();
-
     protected final int heartbeatInterval;
     protected final int heartbeatTimeout;
     protected final int logonTimeout;
@@ -70,6 +72,9 @@ public class SessionProcessor implements Worker {
 
     protected final ArrayList<Disposable> openResources = new ArrayList<>();
 
+    protected boolean active = true;
+    protected boolean closing = false;
+
     public SessionProcessor(SessionContext context) {
         context.conclude();
 
@@ -79,8 +84,8 @@ public class SessionProcessor implements Worker {
         this.log = context.log();
         this.schedule = context.schedule();
 
+        this.commandQueue = context.commandQueue();
         this.messageQueue = context.messageQueue();
-        this.idleStrategy = context.idleStrategy();
 
         this.parser = context.parser();
         this.builder = context.builder();
@@ -113,14 +118,6 @@ public class SessionProcessor implements Worker {
         }
     }
 
-    protected void open() {
-        Disposable[] resources = {state, store, log, connector};
-        for (Disposable resource : resources) {
-            resource.open();
-            openResources.add(resource);
-        }
-    }
-
     @Override
     public void onClose() {
         try {
@@ -128,6 +125,32 @@ public class SessionProcessor implements Worker {
         } catch (Exception e) {
             handleError(e);
             throw e;
+        }
+    }
+
+    @Override
+    public int doWork() {
+        int work = work();
+        if (work <= 0)
+            flush();
+
+        return work;
+    }
+
+    @Override
+    public boolean active() {
+        return active;
+    }
+
+    @Override
+    public void deactivate() {
+    }
+
+    protected void open() {
+        Disposable[] resources = {state, store, log, connector};
+        for (Disposable resource : resources) {
+            resource.open();
+            openResources.add(resource);
         }
     }
 
@@ -139,19 +162,10 @@ public class SessionProcessor implements Worker {
         }
     }
 
-    @Override
-    public void doWork() {
-        int work = work();
-        if (work <= 0)
-            flush();
-
-        idleStrategy.idle(work);
-    }
-
-
     protected int work() {
         int work = 0;
 
+        work += processCommands();
         work += checkSession(clock.time());
         work += processInMessages();
         work += processOutMessages();
@@ -172,6 +186,18 @@ public class SessionProcessor implements Worker {
         } catch (Exception e) {
             handleError(e);
         }
+    }
+
+    protected int processCommands() {
+        int work = commandQueue.drain(commandHandler);
+        if (closing && state.getStatus() == DISCONNECTED)
+            active = false;
+
+        return work;
+    }
+
+    protected void processCloseCommand(CloseCommand command) {
+        closing = true;
     }
 
     protected int checkSession(long now) {
@@ -212,16 +238,7 @@ public class SessionProcessor implements Worker {
     }
 
     protected int processOutMessages() {
-        int work = 0;
-
-        try {
-            work += messageQueue.read(outMessageHandler);
-        } catch (Exception e) {
-            work += 1;
-            handleError(e);
-        }
-
-        return work;
+        return messageQueue.read(outMessageHandler);
     }
 
     protected int processTimers(long now) {
@@ -248,7 +265,7 @@ public class SessionProcessor implements Worker {
     protected int checkSessionStart(long now) {
         int work = 0;
         long start = schedule.getStartTime(now);
-        if (now >= start) {
+        if (now >= start && !closing) {
             boolean connected = connect();
             if (connected) {
                 if (state.getSessionStartTime() < start) {
@@ -274,15 +291,16 @@ public class SessionProcessor implements Worker {
 
     protected int checkSessionEnd(long now) {
         int work = 0;
+
         long end = schedule.getEndTime(state.getSessionStartTime());
-        if (now >= end) {
+        if (now >= end || closing) {
             SessionStatus status = state.getStatus();
             if (status == SOCKET_CONNECTED || status == LOGON_SENT) {
-                sendLogout("Session expired");
-                disconnect("Session expired");
+                sendLogout("Session end");
+                disconnect("Session end");
                 work += 1;
             } else if (status == APPLICATION_CONNECTED) {
-                sendLogout("Session expired");
+                sendLogout("Session end");
                 work += 1;
             }
         }
@@ -698,6 +716,10 @@ public class SessionProcessor implements Worker {
     }
 
     protected void onError(Exception e) {
+    }
+
+    protected Consumer<Command<SessionProcessor>> createCommandHandler() {
+        return command -> command.execute(this);
     }
 
     protected MessageHandler createInMessageHandler() {

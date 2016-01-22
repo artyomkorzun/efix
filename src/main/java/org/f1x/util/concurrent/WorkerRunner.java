@@ -1,9 +1,11 @@
 package org.f1x.util.concurrent;
 
 import org.f1x.util.LangUtil;
+import org.f1x.util.concurrent.strategy.IdleStrategy;
 
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static java.util.Objects.requireNonNull;
 
 public class WorkerRunner implements Runnable, AutoCloseable {
 
@@ -11,11 +13,11 @@ public class WorkerRunner implements Runnable, AutoCloseable {
 
     protected final AtomicReference<Thread> thread = new AtomicReference<>();
     protected final Worker worker;
+    protected final IdleStrategy strategy;
 
-    protected volatile boolean active = true;
-
-    public WorkerRunner(Worker worker) {
-        this.worker = Objects.requireNonNull(worker);
+    public WorkerRunner(Worker worker, IdleStrategy strategy) {
+        this.worker = requireNonNull(worker);
+        this.strategy = requireNonNull(strategy);
     }
 
     @Override
@@ -36,8 +38,10 @@ public class WorkerRunner implements Runnable, AutoCloseable {
     }
 
     protected void work() {
-        while (active)
-            worker.doWork();
+        while (worker.active()) {
+            int work = worker.doWork();
+            strategy.idle(work);
+        }
     }
 
     protected void onClose() {
@@ -50,7 +54,7 @@ public class WorkerRunner implements Runnable, AutoCloseable {
 
     @Override
     public void close() {
-        active = false;
+        worker.deactivate();
         Thread thread = this.thread.get();
         if (thread != null && thread != TOMB) {
             try {

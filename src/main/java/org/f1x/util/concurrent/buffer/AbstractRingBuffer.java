@@ -52,6 +52,13 @@ public abstract class AbstractRingBuffer implements RingBuffer {
         return (int) (head - tail);
     }
 
+    @Override
+    public boolean isEmpty() {
+        long tail = tailSequence.getVolatile();
+        long head = headSequence.getVolatile();
+        return head == tail;
+    }
+
     protected static int recordLength(int messageLength) {
         return messageLength + HEADER_LENGTH;
     }

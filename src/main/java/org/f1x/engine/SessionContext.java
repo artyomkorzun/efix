@@ -18,12 +18,16 @@ import org.f1x.state.MemorySessionState;
 import org.f1x.state.SessionState;
 import org.f1x.store.MemoryMessageStore;
 import org.f1x.store.MessageStore;
+import org.f1x.util.Command;
 import org.f1x.util.EpochClock;
 import org.f1x.util.SystemEpochClock;
 import org.f1x.util.concurrent.ProducerType;
 import org.f1x.util.concurrent.buffer.MPSCRingBuffer;
 import org.f1x.util.concurrent.buffer.RingBuffer;
 import org.f1x.util.concurrent.buffer.SPSCRingBuffer;
+import org.f1x.util.concurrent.queue.MPSCQueue;
+import org.f1x.util.concurrent.queue.Queue;
+import org.f1x.util.concurrent.queue.SPSCQueue;
 import org.f1x.util.concurrent.strategy.BackoffIdleStrategy;
 import org.f1x.util.concurrent.strategy.IdleStrategy;
 
@@ -45,6 +49,7 @@ public class SessionContext {
     protected MessageStore store;
     protected MessageLog log;
 
+    protected Queue<Command<SessionProcessor>> commandQueue;
     protected RingBuffer messageQueue;
     protected ProducerType producerType = ProducerType.MULTI;
     protected int messageQueueSize = Configuration.MESSAGE_QUEUE_SIZE;
@@ -123,6 +128,15 @@ public class SessionContext {
 
     public SessionContext log(MessageLog log) {
         this.log = log;
+        return this;
+    }
+
+    public Queue<Command<SessionProcessor>> commandQueue() {
+        return commandQueue;
+    }
+
+    public SessionContext commandQueue(Queue<Command<SessionProcessor>> commandQueue) {
+        this.commandQueue = commandQueue;
         return this;
     }
 
@@ -362,6 +376,9 @@ public class SessionContext {
 
         if (log == null)
             log = EmptyMessageLog.INSTANCE;
+
+        if (commandQueue == null)
+            commandQueue = (producerType == ProducerType.SINGLE) ? new SPSCQueue<>(64) : new MPSCQueue<>(64);
 
         if (messageQueue == null)
             messageQueue = (producerType == ProducerType.SINGLE) ? new SPSCRingBuffer(messageQueueSize) : new MPSCRingBuffer(messageQueueSize);

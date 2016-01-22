@@ -94,4 +94,11 @@ public class SessionIDBean implements SessionID {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return "senderCompId=" + senderCompId +
+                ", senderSubId=" + senderSubId +
+                ", targetCompId=" + targetCompId +
+                ", targetSubId=" + targetSubId;
+    }
 }

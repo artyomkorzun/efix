@@ -1,7 +1,8 @@
 package org.f1x.util.concurrent.queue;
 
-import java.util.Objects;
 import java.util.function.Consumer;
+
+import static java.util.Objects.requireNonNull;
 
 public class MPSCQueue<E> extends AbstractQueue<E> {
 
@@ -11,7 +12,7 @@ public class MPSCQueue<E> extends AbstractQueue<E> {
 
     @Override
     public boolean offer(E e) {
-        Objects.requireNonNull(e);
+        requireNonNull(e);
 
         long head;
         long tail = tailCacheSequence.getVolatile();
@@ -26,7 +27,7 @@ public class MPSCQueue<E> extends AbstractQueue<E> {
 
                 tailCacheSequence.setOrdered(tail);
             }
-        } while (headSequence.compareAndSwap(head, head + 1));
+        } while (!headSequence.compareAndSwap(head, head + 1));
 
         array.setOrderedObject(mask(head), e);
 

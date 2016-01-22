@@ -14,5 +14,7 @@ public interface RingBuffer {
 
     int size();
 
+    boolean isEmpty();
+
 }
 

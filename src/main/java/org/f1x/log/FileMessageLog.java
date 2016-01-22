@@ -1,6 +1,7 @@
 package org.f1x.log;
 
 import org.f1x.log.layout.Layout;
+import org.f1x.log.layout.TimeLayout;
 import org.f1x.util.CloseHelper;
 import org.f1x.util.InsufficientSpaceException;
 import org.f1x.util.LangUtil;
@@ -14,6 +15,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import static java.util.Objects.requireNonNull;
+
 public class FileMessageLog implements MessageLog {
 
     protected final Layout layout;
@@ -24,10 +27,14 @@ public class FileMessageLog implements MessageLog {
     protected ByteBuffer byteBuffer;
     protected MutableBuffer buffer;
 
+    public FileMessageLog(int bufferSize, Path path) {
+        this(bufferSize, path, new TimeLayout());
+    }
+
     public FileMessageLog(int bufferSize, Path path, Layout layout) {
         this.bufferSize = bufferSize;
-        this.path = path;
-        this.layout = layout;
+        this.path = requireNonNull(path);
+        this.layout = requireNonNull(layout);
     }
 
     @Override
