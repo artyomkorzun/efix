@@ -72,22 +72,22 @@ public class SessionID {
     }
 
     public SessionID senderCompId(String senderCompId) {
-        this.senderCompId = ByteSequenceWrapper.of(senderCompId);
+        this.senderCompId = byteSequence(senderCompId);
         return this;
     }
 
     public SessionID senderSubId(String senderSubId) {
-        this.senderSubId = ByteSequenceWrapper.of(senderSubId);
+        this.senderSubId = byteSequence(senderSubId);
         return this;
     }
 
     public SessionID targetCompId(String targetCompId) {
-        this.targetCompId = ByteSequenceWrapper.of(targetCompId);
+        this.targetCompId = byteSequence(targetCompId);
         return this;
     }
 
     public SessionID targetSubId(String targetSubId) {
-        this.targetSubId = ByteSequenceWrapper.of(targetSubId);
+        this.targetSubId = byteSequence(targetSubId);
         return this;
     }
 
@@ -97,6 +97,10 @@ public class SessionID {
                 ", senderSubId=" + senderSubId +
                 ", targetCompId=" + targetCompId +
                 ", targetSubId=" + targetSubId;
+    }
+
+    protected static ByteSequenceWrapper byteSequence(String string) {
+        return string == null ? null : ByteSequenceWrapper.of(string);
     }
 
 }
