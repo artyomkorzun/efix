@@ -1,13 +1,15 @@
 package org.f1x.util.concurrent;
 
-import org.f1x.util.BitUtil;
-
+import static org.f1x.util.BitUtil.calculateShift;
 import static org.f1x.util.UnsafeAccess.UNSAFE;
 
+/**
+ * Doesn't check bounds
+ */
 public final class UnsafeArray<E> {
 
     private static final int ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset(Object[].class);
-    private static final int ARRAY_INDEX_SHIFT = BitUtil.calculateShift(UNSAFE.arrayIndexScale(Object[].class));
+    private static final int ARRAY_INDEX_SHIFT = calculateShift(UNSAFE.arrayIndexScale(Object[].class));
 
     private final E[] array;
 

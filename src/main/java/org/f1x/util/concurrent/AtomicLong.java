@@ -24,7 +24,7 @@ public final class AtomicLong {
     }
 
     public AtomicLong(long value) {
-        this.value = value;
+        setVolatile(value);
     }
 
     public long get() {
@@ -43,7 +43,7 @@ public final class AtomicLong {
         return UNSAFE.getLongVolatile(this, VALUE_FIELD_OFFSET);
     }
 
-    public void setVolitile() {
+    public void setVolatile(long value) {
         UNSAFE.putLongVolatile(this, VALUE_FIELD_OFFSET, value);
     }
 
