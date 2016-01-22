@@ -1,24 +1,26 @@
 package org.f1x.util.concurrent.queue;
 
-import org.f1x.util.BitUtil;
 import org.f1x.util.concurrent.AtomicLong;
 import org.f1x.util.concurrent.UnsafeArray;
+
+import static org.f1x.util.BitUtil.nextPowerOfTwo;
 
 public abstract class AbstractQueue<E> implements Queue<E> {
 
     protected final AtomicLong headSequence = new AtomicLong();
     protected final AtomicLong tailSequence = new AtomicLong();
-    protected final AtomicLong tailCacheSequence = new AtomicLong();
+    protected final AtomicLong tailSequenceCache = new AtomicLong();
     protected final UnsafeArray<E> array;
     protected final int mask;
     protected final int capacity;
 
     public AbstractQueue(int requestedCapacity) {
-        capacity = BitUtil.nextPowerOfTwo(requestedCapacity);
+        capacity = nextPowerOfTwo(requestedCapacity);
         mask = capacity - 1;
         array = new UnsafeArray<>(capacity);
     }
 
+    @Override
     public int capacity() {
         return capacity;
     }
@@ -36,6 +38,7 @@ public abstract class AbstractQueue<E> implements Queue<E> {
         return e;
     }
 
+    @Override
     public int size() {
         long head = headSequence.getVolatile();
         long tail = tailSequence.getVolatile();
@@ -46,7 +49,7 @@ public abstract class AbstractQueue<E> implements Queue<E> {
     public boolean isEmpty() {
         long head = headSequence.getVolatile();
         long tail = tailSequence.getVolatile();
-        return tail == head;
+        return tail >= head;
     }
 
     protected int mask(long sequence) {

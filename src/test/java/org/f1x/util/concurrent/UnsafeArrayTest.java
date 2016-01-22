@@ -11,13 +11,13 @@ public class UnsafeArrayTest {
     @Test
     public void shouldSetAndGetObjects() {
         int length = 1024;
-        UnsafeArray<Object> array = new UnsafeArray<>(length);
+        UnsafeArray<String> array = new UnsafeArray<>(length);
         Assert.assertEquals(length, array.length());
 
         for (int i = 0; i < length; i++) {
             assertEquals(null, array, i);
 
-            Object current = "1";
+            String current = "1";
             array.set(i, current);
             assertEquals(current, array, i);
 
@@ -29,7 +29,7 @@ public class UnsafeArrayTest {
             array.setVolatile(i, current);
             assertEquals(current, array, i);
 
-            Object updated = "4";
+            String updated = "4";
             assertFalse(array.compareAndSet(i, updated, updated));
             assertEquals(current, array, i);
 
@@ -38,7 +38,7 @@ public class UnsafeArrayTest {
         }
     }
 
-    protected static void assertEquals(Object expected, UnsafeArray<Object> array, int index) {
+    protected static void assertEquals(String expected, UnsafeArray<String> array, int index) {
         Assert.assertEquals(expected, array.get(index));
         Assert.assertEquals(expected, array.getVolatile(index));
     }

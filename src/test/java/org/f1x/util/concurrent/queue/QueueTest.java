@@ -1,0 +1,84 @@
+package org.f1x.util.concurrent.queue;
+
+import org.f1x.util.MutableInt;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
+import static org.junit.Assert.*;
+
+@RunWith(Parameterized.class)
+public class QueueTest {
+
+    protected static final int QUEUE_CAPACITY = 1024;
+
+    private final Queue<Integer> queue;
+
+    public QueueTest(Queue<Integer> queue) {
+        this.queue = queue;
+    }
+
+    @Test
+    public void shouldOfferAndPollObjects() {
+        assertEquals(QUEUE_CAPACITY, queue.capacity());
+        assertTrue(queue.isEmpty());
+
+        assertTrue(queue.offer(1));
+        assertFalse(queue.isEmpty());
+        assertEquals(1, queue.size());
+
+        assertEquals(1, queue.poll());
+        assertTrue(queue.isEmpty());
+        assertEquals(0, queue.size());
+
+        for (int i = 1; i <= QUEUE_CAPACITY; i++) {
+            assertTrue(queue.offer(i));
+            assertFalse(queue.isEmpty());
+            assertEquals(i, queue.size());
+        }
+
+        assertFalse(queue.offer(1));
+        assertFalse(queue.isEmpty());
+        assertEquals(QUEUE_CAPACITY, queue.size());
+
+        for (int i = 1; i <= QUEUE_CAPACITY; i++) {
+            assertFalse(queue.isEmpty());
+            assertEquals(i, queue.poll());
+            assertEquals(QUEUE_CAPACITY - i, queue.size());
+        }
+
+        assertTrue(queue.isEmpty());
+        assertNull(queue.poll());
+    }
+
+    @Test
+    public void shouldDrainObjects() {
+        for (int objectsAdded = 1; objectsAdded <= QUEUE_CAPACITY; objectsAdded++) {
+            for (int i = 1; i <= objectsAdded; i++)
+                assertTrue(queue.offer(i));
+
+            MutableInt expected = new MutableInt(0);
+            int objectsRead = queue.drain(number -> assertEquals(increment(expected), number));
+            assertEquals(objectsAdded, objectsRead);
+        }
+    }
+
+    protected int increment(MutableInt number) {
+        int value = number.value();
+        return number.value(value + 1).value();
+    }
+
+    @Parameters(name = "{0}")
+    @SuppressWarnings("unchecked")
+    public static Queue<Integer>[] queues() {
+        return new Queue[]{new SPSCQueue<Integer>(QUEUE_CAPACITY), new MPSCQueue<Integer>(QUEUE_CAPACITY)};
+    }
+
+    protected static void assertEquals(int expected, int actual) {
+        Assert.assertEquals(expected, actual);
+    }
+
+
+}

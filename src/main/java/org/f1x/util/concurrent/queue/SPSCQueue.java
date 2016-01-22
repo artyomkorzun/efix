@@ -1,7 +1,8 @@
 package org.f1x.util.concurrent.queue;
 
-import java.util.Objects;
 import java.util.function.Consumer;
+
+import static java.util.Objects.requireNonNull;
 
 public class SPSCQueue<E> extends AbstractQueue<E> {
 
@@ -11,10 +12,10 @@ public class SPSCQueue<E> extends AbstractQueue<E> {
 
     @Override
     public boolean offer(E e) {
-        Objects.requireNonNull(e);
+        requireNonNull(e);
 
         long head = headSequence.get();
-        long tail = tailCacheSequence.get();
+        long tail = tailSequenceCache.get();
         long limit = tail + capacity;
         if (head >= limit) {
             tail = tailSequence.getVolatile();
@@ -22,7 +23,7 @@ public class SPSCQueue<E> extends AbstractQueue<E> {
             if (head >= limit)
                 return false;
 
-            tailCacheSequence.set(tail);
+            tailSequenceCache.set(tail);
         }
 
         array.setOrdered(mask(head), e);
@@ -33,23 +34,23 @@ public class SPSCQueue<E> extends AbstractQueue<E> {
 
     @Override
     public int drain(Consumer<E> handler) {
-        int readMessages = 0;
+        int read = 0;
         long tail = tailSequence.get();
         long head = headSequence.getVolatile();
         int available = (int) (head - tail);
-        while (readMessages < available) {
-            int index = mask(tail + readMessages);
+        while (read < available) {
+            int index = mask(tail + read);
             E e = array.get(index);
 
-            readMessages++;
+            read++;
 
             array.set(index, null);
-            tailSequence.setOrdered(tail + readMessages);
+            tailSequence.setOrdered(tail + read);
 
             handler.accept(e);
         }
 
-        return readMessages;
+        return read;
     }
 
 }

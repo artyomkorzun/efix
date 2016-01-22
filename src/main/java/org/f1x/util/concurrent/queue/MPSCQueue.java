@@ -15,7 +15,7 @@ public class MPSCQueue<E> extends AbstractQueue<E> {
         requireNonNull(e);
 
         long head;
-        long tail = tailCacheSequence.getVolatile();
+        long tail = tailSequenceCache.getVolatile();
         long limit = tail + capacity;
         do {
             head = headSequence.getVolatile();
@@ -25,7 +25,7 @@ public class MPSCQueue<E> extends AbstractQueue<E> {
                 if (head >= limit)
                     return false;
 
-                tailCacheSequence.setOrdered(tail);
+                tailSequenceCache.setOrdered(tail);
             }
         } while (!headSequence.compareAndSet(head, head + 1));
 
@@ -36,23 +36,23 @@ public class MPSCQueue<E> extends AbstractQueue<E> {
 
     @Override
     public int drain(Consumer<E> handler) {
-        int readMessages = 0;
+        int read = 0;
         long tail = tailSequence.get();
-        while (readMessages < capacity) {
-            int index = mask(tail + readMessages);
+        while (read < capacity) {
+            int index = mask(tail + read);
             E e = array.getVolatile(index);
             if (e == null)
                 break;
 
-            readMessages++;
+            read++;
 
             array.set(index, null);
-            tailSequence.setOrdered(tail + readMessages);
+            tailSequence.setOrdered(tail + read);
 
             handler.accept(e);
         }
 
-        return readMessages;
+        return read;
     }
 
 }
