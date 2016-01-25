@@ -20,12 +20,12 @@ public abstract class AbstractRingBuffer implements RingBuffer {
 
     protected final AtomicLong headSequence = new AtomicLong();
     protected final AtomicLong tailSequence = new AtomicLong();
+    protected final AtomicLong tailCacheSequence = new AtomicLong();
 
     protected final AtomicBuffer buffer;
     protected final int capacity;
     protected final int mask;
     protected final int maxMessageLength;
-    protected final AtomicLong tailCacheSequence = new AtomicLong();
 
     public AbstractRingBuffer(int capacity) {
         capacity = capacity(capacity);

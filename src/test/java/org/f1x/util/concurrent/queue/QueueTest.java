@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class QueueTest {
 
-    protected static final int QUEUE_CAPACITY = 1024;
+    protected static final int CAPACITY = 1024;
 
     private final Queue<Integer> queue;
 
@@ -22,7 +22,7 @@ public class QueueTest {
 
     @Test
     public void shouldOfferAndPollObjects() {
-        assertEquals(QUEUE_CAPACITY, queue.capacity());
+        assertEquals(CAPACITY, queue.capacity());
         assertTrue(queue.isEmpty());
 
         assertTrue(queue.offer(1));
@@ -33,7 +33,7 @@ public class QueueTest {
         assertTrue(queue.isEmpty());
         assertEquals(0, queue.size());
 
-        for (int i = 1; i <= QUEUE_CAPACITY; i++) {
+        for (int i = 1; i <= CAPACITY; i++) {
             assertTrue(queue.offer(i));
             assertFalse(queue.isEmpty());
             assertEquals(i, queue.size());
@@ -41,12 +41,12 @@ public class QueueTest {
 
         assertFalse(queue.offer(1));
         assertFalse(queue.isEmpty());
-        assertEquals(QUEUE_CAPACITY, queue.size());
+        assertEquals(CAPACITY, queue.size());
 
-        for (int i = 1; i <= QUEUE_CAPACITY; i++) {
+        for (int i = 1; i <= CAPACITY; i++) {
             assertFalse(queue.isEmpty());
             assertEquals(i, queue.poll());
-            assertEquals(QUEUE_CAPACITY - i, queue.size());
+            assertEquals(CAPACITY - i, queue.size());
         }
 
         assertTrue(queue.isEmpty());
@@ -55,7 +55,7 @@ public class QueueTest {
 
     @Test
     public void shouldDrainObjects() {
-        for (int objectsAdded = 1; objectsAdded <= QUEUE_CAPACITY; objectsAdded++) {
+        for (int objectsAdded = 1; objectsAdded <= CAPACITY; objectsAdded++) {
             for (int i = 1; i <= objectsAdded; i++)
                 assertTrue(queue.offer(i));
 
@@ -73,7 +73,7 @@ public class QueueTest {
     @Parameters(name = "{0}")
     @SuppressWarnings("unchecked")
     public static Queue<Integer>[] queues() {
-        return new Queue[]{new SPSCQueue<Integer>(QUEUE_CAPACITY), new MPSCQueue<Integer>(QUEUE_CAPACITY)};
+        return new Queue[]{new SPSCQueue<Integer>(CAPACITY), new MPSCQueue<Integer>(CAPACITY)};
     }
 
     protected static void assertEquals(int expected, int actual) {
