@@ -29,18 +29,31 @@ public class Receiver {
     public int receive(MessageHandler handler) {
         MutableBuffer buffer = this.buffer;
         int offset = this.offset;
+        int available = buffer.capacity() - offset;
 
-        int bytesReceived = channel.read(buffer, offset, buffer.capacity() - offset);
+        int bytesReceived = channel.read(buffer, offset, available);
+
         if (bytesReceived > 0) {
-            int length = offset + bytesReceived;
-            int bytesRead = processMessages(handler, buffer, length);
-            if (bytesRead > 0) {
-                int remaining = length - bytesRead;
-                if (remaining > 0)
-                    buffer.putBytes(0, buffer, bytesRead, remaining);
+            int remaining = offset + bytesReceived;
+            offset = 0;
 
-                this.offset = remaining;
+            while (remaining >= FieldUtil.MIN_MESSAGE_LENGTH) {
+                int length = parseMessageLength(buffer, offset, remaining);
+                if (length > remaining) {
+                    checkMessageLength(length);
+                    break;
+                }
+
+                handler.onMessage(EventType.INBOUND_MESSAGE, buffer, offset, length);
+
+                remaining -= length;
+                offset += length;
             }
+
+            if (remaining > 0)
+                buffer.putBytes(0, buffer, offset, remaining);
+
+            this.offset = remaining;
         }
 
         return bytesReceived;
@@ -48,25 +61,6 @@ public class Receiver {
 
     public void setChannel(Channel channel) {
         this.channel = channel;
-    }
-
-    protected int processMessages(MessageHandler handler, Buffer buffer, int length) {
-        int offset = 0;
-        int remaining = length;
-        while (remaining >= FieldUtil.MIN_MESSAGE_LENGTH) {
-            int messageLength = parseMessageLength(buffer, offset, remaining);
-            if (messageLength > remaining) {
-                checkMessageLength(messageLength);
-                break;
-            }
-
-            handler.onMessage(EventType.INBOUND_MESSAGE, buffer, offset, messageLength);
-
-            offset += messageLength;
-            remaining -= messageLength;
-        }
-
-        return length - remaining;
     }
 
     protected int parseMessageLength(Buffer buffer, int offset, int length) {

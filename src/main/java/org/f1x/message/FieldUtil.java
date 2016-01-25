@@ -1,8 +1,8 @@
 package org.f1x.message;
 
-
 import org.f1x.message.field.Tag;
 import org.f1x.util.ByteSequence;
+
 
 public class FieldUtil {
 

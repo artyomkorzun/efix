@@ -13,6 +13,7 @@ import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.format.IntFormatter;
 import org.f1x.util.type.TimestampType;
 
+
 public class MessagePacker {
 
     protected final MessageBuilder builder = new FastMessageBuilder();
@@ -20,7 +21,7 @@ public class MessagePacker {
     protected final SessionID sessionID;
     protected final MutableBuffer buffer;
 
-    public MessagePacker(SessionID sessionID, FIXVersion FIXVersion, MutableBuffer buffer) {
+    public MessagePacker(FIXVersion FIXVersion, SessionID sessionID, MutableBuffer buffer) {
         this.beginString = FIXVersion.beginString();
         this.sessionID = sessionID;
         this.buffer = buffer;
