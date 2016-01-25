@@ -74,7 +74,7 @@ public class MemoryMessageStoreTest {
     }
 
     @Test
-    public void shouldNotReadTruncatedMessage() {
+    public void shouldNotReadTruncatedEntry() {
         Verifier verifier = new Verifier();
 
         Buffer bigBody = makeBody(MAX_BODY_LENGTH);

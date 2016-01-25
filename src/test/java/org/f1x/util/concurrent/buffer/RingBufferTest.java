@@ -7,6 +7,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.f1x.util.BitUtil.align;
 import static org.f1x.util.concurrent.buffer.AbstractRingBuffer.ALIGNMENT;
@@ -113,9 +117,9 @@ public class RingBufferTest {
         };
     }
 
-    @Parameterized.Parameters(name = "{0}")
-    public static AbstractRingBuffer[] buffers() {
-        return new AbstractRingBuffer[]{new SPSCRingBuffer(CAPACITY), new MPSCRingBuffer(CAPACITY)};
+    @Parameters(name = "{0}")
+    public static Collection<RingBuffer> buffers() {
+        return Arrays.asList(new SPSCRingBuffer(CAPACITY), new MPSCRingBuffer(CAPACITY));
     }
 
 }

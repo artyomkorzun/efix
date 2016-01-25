@@ -7,6 +7,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
@@ -71,9 +74,8 @@ public class QueueTest {
     }
 
     @Parameters(name = "{0}")
-    @SuppressWarnings("unchecked")
-    public static Queue<Integer>[] queues() {
-        return new Queue[]{new SPSCQueue<Integer>(CAPACITY), new MPSCQueue<Integer>(CAPACITY)};
+    public static Collection<Queue<Integer>> queues() {
+        return Arrays.asList(new SPSCQueue<>(CAPACITY), new MPSCQueue<>(CAPACITY));
     }
 
     protected static void assertEquals(int expected, int actual) {

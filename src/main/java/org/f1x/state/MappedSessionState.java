@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+import static java.util.Objects.requireNonNull;
+
 public class MappedSessionState extends AbstractSessionState {
 
     protected static final int LENGTH = 2 * BitUtil.SIZE_OF_INT + BitUtil.SIZE_OF_LONG;
@@ -26,7 +28,7 @@ public class MappedSessionState extends AbstractSessionState {
     protected MutableBuffer buffer;
 
     public MappedSessionState(Path path) {
-        this.path = checkFile(path);
+        this.path = requireNonNull(path);
     }
 
     @Override
@@ -88,13 +90,6 @@ public class MappedSessionState extends AbstractSessionState {
             byteBuffer = null;
             buffer = null;
         }
-    }
-
-    protected Path checkFile(Path filePath) {
-        if (!Files.isRegularFile(filePath))
-            throw new IllegalArgumentException("Not file: " + filePath);
-
-        return filePath;
     }
 
 }
