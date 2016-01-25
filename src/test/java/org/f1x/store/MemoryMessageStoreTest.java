@@ -52,7 +52,6 @@ public class MemoryMessageStoreTest {
         store.write(msgSeqNum, TIME, MSG_TYPE, body, 0, bodyLength);
     }
 
-
     @Test
     public void shouldWriteAndReadMessages() {
         Verifier verifier = new Verifier();
@@ -81,17 +80,18 @@ public class MemoryMessageStoreTest {
         Buffer bigBody = makeBody(MAX_BODY_LENGTH);
         Buffer smallBody = makeBody(0);
 
+        int messageCount = CAPACITY / entrySize(MAX_BODY_LENGTH);
         int seqNum = 1;
 
         // 1 3 5 7 9 11 13 15
-        for (int i = 0; i < 8; i++, seqNum += SEQ_NUM_INCREMENT)
+        for (int i = 0; i < messageCount; i++, seqNum += SEQ_NUM_INCREMENT)
             store.write(seqNum, TIME, MSG_TYPE, bigBody, 0, bigBody.capacity());
 
         // 17
         store.write(seqNum, TIME, MSG_TYPE, smallBody, 0, smallBody.capacity());
 
-        verifier.verify(7, 3, bigBody, store, 1, 16);
-        verifier.verify(1, 17, smallBody, store, 17, 99);
+        verifier.verify(messageCount - 1, 3, bigBody, store, 1, seqNum - 1);
+        verifier.verify(1, seqNum, smallBody, store, seqNum - 1, seqNum + 99);
     }
 
     protected static Buffer makeBody(int length) {
