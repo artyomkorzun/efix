@@ -50,7 +50,7 @@ public class DoubleFormatterTest extends AbstractFormatterTest {
         int end = buffer.capacity();
 
         DoubleFormatter.formatDouble(value, precision, roundUp, buffer, offset, end);
-        String actual = new ByteSequenceWrapper().wrap(buffer, 0, offset.value()).toString();
+        String actual = new ByteSequenceWrapper().wrap(buffer, 0, offset.get()).toString();
         String expected = verifier(value, precision, roundUp);
 
         String message = String.format("Fail to parse double %s, precision %s", value, precision);

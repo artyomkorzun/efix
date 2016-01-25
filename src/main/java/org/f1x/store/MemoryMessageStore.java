@@ -226,7 +226,7 @@ public class MemoryMessageStore implements MessageStore {
 
     protected int checkSeqNum(int seqNum) {
         if (seqNum <= lastSeqNum)
-            throw new IllegalArgumentException(String.format("Seq num %s less previous %s", seqNum, lastSeqNum));
+            throw new IllegalArgumentException(String.format("Seq num %s should be more previous %s", seqNum, lastSeqNum));
 
         return seqNum;
     }

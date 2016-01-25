@@ -54,33 +54,33 @@ public class IntFormatter {
 
     private static void formatNegativeInt(int value, MutableBuffer buffer, MutableInt offset, int end) {
         if (value == Integer.MIN_VALUE) {
-            int off = offset.value();
+            int off = offset.get();
             int length = MIN_INT.capacity();
             checkFreeSpace(end - off, length);
 
             buffer.putBytes(off, MIN_INT);
-            offset.value(off + length);
+            offset.set(off + length);
             return;
         }
 
-        int off = offset.value();
+        int off = offset.get();
         value = -value;
         int length = uintLength(value) + 1;
         checkFreeSpace(end - off, length);
 
         formatUInt(value, off + length, buffer);
         buffer.putByte(off, (byte) '-');
-        offset.value(off + length);
+        offset.set(off + length);
     }
 
     public static void formatUInt(int value, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         int length = uintLength(value);
         checkFreeSpace(end - off, length);
 
         int index = off + length;
         formatUInt(value, index, buffer);
-        offset.value(off + length);
+        offset.set(off + length);
     }
 
     public static int uintLength(int x) {

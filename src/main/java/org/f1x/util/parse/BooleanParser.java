@@ -9,13 +9,13 @@ import static org.f1x.util.parse.ParserUtil.*;
 public class BooleanParser {
 
     public static boolean parseBoolean(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         checkFreeSpace(end - off, BooleanType.LENGTH + 1);
 
         boolean value = toBoolean(buffer.getByte(off++));
         checkByte(buffer.getByte(off++), separator);
 
-        offset.value(off);
+        offset.set(off);
         return value;
     }
 

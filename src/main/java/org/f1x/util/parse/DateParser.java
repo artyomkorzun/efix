@@ -20,13 +20,13 @@ public class DateParser {
     private static final short[] DAYS_TO_NEW_YEAR_LEAP = {0, 366, 335, 306, 275, 245, 214, 184, 153, 122, 92, 61, 31};
 
     public static long parseDate(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
 
         checkFreeSpace(end - off, DateType.LENGTH + 1);
         long time = parseDate(buffer, off);
 
         checkByte(buffer.getByte(off + DateType.LENGTH), separator);
-        offset.value(off + DateType.LENGTH + 1);
+        offset.set(off + DateType.LENGTH + 1);
 
         return time;
     }

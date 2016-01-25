@@ -10,7 +10,7 @@ import static org.f1x.util.parse.ParserUtil.*;
 public class IntParser {
 
     public static int parseInt(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int start = offset.value();
+        int start = offset.get();
         int off = start;
 
         checkFreeSpace(end - off, IntType.MIN_LENGTH + 1);
@@ -25,7 +25,7 @@ public class IntParser {
                     value = (value << 3) + (value << 1) + digit(b);
                 } else if (b == separator) {
                     checkUnsignedValue(value, off - start - 1);
-                    offset.value(off);
+                    offset.set(off);
                     return (int) value;
                 } else {
                     throwInvalidChar(b);
@@ -44,7 +44,7 @@ public class IntParser {
                     } else if (b == separator) {
                         value = -value;
                         checkNegativeValue(value, off - start - 1);
-                        offset.value(off);
+                        offset.set(off);
                         return (int) value;
                     } else {
                         throwInvalidChar(b);
@@ -62,7 +62,7 @@ public class IntParser {
     }
 
     public static int parseUInt(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int start = offset.value();
+        int start = offset.get();
         int off = start;
 
         checkFreeSpace(end - off, IntType.MIN_LENGTH + 1);
@@ -80,7 +80,7 @@ public class IntParser {
                 value = (value << 3) + (value << 1) + digit(b);
             } else if (b == separator) {
                 checkUnsignedValue(value, off - start - 1);
-                offset.value(off);
+                offset.set(off);
                 return (int) value;
             } else {
                 throwInvalidChar(b);

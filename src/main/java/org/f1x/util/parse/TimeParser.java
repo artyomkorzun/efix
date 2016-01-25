@@ -15,7 +15,7 @@ public class TimeParser {
      * Parses time in format HH:MM:SS or HH:MM:SS.sss without leap seconds
      */
     public static int parseTime(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         int free = end - off;
 
         checkFreeSpace(free, TimeType.SECOND_TIME_LENGTH + 1);
@@ -32,7 +32,7 @@ public class TimeParser {
         }
 
         checkByte(b, separator);
-        offset.value(off);
+        offset.set(off);
 
         return time;
     }

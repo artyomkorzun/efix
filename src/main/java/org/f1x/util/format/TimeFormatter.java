@@ -16,10 +16,10 @@ public class TimeFormatter {
     protected static final int HOUR_MILLIS = MINUTE_MILLIS * 60;
 
     public static void formatTime(long timestamp, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         checkFreeSpace(end - off, TimeType.MILLISECOND_TIME_LENGTH);
         formatTime(timestamp, buffer, off);
-        offset.value(off + TimeType.MILLISECOND_TIME_LENGTH);
+        offset.set(off + TimeType.MILLISECOND_TIME_LENGTH);
     }
 
     protected static void formatTime(long timestamp, MutableBuffer buffer, int offset) {

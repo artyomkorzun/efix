@@ -22,7 +22,7 @@ public class TimeLayout implements Layout {
 
     @Override
     public void format(boolean inbound, long time, Buffer srcBuffer, int srcOffset, MutableBuffer dstBuffer, int dstOffset, int length) {
-        MutableInt offset = this.offset.value(dstOffset);
+        MutableInt offset = offset(dstOffset);
         int end = dstOffset + size(inbound, time, srcBuffer, srcOffset, length);
 
         formatTimestamp(time, dstBuffer, offset, end);
@@ -30,6 +30,11 @@ public class TimeLayout implements Layout {
         formatChar(' ', dstBuffer, offset, end);
         formatBytes(srcBuffer, srcOffset, length, dstBuffer, offset, end);
         formatChar('\n', dstBuffer, offset, end);
+    }
+
+    protected MutableInt offset(int offset) {
+        this.offset.set(offset);
+        return this.offset;
     }
 
 }

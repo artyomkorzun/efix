@@ -27,7 +27,7 @@ public class RingBufferTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         buffer.headSequence.set(0);
         buffer.tailSequence.set(0);
         buffer.tailCacheSequence.set(0);

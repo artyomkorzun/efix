@@ -222,7 +222,7 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder reset() {
-        offset.value(start);
+        offset.set(start);
         return this;
     }
 
@@ -234,7 +234,7 @@ public class FastMessageBuilder implements MessageBuilder {
     @Override
     public MessageBuilder wrap(MutableBuffer buffer, int offset, int length) {
         this.buffer = buffer;
-        this.offset.value(offset);
+        this.offset.set(offset);
         this.start = offset;
         this.end = offset + length;
         return this;
@@ -247,17 +247,17 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public int offset() {
-        return offset.value();
+        return offset.get();
     }
 
     @Override
     public int length() {
-        return offset.value() - start;
+        return offset.get() - start;
     }
 
     @Override
     public int remaining() {
-        return end - offset.value();
+        return end - offset.get();
     }
 
 }

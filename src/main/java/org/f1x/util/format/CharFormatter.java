@@ -13,13 +13,13 @@ public class CharFormatter {
     }
 
     public static void formatChars(CharSequence value, int valueOffset, int valueLength, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         checkFreeSpace(end - off, valueLength);
 
         for (int i = 0; i < valueLength; i++)
             buffer.putByte(off + i, (byte) value.charAt(valueOffset + i));
 
-        offset.value(off + valueLength);
+        offset.set(off + valueLength);
     }
 
 }

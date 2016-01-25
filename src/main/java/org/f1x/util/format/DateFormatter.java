@@ -56,10 +56,10 @@ public class DateFormatter {
     private static final int[] MONTH_TO_DAY_OFFSET_LEAP = {0, 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
 
     public static void formatDate(long timestamp, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         checkFreeSpace(end - off, DateType.LENGTH);
         formatDate(timestamp, buffer, off);
-        offset.value(off + DateType.LENGTH);
+        offset.set(off + DateType.LENGTH);
     }
 
     // TODO: add support for 0-1904 and 2100-9999 years + optimize

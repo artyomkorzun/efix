@@ -17,9 +17,9 @@ public abstract class AbstractFormatterTest {
         int end = buffer.capacity();
 
         for (Formatter<T> formatter : formatters) {
-            offset.value(0);
+            offset.set(0);
             formatter.format(object, buffer, offset, end);
-            String actual = BufferUtil.toString(buffer, 0, offset.value());
+            String actual = BufferUtil.toString(buffer, 0, offset.get());
             assertEquals("Fail to parse " + object, expected, actual);
         }
     }

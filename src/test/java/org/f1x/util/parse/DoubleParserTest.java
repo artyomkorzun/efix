@@ -238,7 +238,7 @@ public class DoubleParserTest extends AbstractParserTest {
         double actual = DoubleParser.parseDouble(SEPARATOR, buffer, offset, end);
         double precision = guessPrecision(number);
 
-        assertEquals(end, offset.value());
+        assertEquals(end, offset.get());
         assertEquals(expected, actual, precision);
     }
 

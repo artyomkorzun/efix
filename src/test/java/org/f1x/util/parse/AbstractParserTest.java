@@ -18,10 +18,10 @@ public abstract class AbstractParserTest {
 
         T expected = verifier.parse(string);
         for (Parser<T> parser : parsers) {
-            offset.value(0);
+            offset.set(0);
             T actual = parser.parse(SEPARATOR, buffer, offset, end);
 
-            assertEquals(end, offset.value());
+            assertEquals(end, offset.get());
             assertEquals(string, expected, actual);
         }
     }
@@ -32,7 +32,7 @@ public abstract class AbstractParserTest {
         int end = buffer.capacity();
 
         for (Parser<?> parser : parsers) {
-            offset.value(0);
+            offset.set(0);
             try {
                 parser.parse(SEPARATOR, buffer, offset, end);
                 fail(String.format("should fail to parse \"%s\"", string));

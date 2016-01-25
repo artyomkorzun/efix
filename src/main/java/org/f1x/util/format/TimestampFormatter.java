@@ -12,14 +12,14 @@ public class TimestampFormatter {
 
     // TODO: optimize
     public static void formatTimestamp(long timestamp, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         checkFreeSpace(end - off, TimestampType.MILLISECOND_TIMESTAMP_LENGTH);
 
         formatDate(timestamp, buffer, off);
         buffer.putByte(off + TimestampType.DASH_OFFSET, (byte) '-');
         formatTime(timestamp, buffer, off + TimestampType.DASH_OFFSET + 1);
 
-        offset.value(off + TimestampType.MILLISECOND_TIMESTAMP_LENGTH);
+        offset.set(off + TimestampType.MILLISECOND_TIMESTAMP_LENGTH);
     }
 
 }

@@ -15,7 +15,7 @@ public class TimestampParser {
      * Parses timestamp in format YYYYMMDD-HH:MM:SS or YYYYMMDD-HH:MM:SS.sss. Supports leap year. Doesn't support leap second.
      */
     public static long parseTimestamp(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         int free = end - off;
 
         checkFreeSpace(free, TimestampType.SECOND_TIMESTAMP_LENGTH + 1);
@@ -36,7 +36,7 @@ public class TimestampParser {
         }
 
         checkByte(b, separator);
-        offset.value(off);
+        offset.set(off);
 
         return time;
     }

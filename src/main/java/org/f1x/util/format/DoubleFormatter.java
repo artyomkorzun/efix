@@ -46,7 +46,7 @@ public class DoubleFormatter {
             return;
         }
 
-        checkFreeSpace(end - offset.value(), DoubleType.MAX_LENGTH);
+        checkFreeSpace(end - offset.get(), DoubleType.MAX_LENGTH);
 
         long integer = (long) value;
         if (integer < 0) {

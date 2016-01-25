@@ -34,12 +34,12 @@ public class ByteSequenceParserTest extends AbstractParserTest {
         String actual = sequence.toString();
 
         assertEquals(string, actual);
-        assertEquals(offset.value(), end);
+        assertEquals(offset.get(), end);
 
-        offset.value(0);
+        offset.set(0);
         ByteSequenceParser.parseByteSequence(SEPARATOR, buffer, offset, end);
 
-        assertEquals(offset.value(), end);
+        assertEquals(offset.get(), end);
     }
 
     protected static void shouldFailParse(String string) {

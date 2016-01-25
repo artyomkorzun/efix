@@ -55,34 +55,34 @@ public class LongFormatter {
     }
 
     public static void formatULong(long value, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         int length = ulongLength(value);
         checkFreeSpace(end - off, length);
 
         int index = off + length;
         formatULong(value, index, buffer);
-        offset.value(off + length);
+        offset.set(off + length);
     }
 
     public static void formatNegativeLong(long value, MutableBuffer buffer, MutableInt offset, int end) {
         if (value == Long.MIN_VALUE) {
-            int off = offset.value();
+            int off = offset.get();
             int length = MIN_LONG.capacity();
             checkFreeSpace(end - off, length);
 
             buffer.putBytes(off, MIN_LONG);
-            offset.value(off + length);
+            offset.set(off + length);
             return;
         }
 
-        int off = offset.value();
+        int off = offset.get();
         value = -value;
         int length = ulongLength(value) + 1;
         checkFreeSpace(end - off, length);
 
         formatULong(value, off + length, buffer);
         buffer.putByte(off, (byte) '-');
-        offset.value(off + length);
+        offset.set(off + length);
     }
 
     public static int ulongLength(long x) {

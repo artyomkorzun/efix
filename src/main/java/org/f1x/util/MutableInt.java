@@ -11,13 +11,12 @@ public final class MutableInt {
         this.value = value;
     }
 
-    public int value() {
+    public int get() {
         return value;
     }
 
-    public MutableInt value(int newValue) {
-        value = newValue;
-        return this;
+    public void set(int value) {
+        this.value = value;
     }
 
 }

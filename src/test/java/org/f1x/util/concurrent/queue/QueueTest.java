@@ -66,8 +66,8 @@ public class QueueTest {
     }
 
     protected int increment(MutableInt number) {
-        int value = number.value();
-        return number.value(value + 1).value();
+        number.set(number.get() + 1);
+        return number.get();
     }
 
     @Parameters(name = "{0}")

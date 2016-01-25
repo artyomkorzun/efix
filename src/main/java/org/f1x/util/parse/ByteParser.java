@@ -9,13 +9,13 @@ import static org.f1x.util.parse.ParserUtil.*;
 public class ByteParser {
 
     public static byte parseByte(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int off = offset.value();
+        int off = offset.get();
         checkFreeSpace(end - off, ByteType.LENGTH + 1);
 
         byte b = checkByteNotEqual(buffer.getByte(off++), separator);
         checkByte(buffer.getByte(off++), separator);
 
-        offset.value(off);
+        offset.set(off);
 
         return b;
     }

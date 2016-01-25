@@ -10,7 +10,7 @@ import static org.f1x.util.parse.ParserUtil.*;
 public class LongParser {
 
     public static long parseLong(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int start = offset.value();
+        int start = offset.get();
         int off = start;
 
         checkFreeSpace(end - off, LongType.MIN_LENGTH + 1);
@@ -25,7 +25,7 @@ public class LongParser {
                     value = (value << 3) + (value << 1) + digit(b);
                 } else if (b == separator) {
                     checkValueLength(off - start - 1, LongType.MAX_UNSIGNED_LONG_LENGTH);
-                    offset.value(off);
+                    offset.set(off);
                     return value;
                 } else {
                     throwInvalidChar(b);
@@ -43,7 +43,7 @@ public class LongParser {
                         value = (value << 3) + (value << 1) + digit(b);
                     } else if (b == separator) {
                         checkValueLength(off - start - 1, LongType.MAX_NEGATIVE_LONG_LENGTH);
-                        offset.value(off);
+                        offset.set(off);
                         return -value;
                     } else {
                         throwInvalidChar(b);
@@ -61,7 +61,7 @@ public class LongParser {
     }
 
     public static long parseULong(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int start = offset.value();
+        int start = offset.get();
         int off = start;
 
         checkFreeSpace(end - off, LongType.MIN_LENGTH + 1);
@@ -79,7 +79,7 @@ public class LongParser {
                 value = (value << 3) + (value << 1) + digit(b);
             } else if (b == separator) {
                 checkValueLength(off - start - 1, LongType.MAX_UNSIGNED_LONG_LENGTH);
-                offset.value(off);
+                offset.set(off);
                 return value;
             } else {
                 throwInvalidChar(b);
