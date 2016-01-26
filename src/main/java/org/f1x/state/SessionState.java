@@ -5,43 +5,43 @@ import org.f1x.SessionComponent;
 
 public interface SessionState extends SessionComponent {
 
-    SessionStatus getStatus();
+    SessionStatus status();
 
-    void setStatus(SessionStatus status);
-
-
-    boolean isTargetSeqNumSynchronized();
-
-    void setTargetSeqNumSynchronized(boolean targetSeqNumSynchronized);
+    void status(SessionStatus status);
 
 
-    int getNextSenderSeqNum();
+    boolean targetSeqNumSynced();
 
-    void setNextSenderSeqNum(int newValue);
-
-
-    int getNextTargetSeqNum();
-
-    void setNextTargetSeqNum(int newValue);
+    void targetSeqNumSynced(boolean synced);
 
 
-    long getSessionStartTime();
+    int senderSeqNum();
 
-    void setSessionStartTime(long time);
-
-
-    long getLastReceivedTime();
-
-    void setLastReceivedTime(long time);
+    void senderSeqNum(int seqNum);
 
 
-    long getLastSentTime();
+    int targetSeqNum();
 
-    void setLastSentTime(long time);
+    void targetSeqNum(int seqNum);
 
 
-    boolean isTestRequestSent();
+    long sessionStartTime();
 
-    void setTestRequestSent(boolean sent);
+    void sessionStartTime(long time);
+
+
+    long lastReceivedTime();
+
+    void lastReceivedTime(long time);
+
+
+    long lastSentTime();
+
+    void lastSentTime(long time);
+
+
+    boolean testRequestSent();
+
+    void testRequestSent(boolean sent);
 
 }

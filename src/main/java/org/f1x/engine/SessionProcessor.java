@@ -192,7 +192,7 @@ public class SessionProcessor implements Worker {
 
     protected int processCommands() {
         int work = commandQueue.drain(commandHandler);
-        if (closing && state.getStatus() == DISCONNECTED)
+        if (closing && state.status() == DISCONNECTED)
             active = false;
 
         return work;
@@ -206,7 +206,7 @@ public class SessionProcessor implements Worker {
         int work = 0;
 
         try {
-            if (state.getStatus() == DISCONNECTED)
+            if (state.status() == DISCONNECTED)
                 work += checkSessionStart(now);
             else
                 work += checkSessionEnd(now);
@@ -221,7 +221,7 @@ public class SessionProcessor implements Worker {
     protected int processInMessages() {
         int work = 0;
 
-        if (state.getStatus() != DISCONNECTED) {
+        if (state.status() != DISCONNECTED) {
             try {
                 int bytesRead = receiver.receive(inMessageHandler);
                 if (bytesRead == -1) {
@@ -247,7 +247,7 @@ public class SessionProcessor implements Worker {
         int work = 0;
 
         try {
-            SessionStatus status = state.getStatus();
+            SessionStatus status = state.status();
             if (status == SOCKET_CONNECTED || status == LOGON_SENT) {
                 work += checkLogonTimeout(now);
             } else if (status == APPLICATION_CONNECTED) {
@@ -270,13 +270,13 @@ public class SessionProcessor implements Worker {
         if (now >= start && !closing) {
             boolean connected = connect();
             if (connected) {
-                if (state.getSessionStartTime() < start) {
-                    state.setNextTargetSeqNum(1);
-                    state.setNextSenderSeqNum(1);
+                if (state.sessionStartTime() < start) {
+                    state.targetSeqNum(1);
+                    state.senderSeqNum(1);
                     store.clear();
                 }
 
-                state.setSessionStartTime(now);
+                state.sessionStartTime(now);
 
                 if (sessionType.initiator())
                     sendLogon(resetSeqNumsOnLogon);
@@ -294,9 +294,9 @@ public class SessionProcessor implements Worker {
     protected int checkSessionEnd(long now) {
         int work = 0;
 
-        long end = schedule.getEndTime(state.getSessionStartTime());
+        long end = schedule.getEndTime(state.sessionStartTime());
         if (now >= end || closing) {
-            SessionStatus status = state.getStatus();
+            SessionStatus status = state.status();
             if (status == SOCKET_CONNECTED || status == LOGON_SENT) {
                 sendLogout("Session end");
                 disconnect("Session end");
@@ -312,7 +312,7 @@ public class SessionProcessor implements Worker {
 
     protected int checkLogonTimeout(long now) {
         int work = 0;
-        long elapsed = now - state.getSessionStartTime();
+        long elapsed = now - state.sessionStartTime();
         if (elapsed >= logonTimeout)
             throw new TimeoutException(String.format("Logon timeout %s ms. Elapsed %s ms", logonTimeout, elapsed));
 
@@ -321,7 +321,7 @@ public class SessionProcessor implements Worker {
 
     protected int checkLogoutTimeout(long now) {
         int work = 0;
-        long elapsed = now - state.getLastSentTime();
+        long elapsed = now - state.lastSentTime();
         if (elapsed >= logoutTimeout)
             throw new TimeoutException(String.format("Logout timeout %s ms. Elapsed %s ms", logoutTimeout, elapsed));
 
@@ -330,11 +330,11 @@ public class SessionProcessor implements Worker {
 
     protected int checkInHeartbeatTimeout(long now) {
         int work = 0;
-        long elapsed = now - state.getLastReceivedTime();
+        long elapsed = now - state.lastReceivedTime();
         if (elapsed >= 2 * heartbeatTimeout)
             throw new TimeoutException(String.format("Heartbeat timeout %s ms. Elapsed %s ms", heartbeatTimeout, elapsed));
 
-        if (elapsed >= heartbeatTimeout && !state.isTestRequestSent()) {
+        if (elapsed >= heartbeatTimeout && !state.testRequestSent()) {
             sendTestRequest("Heartbeat timeout");
             work += 1;
         }
@@ -344,7 +344,7 @@ public class SessionProcessor implements Worker {
 
     protected int checkOutHeartbeatTimeout(long now) {
         int work = 0;
-        long elapsed = now - state.getLastSentTime();
+        long elapsed = now - state.lastSentTime();
         if (elapsed >= heartbeatTimeout) {
             sendHeartbeat(null);
             work += 1;
@@ -366,7 +366,7 @@ public class SessionProcessor implements Worker {
     }
 
     protected void disconnect(CharSequence cause) {
-        SessionStatus status = state.getStatus();
+        SessionStatus status = state.status();
         if (status != SOCKET_CONNECTED)
             updateStatus(SOCKET_CONNECTED);
 
@@ -379,7 +379,7 @@ public class SessionProcessor implements Worker {
 
     protected void processMessage(Buffer buffer, int offset, int length) {
         long time = clock.time();
-        state.setLastReceivedTime(time);
+        state.lastReceivedTime(time);
         log.log(true, time, buffer, offset, length);
 
         MessageParser parser = this.parser;
@@ -427,25 +427,26 @@ public class SessionProcessor implements Worker {
         assertNotDuplicate(header.possDup(), "Logon with PossDup(44)=Y");
 
         Logon logon = parseLogon(parser, this.logon);
+
         boolean resetSeqNums = logon.resetSeqNums();
-        if (resetSeqNums)
-            state.setNextTargetSeqNum(1);
-
         int msgSeqNum = header.msgSeqNum();
-        boolean expectedSeqNum = checkTargetSeqNum(msgSeqNum, resetSeqNums);
 
-        state.setTargetSeqNumSynchronized(false);
-        if (expectedSeqNum)
-            state.setNextTargetSeqNum(msgSeqNum + 1);
+        boolean expectedSeqNum = checkTargetSeqNum(resetSeqNums ? 1 : state.targetSeqNum(), msgSeqNum, resetSeqNums);
+        if (!resetSeqNums && expectedSeqNum)
+            state.targetSeqNum(msgSeqNum + 1);
 
         validateLogon(logon);
         onAdminMessage(header, parser.reset());
+
+        state.targetSeqNumSynced(false);
+        if (resetSeqNums)
+            state.targetSeqNum(msgSeqNum + 1);
 
         if (updateStatus(LOGON_RECEIVED) == SOCKET_CONNECTED)
             sendLogon(resetSeqNums);
 
         if (!expectedSeqNum)
-            sendResendRequest(state.getNextTargetSeqNum(), 0);
+            sendResendRequest(state.targetSeqNum(), 0);
 
         sendTestRequest("MsgSeqNum check");
         updateStatus(APPLICATION_CONNECTED);
@@ -458,9 +459,9 @@ public class SessionProcessor implements Worker {
         int msgSeqNum = header.msgSeqNum();
         checkTargetSeqNum(msgSeqNum, true);
 
-        state.setNextTargetSeqNum(msgSeqNum + 1);
-        state.setTestRequestSent(false);
-        state.setTargetSeqNumSynchronized(true);
+        state.targetSeqNum(msgSeqNum + 1);
+        state.testRequestSent(false);
+        state.targetSeqNumSynced(true);
 
         onAdminMessage(header, parser);
     }
@@ -470,14 +471,14 @@ public class SessionProcessor implements Worker {
         assertNotDuplicate(header.possDup(), "TestRequest with PossDup(44)=Y");
 
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.isTargetSeqNumSynchronized()))
-            state.setNextTargetSeqNum(msgSeqNum + 1);
+        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced()))
+            state.targetSeqNum(msgSeqNum + 1);
 
         TestRequest request = parseTestRequest(parser, testRequest);
         validateTestRequest(request);
 
         onAdminMessage(header, parser.reset());
-        if (state.getStatus() == APPLICATION_CONNECTED)
+        if (state.status() == APPLICATION_CONNECTED)
             sendHeartbeat(request.testReqID());
     }
 
@@ -486,22 +487,22 @@ public class SessionProcessor implements Worker {
         assertNotDuplicate(header.possDup(), "ResendRequest with PossDup(44)=Y");
 
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.isTargetSeqNumSynchronized()))
-            state.setNextTargetSeqNum(msgSeqNum + 1);
+        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced()))
+            state.targetSeqNum(msgSeqNum + 1);
 
         ResendRequest request = parseResendRequest(parser, resendRequest);
         validateResendRequest(request);
 
         onAdminMessage(header, parser.reset());
-        resendMessages(request.beginSeqNo(), request.endSeqNo() == 0 ? (state.getNextSenderSeqNum() - 1) : request.endSeqNo());
+        resendMessages(request.beginSeqNo(), request.endSeqNo() == 0 ? (state.senderSeqNum() - 1) : request.endSeqNo());
     }
 
     protected void processReject(Header header, MessageParser parser) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.isTargetSeqNumSynchronized())) {
-            state.setNextTargetSeqNum(msgSeqNum + 1);
+        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced())) {
+            state.targetSeqNum(msgSeqNum + 1);
             onAdminMessage(header, parser);
         }
     }
@@ -515,21 +516,21 @@ public class SessionProcessor implements Worker {
 
         validateSequenceReset(reset);
         onAdminMessage(header, parser.reset());
-        state.setNextTargetSeqNum(reset.newSeqNo());
+        state.targetSeqNum(reset.newSeqNo());
     }
 
     protected void processLogout(Header header, MessageParser parser) {
         assertStatus(LOGON_SENT, APPLICATION_CONNECTED, LOGOUT_SENT);
         assertNotDuplicate(header.possDup(), "Logout with PossDup(44)=Y");
 
-        boolean expectedSeqNum = checkTargetSeqNum(header.msgSeqNum(), state.isTargetSeqNumSynchronized());
+        boolean expectedSeqNum = checkTargetSeqNum(header.msgSeqNum(), state.targetSeqNumSynced());
         if (expectedSeqNum)
-            state.setNextTargetSeqNum(header.msgSeqNum() + 1);
+            state.targetSeqNum(header.msgSeqNum() + 1);
 
         onAdminMessage(header, parser);
 
         if (updateStatus(LOGOUT_RECEIVED) == APPLICATION_CONNECTED)
-            sendLogout("Responding to Logout");
+            sendLogout("Logout response");
 
         disconnect("Logout");
     }
@@ -537,8 +538,8 @@ public class SessionProcessor implements Worker {
     protected void processAppMessage(Header header, MessageParser parser) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        if (checkTargetSeqNum(header.msgSeqNum(), state.isTargetSeqNumSynchronized())) {
-            state.setNextTargetSeqNum(header.msgSeqNum() + 1);
+        if (checkTargetSeqNum(header.msgSeqNum(), state.targetSeqNumSynced())) {
+            state.targetSeqNum(header.msgSeqNum() + 1);
             onAppMessage(header, parser);
         }
     }
@@ -559,12 +560,12 @@ public class SessionProcessor implements Worker {
     }
 
     protected void validateSequenceReset(SequenceReset reset) {
-        SessionUtil.validateSequenceReset(state.getNextTargetSeqNum(), reset);
+        SessionUtil.validateSequenceReset(state.targetSeqNum(), reset);
     }
 
     protected void sendLogon(boolean resetSeqNums) {
         if (resetSeqNums) {
-            state.setNextSenderSeqNum(1);
+            state.senderSeqNum(1);
             store.clear();
         }
 
@@ -591,7 +592,7 @@ public class SessionProcessor implements Worker {
         builder.wrap(messageBuffer);
         makeTestRequest(testReqID, builder);
         sendMessage(true, messageBuffer, 0, builder.length());
-        state.setTestRequestSent(true);
+        state.testRequestSent(true);
     }
 
     protected void sendResendRequest(int beginSeqNo, int endSeqNo) {
@@ -601,7 +602,7 @@ public class SessionProcessor implements Worker {
     }
 
     protected void sendReject(Buffer buffer, int offset, int length) {
-        SessionStatus status = state.getStatus();
+        SessionStatus status = state.status();
         boolean send = (status == APPLICATION_CONNECTED || status == LOGON_SENT);
         sendMessage(send, buffer, offset, length);
     }
@@ -613,14 +614,14 @@ public class SessionProcessor implements Worker {
     }
 
     protected void sendAppMessage(Buffer buffer, int offset, int length) {
-        SessionStatus status = state.getStatus();
+        SessionStatus status = state.status();
         boolean send = (status == APPLICATION_CONNECTED || status == LOGON_SENT);
         sendMessage(send, buffer, offset, length);
     }
 
     protected void sendMessage(boolean send, Buffer buffer, int offset, int length) {
-        int seqNum = state.getNextSenderSeqNum();
-        state.setNextSenderSeqNum(seqNum + 1);
+        int seqNum = state.senderSeqNum();
+        state.senderSeqNum(seqNum + 1);
         sendMessage(send, seqNum, buffer, offset, length);
     }
 
@@ -655,7 +656,7 @@ public class SessionProcessor implements Worker {
     }
 
     protected void sendMessage(long time, Buffer message, int offset, int length) {
-        state.setLastSentTime(time);
+        state.lastSentTime(time);
         sender.send(message, offset, length);
         log.log(false, time, message, offset, length);
     }
@@ -663,7 +664,7 @@ public class SessionProcessor implements Worker {
     protected void makeLogon(boolean resetSeqNum, MessageBuilder builder) {
         SessionUtil.makeLogon(resetSeqNum, heartbeatInterval, builder);
         if (logonWithNextExpectedSeqNum)
-            builder.addInt(Tag.NextExpectedMsgSeqNum, state.getNextTargetSeqNum());
+            builder.addInt(Tag.NextExpectedMsgSeqNum, state.targetSeqNum());
     }
 
     protected void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {
@@ -687,14 +688,14 @@ public class SessionProcessor implements Worker {
     }
 
     protected SessionStatus updateStatus(SessionStatus status) {
-        SessionStatus old = state.getStatus();
-        state.setStatus(status);
+        SessionStatus old = state.status();
+        state.status(status);
         onStatusUpdate(old, status);
         return old;
     }
 
     protected void processError(Exception e) {
-        if (state.getStatus() != DISCONNECTED)
+        if (state.status() != DISCONNECTED)
             disconnect(e.getMessage());
 
         onError(e);
@@ -739,15 +740,19 @@ public class SessionProcessor implements Worker {
     }
 
     protected void assertStatus(SessionStatus expected1, SessionStatus expected2) {
-        SessionUtil.assertStatus(expected1, expected2, state.getStatus());
+        SessionUtil.assertStatus(expected1, expected2, state.status());
     }
 
     protected void assertStatus(SessionStatus expected1, SessionStatus expected2, SessionStatus expected3) {
-        SessionUtil.assertStatus(expected1, expected2, expected3, state.getStatus());
+        SessionUtil.assertStatus(expected1, expected2, expected3, state.status());
     }
 
     protected boolean checkTargetSeqNum(int actual, boolean checkHigher) {
-        return SessionUtil.checkTargetSeqNum(state.getNextTargetSeqNum(), actual, checkHigher);
+        return SessionUtil.checkTargetSeqNum(state.targetSeqNum(), actual, checkHigher);
+    }
+
+    protected boolean checkTargetSeqNum(int expected, int actual, boolean checkHigher) {
+        return SessionUtil.checkTargetSeqNum(expected, actual, checkHigher);
     }
 
 }

@@ -37,37 +37,37 @@ public class SessionStateTest {
 
     @Test
     public void shouldSetAndGetFields() {
-        assertEquals(SessionStatus.DISCONNECTED, state.getStatus());
-        state.setStatus(SessionStatus.APPLICATION_CONNECTED);
-        assertEquals(SessionStatus.APPLICATION_CONNECTED, state.getStatus());
+        assertEquals(SessionStatus.DISCONNECTED, state.status());
+        state.status(SessionStatus.APPLICATION_CONNECTED);
+        assertEquals(SessionStatus.APPLICATION_CONNECTED, state.status());
 
-        assertFalse(state.isTargetSeqNumSynchronized());
-        state.setTargetSeqNumSynchronized(true);
-        assertTrue(state.isTargetSeqNumSynchronized());
+        assertFalse(state.targetSeqNumSynced());
+        state.targetSeqNumSynced(true);
+        assertTrue(state.targetSeqNumSynced());
 
-        assertEquals(1, state.getNextSenderSeqNum());
-        state.setNextSenderSeqNum(99);
-        assertEquals(99, state.getNextSenderSeqNum());
+        assertEquals(1, state.senderSeqNum());
+        state.senderSeqNum(99);
+        assertEquals(99, state.senderSeqNum());
 
-        assertEquals(1, state.getNextTargetSeqNum());
-        state.setNextTargetSeqNum(999);
-        assertEquals(999, state.getNextTargetSeqNum());
+        assertEquals(1, state.targetSeqNum());
+        state.targetSeqNum(999);
+        assertEquals(999, state.targetSeqNum());
 
-        assertEquals(Long.MIN_VALUE, state.getSessionStartTime());
-        state.setSessionStartTime(9999);
-        assertEquals(9999, state.getSessionStartTime());
+        assertEquals(Long.MIN_VALUE, state.sessionStartTime());
+        state.sessionStartTime(9999);
+        assertEquals(9999, state.sessionStartTime());
 
-        assertEquals(Long.MIN_VALUE, state.getLastSentTime());
-        state.setLastSentTime(99999);
-        assertEquals(99999, state.getLastSentTime());
+        assertEquals(Long.MIN_VALUE, state.lastSentTime());
+        state.lastSentTime(99999);
+        assertEquals(99999, state.lastSentTime());
 
-        assertEquals(Long.MIN_VALUE, state.getLastReceivedTime());
-        state.setLastReceivedTime(999999);
-        assertEquals(999999, state.getLastReceivedTime());
+        assertEquals(Long.MIN_VALUE, state.lastReceivedTime());
+        state.lastReceivedTime(999999);
+        assertEquals(999999, state.lastReceivedTime());
 
-        assertFalse(state.isTestRequestSent());
-        state.setTestRequestSent(true);
-        assertTrue(state.isTestRequestSent());
+        assertFalse(state.testRequestSent());
+        state.testRequestSent(true);
+        assertTrue(state.testRequestSent());
     }
 
     @Parameters(name = "{0}")

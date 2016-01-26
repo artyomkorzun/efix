@@ -7,32 +7,32 @@ public class MemorySessionState extends AbstractSessionState {
     protected int targetSeqNum = 1;
 
     @Override
-    public int getNextSenderSeqNum() {
+    public int senderSeqNum() {
         return senderSeqNum;
     }
 
     @Override
-    public void setNextSenderSeqNum(int newValue) {
-        this.senderSeqNum = newValue;
+    public void senderSeqNum(int seqNum) {
+        this.senderSeqNum = seqNum;
     }
 
     @Override
-    public int getNextTargetSeqNum() {
+    public int targetSeqNum() {
         return targetSeqNum;
     }
 
     @Override
-    public void setNextTargetSeqNum(int newValue) {
-        this.targetSeqNum = newValue;
+    public void targetSeqNum(int seqNum) {
+        this.targetSeqNum = seqNum;
     }
 
     @Override
-    public long getSessionStartTime() {
+    public long sessionStartTime() {
         return sessionStartTime;
     }
 
     @Override
-    public void setSessionStartTime(long time) {
+    public void sessionStartTime(long time) {
         this.sessionStartTime = time;
     }
 

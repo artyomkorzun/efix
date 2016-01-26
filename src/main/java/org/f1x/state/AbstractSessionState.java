@@ -9,52 +9,52 @@ public abstract class AbstractSessionState implements SessionState {
     protected boolean isTestRequestSent;
 
     @Override
-    public SessionStatus getStatus() {
+    public SessionStatus status() {
         return status;
     }
 
     @Override
-    public void setStatus(SessionStatus status) {
+    public void status(SessionStatus status) {
         this.status = status;
     }
 
     @Override
-    public boolean isTargetSeqNumSynchronized() {
+    public boolean targetSeqNumSynced() {
         return targetSeqNumSynchronized;
     }
 
     @Override
-    public void setTargetSeqNumSynchronized(boolean targetSeqNumSynchronized) {
-        this.targetSeqNumSynchronized = targetSeqNumSynchronized;
+    public void targetSeqNumSynced(boolean synced) {
+        this.targetSeqNumSynchronized = synced;
     }
 
     @Override
-    public long getLastReceivedTime() {
+    public long lastReceivedTime() {
         return lastReceivedTime;
     }
 
     @Override
-    public void setLastReceivedTime(long time) {
+    public void lastReceivedTime(long time) {
         this.lastReceivedTime = time;
     }
 
     @Override
-    public long getLastSentTime() {
+    public long lastSentTime() {
         return lastSentTime;
     }
 
     @Override
-    public void setLastSentTime(long time) {
+    public void lastSentTime(long time) {
         this.lastSentTime = time;
     }
 
     @Override
-    public boolean isTestRequestSent() {
+    public boolean testRequestSent() {
         return isTestRequestSent;
     }
 
     @Override
-    public void setTestRequestSent(boolean sent) {
+    public void testRequestSent(boolean sent) {
         this.isTestRequestSent = sent;
     }
 

@@ -45,12 +45,21 @@ public class TestUtil {
 
 
     public static UnsafeBuffer byteMessage(String message) {
-        return BufferUtil.fromString(normalize(message));
+        return BufferUtil.fromString(stringMessage(message));
     }
 
-    public static String normalize(String message) {
+    public static String stringMessage(String message) {
         return message.replace('|', '\u0001');
     }
+
+    public static String[] stringMessages(String... messages) {
+        String[] msgs = new String[messages.length];
+        for (int i = 0; i < messages.length; i++)
+            msgs[i] = stringMessage(messages[i]);
+
+        return msgs;
+    }
+
 
     public static int generateInt(int from, int to) {
         return (int) ThreadLocalRandom.current().nextLong(from, to + 1L);
@@ -75,6 +84,14 @@ public class TestUtil {
     @SafeVarargs
     public static <T> T[] arrayOf(T... objects) {
         return objects;
+    }
+
+    public static String concatenate(String[] strings) {
+        String string = "";
+        for (String s : strings)
+            string += s;
+
+        return string;
     }
 
 }

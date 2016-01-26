@@ -83,7 +83,7 @@ public class MessageBuilderTest {
     }
 
     protected static void assertMessage(String expected, String actual) {
-        expected = normalize(expected);
+        expected = stringMessage(expected);
         assertEquals("Fail to build " + expected, expected, actual);
     }
 

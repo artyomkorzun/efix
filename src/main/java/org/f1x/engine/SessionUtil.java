@@ -39,9 +39,9 @@ public class SessionUtil {
     }
 
     public static void validateSequenceReset(int targetSeqNum, SequenceReset reset) {
-        int newSeqNo = checkPresent(Tag.BeginSeqNo, reset.newSeqNo());
-        if (newSeqNo < targetSeqNum)
-            throw new FieldException(Tag.NewSeqNo, String.format("NewSeqNo(36) %s less expected target MsgSeqNum %s", newSeqNo, targetSeqNum));
+        int newSeqNo = checkPresent(Tag.NewSeqNo, reset.newSeqNo());
+        if (newSeqNo <= targetSeqNum)
+            throw new FieldException(Tag.NewSeqNo, String.format("NewSeqNo(36) %s should be more expected target MsgSeqNum %s", newSeqNo, targetSeqNum));
     }
 
     public static void makeLogon(boolean resetSeqNum, int heartBtInt, MessageBuilder builder) {
@@ -140,6 +140,8 @@ public class SessionUtil {
             else
                 parser.parseValue();
         }
+
+        checkPresent(Tag.TestReqID, testReqID);
 
         return request;
     }

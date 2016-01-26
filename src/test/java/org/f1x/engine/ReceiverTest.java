@@ -1,17 +1,20 @@
 package org.f1x.engine;
 
-import org.f1x.connector.channel.TestChannel;
+import org.f1x.connector.channel.TextChannel;
+import org.f1x.message.FieldException;
 import org.f1x.util.InsufficientSpaceException;
-import org.f1x.util.TestUtil;
 import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.concurrent.buffer.MessageHandler;
 import org.junit.Test;
 
 import java.util.ArrayList;
 
+import static org.f1x.util.TestUtil.stringMessages;
 import static org.junit.Assert.assertArrayEquals;
 
 public class ReceiverTest {
+
+    protected static final int BUFFER_SIZE = 1024;
 
     @Test
     public void shouldReceiveBrokenMessages() {
@@ -34,23 +37,42 @@ public class ReceiverTest {
 
     @Test(expected = InsufficientSpaceException.class)
     public void shouldThrowExceptionMessageLengthExceedsMax() {
-        Receiver receiver = new Receiver(1024);
-        receiver.setChannel(new TestChannel("8=FIX.4.2|9=1024|---------------------------------------------------------------------------------->"));
-        receiver.receive(null);
+        shouldThrowException("8=FIX.4.2|9=1024|---------------------------------------------------------------------------------->");
+    }
+
+    @Test(expected = FieldException.class)
+    public void shouldThrowExceptionBodyLengthNonPositive() {
+        shouldThrowException("8=FIX.4.2|9=0|---------------------------------------------------------------------------------->");
+    }
+
+    @Test(expected = FieldException.class)
+    public void shouldThrowExceptionMissingBeginString() {
+        shouldThrowException("9=150|---------------------------------------------------------------------------------->");
+    }
+
+    @Test(expected = FieldException.class)
+    public void shouldThrowExceptionMissingBodyLength() {
+        shouldThrowException("8=FIX.4.2|19=150|---------------------------------------------------------------------------------->");
     }
 
     protected void shouldReceiveMessages(String[] expected, String[] chunks) {
-        for (int i = 0; i < expected.length; i++)
-            expected[i] = TestUtil.normalize(expected[i]);
-
-        Receiver receiver = new Receiver(1024);
-        receiver.setChannel(new TestChannel(chunks));
+        Receiver receiver = new Receiver(BUFFER_SIZE);
+        receiver.setChannel(new TextChannel(chunks));
 
         ArrayList<String> messages = new ArrayList<>();
         MessageHandler verifier = (messageType, buffer, offset, length) -> messages.add(BufferUtil.toString(buffer, offset, length));
         while (receiver.receive(verifier) > 0) ;
 
-        assertArrayEquals(expected, messages.toArray());
+        assertArrayEquals(stringMessages(expected), messages.toArray());
+    }
+
+    protected void shouldThrowException(String... chunks) {
+        Receiver receiver = new Receiver(BUFFER_SIZE);
+        receiver.setChannel(new TextChannel(chunks));
+        MessageHandler handler = (messageType, buffer, offset, length) -> {
+        };
+
+        while (receiver.receive(handler) > 0) ;
     }
 
 }

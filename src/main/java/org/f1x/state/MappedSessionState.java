@@ -32,32 +32,32 @@ public class MappedSessionState extends AbstractSessionState {
     }
 
     @Override
-    public int getNextSenderSeqNum() {
+    public int senderSeqNum() {
         return buffer.getInt(SENDER_SEQ_NUM_OFFSET);
     }
 
     @Override
-    public void setNextSenderSeqNum(int newValue) {
-        buffer.putInt(SENDER_SEQ_NUM_OFFSET, newValue);
+    public void senderSeqNum(int seqNum) {
+        buffer.putInt(SENDER_SEQ_NUM_OFFSET, seqNum);
     }
 
     @Override
-    public int getNextTargetSeqNum() {
+    public int targetSeqNum() {
         return buffer.getInt(TARGET_SEQ_NUM_OFFSET);
     }
 
     @Override
-    public void setNextTargetSeqNum(int newValue) {
-        buffer.putInt(TARGET_SEQ_NUM_OFFSET, newValue);
+    public void targetSeqNum(int seqNum) {
+        buffer.putInt(TARGET_SEQ_NUM_OFFSET, seqNum);
     }
 
     @Override
-    public long getSessionStartTime() {
+    public long sessionStartTime() {
         return buffer.getLong(START_SESSION_TIME_OFFSET);
     }
 
     @Override
-    public void setSessionStartTime(long time) {
+    public void sessionStartTime(long time) {
         buffer.putLong(START_SESSION_TIME_OFFSET, time);
     }
 
@@ -72,9 +72,9 @@ public class MappedSessionState extends AbstractSessionState {
         }
 
         if (justCreated) {
-            setNextSenderSeqNum(1);
-            setNextTargetSeqNum(1);
-            setSessionStartTime(Long.MIN_VALUE);
+            senderSeqNum(1);
+            targetSeqNum(1);
+            sessionStartTime(Long.MIN_VALUE);
         }
     }
 

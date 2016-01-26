@@ -12,8 +12,8 @@ import org.f1x.util.buffer.UnsafeBuffer;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.f1x.util.TestUtil.normalize;
 import static org.f1x.util.TestUtil.parseTimestamp;
+import static org.f1x.util.TestUtil.stringMessage;
 import static org.f1x.util.buffer.BufferUtil.fromString;
 
 
@@ -77,14 +77,14 @@ public class MessagePackerTest {
                                                 int msgSeqNum, String sendingTime, String msgType, String body) {
 
         SessionID id = new SessionID(senderCompID, senderSubId, targetCompID, targetSubId);
-        body = normalize(body);
+        body = stringMessage(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
         MessagePacker packer = new MessagePacker(FIXVersion.FIX44, id, buffer);
         int length = packer.pack(msgSeqNum, parseTimestamp(sendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
-        expected = normalize(expected);
+        expected = stringMessage(expected);
         Assert.assertEquals("should pack message " + expected, expected, actual);
     }
 
@@ -92,14 +92,14 @@ public class MessagePackerTest {
                                                   int msgSeqNum, String sendingTime, String origSendingTime, String msgType, String body) {
 
         SessionID id = new SessionID(senderCompID, senderSubId, targetCompID, targetSubId);
-        body = normalize(body);
+        body = stringMessage(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
         MessagePacker packer = new MessagePacker(FIXVersion.FIX44, id, buffer);
         int length = packer.pack(msgSeqNum, parseTimestamp(sendingTime), parseTimestamp(origSendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
-        expected = normalize(expected);
+        expected = stringMessage(expected);
         Assert.assertEquals("should pack message " + expected, expected, actual);
     }
 
