@@ -1,152 +1,96 @@
 package org.f1x.util.format;
 
-import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.MutableBuffer;
+import org.f1x.util.type.IntType;
 
-import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
 import static org.f1x.util.format.FormatterUtil.digit;
 
-@SuppressWarnings("Duplicates")
+
 public class IntFormatter {
 
     protected static final Buffer MIN_INT = BufferUtil.fromString(Integer.MIN_VALUE + "");
 
-    private static final int[] SIZE_TABLE = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, Integer.MAX_VALUE};
-
-    private static final byte[] DIGIT = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
-    };
-
-    private static final byte[] DIGIT_TEN = {
-            '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
-            '1', '1', '1', '1', '1', '1', '1', '1', '1', '1',
-            '2', '2', '2', '2', '2', '2', '2', '2', '2', '2',
-            '3', '3', '3', '3', '3', '3', '3', '3', '3', '3',
-            '4', '4', '4', '4', '4', '4', '4', '4', '4', '4',
-            '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
-            '6', '6', '6', '6', '6', '6', '6', '6', '6', '6',
-            '7', '7', '7', '7', '7', '7', '7', '7', '7', '7',
-            '8', '8', '8', '8', '8', '8', '8', '8', '8', '8',
-            '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',
-    };
-
-    private static final byte[] DIGIT_ONE = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    };
-
-    public static void formatInt(int value, MutableBuffer buffer, MutableInt offset, int end) {
+    public static int formatInt(int value, MutableBuffer buffer, int offset) {
         if (value >= 0)
-            formatUInt(value, buffer, offset, end);
+            return formatUInt(value, buffer, offset);
         else
-            formatNegativeInt(value, buffer, offset, end);
+            return formatNegativeInt(value, buffer, offset);
     }
 
-    private static void formatNegativeInt(int value, MutableBuffer buffer, MutableInt offset, int end) {
+    private static int formatNegativeInt(int value, MutableBuffer buffer, int offset) {
         if (value == Integer.MIN_VALUE) {
-            int off = offset.get();
-            int length = MIN_INT.capacity();
-            checkFreeSpace(end - off, length);
-
-            buffer.putBytes(off, MIN_INT);
-            offset.set(off + length);
-            return;
+            buffer.putBytes(offset, MIN_INT);
+            return offset + IntType.MAX_NEGATIVE_INT_LENGTH;
         }
 
-        int off = offset.get();
-        value = -value;
-        int length = uintLength(value) + 1;
-        checkFreeSpace(end - off, length);
-
-        formatUInt(value, off + length, buffer);
-        buffer.putByte(off, (byte) '-');
-        offset.set(off + length);
+        buffer.putByte(offset++, (byte) '-');
+        return formatUInt(-value, buffer, offset);
     }
 
-    public static void formatUInt(int value, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.get();
+    /**
+     * Divs are replaced by inverse muls (3435973837 / 34359738368 = 0.10000000000582...).
+     * It works approx for value < 10^11 that covers all ints.
+     */
+    public static int formatUInt(int value, MutableBuffer buffer, int offset) {
         int length = uintLength(value);
-        checkFreeSpace(end - off, length);
-
-        int index = off + length;
-        formatUInt(value, index, buffer);
-        offset.set(off + length);
-    }
-
-    public static int uintLength(int x) {
-        for (int i = 0; ; i++)
-            if (x <= SIZE_TABLE[i])
-                return i + 1;
-    }
-
-    protected static void formatUInt(int value, int index, MutableBuffer buffer) {
-        int integer;
-        int remainder;
+        int index = offset + length;
 
         while (value > 0xFFFF) {
-            integer = value / 100;
-            remainder = value - ((integer << 6) + (integer << 5) + (integer << 2));
-            buffer.putByte(--index, DIGIT_ONE[remainder]);
-            buffer.putByte(--index, DIGIT_TEN[remainder]);
+            int integer = (int) ((value * 3435973837L) >>> (32 + 3));
+            int remainder = value - ((integer << 3) + (integer << 1));
+            buffer.putByte(--index, digit(remainder));
             value = integer;
         }
 
         do {
-            integer = (value * 52429) >>> (16 + 3); // the same as value / 100
-            remainder = value - ((integer << 3) + (integer << 1));
-            buffer.putByte(--index, DIGIT[remainder]);
+            int integer = (value * 52429) >>> (16 + 3);
+            int remainder = value - ((integer << 3) + (integer << 1));
+            buffer.putByte(--index, digit(remainder));
             value = integer;
-        } while (value != 0);
+        } while (index > offset);
 
+        return offset + length;
+    }
 
-        /*
+    public static int uintLength(int value) {
+        if (value < 10) return 1;
+        if (value < 100) return 2;
+        if (value < 1000) return 3;
+        if (value < 10000) return 4;
+        if (value < 100000) return 5;
+        if (value < 1000000) return 6;
+        if (value < 10000000) return 7;
+        if (value < 100000000) return 8;
+        if (value < 1000000000) return 9;
 
-        // TODO: replace
+        return 10;
+    }
 
-        div is replaced by inverse mul (3435973837 / 34359738368 = 0.10000000000582...)
-        it works approx for value < 10^11 that covers all ints
+    protected static int format4DigitUInt(int value, MutableBuffer buffer, int offset) {
+        return formatNDigitUShort(value, 4, buffer, offset);
+    }
+
+    protected static int format3DigitUInt(int value, MutableBuffer buffer, int offset) {
+        return formatNDigitUShort(value, 3, buffer, offset);
+    }
+
+    protected static int format2DigitUInt(int value, MutableBuffer buffer, int offset) {
+        return formatNDigitUShort(value, 2, buffer, offset);
+    }
+
+    private static int formatNDigitUShort(int value, int length, MutableBuffer buffer, int offset) {
+        int index = offset + length;
 
         do {
-            long integer = (value * 3435973837L) >>> (32 + 3);
-            int remainder = (int) (value - ((integer << 3) + (integer << 1)));
-            builder.append((char) (remainder + '0'));
+            int integer = (value * 52429) >>> (16 + 3);
+            int remainder = value - ((integer << 3) + (integer << 1));
+            buffer.putByte(--index, digit(remainder));
             value = integer;
-        } while (value != 0);
+        } while (index > offset);
 
-        */
+        return offset + length;
     }
-
-    // TODO: optimize
-    protected static void format4DigitUInt(int value, MutableBuffer buffer, int offset) {
-        for (int i = 3; i >= 0; i--) {
-            buffer.putByte(offset + i, digit(value % 10));
-            value /= 10;
-        }
-    }
-
-    protected static void format3DigitUInt(int value, MutableBuffer buffer, int offset) {
-        for (int i = 2; i >= 0; i--) {
-            buffer.putByte(offset + i, digit(value % 10));
-            value /= 10;
-        }
-    }
-
-    protected static void format2DigitUInt(int value, MutableBuffer buffer, int offset) {
-        for (int i = 1; i >= 0; i--) {
-            buffer.putByte(offset + i, digit(value % 10));
-            value /= 10;
-        }
-    }
-
 
 }

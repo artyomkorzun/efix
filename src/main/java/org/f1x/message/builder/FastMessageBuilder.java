@@ -108,7 +108,8 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder startField(int tag) {
-        appendInt(tag);
+        int off = IntFormatter.formatUInt(tag, buffer, offset.get());
+        offset.set(off);
         return appendByte(FieldUtil.TAG_VALUE_SEPARATOR);
     }
 
@@ -137,7 +138,8 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder appendInt(int value) {
-        IntFormatter.formatInt(value, buffer, offset, end);
+        int off = IntFormatter.formatInt(value, buffer, offset.get());
+        offset.set(off);
         return this;
     }
 
