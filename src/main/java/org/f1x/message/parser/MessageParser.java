@@ -10,6 +10,8 @@ public interface MessageParser {
 
     byte parseByte();
 
+    char parseChar();
+
     int parseInt();
 
     long parseLong();

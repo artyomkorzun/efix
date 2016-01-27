@@ -28,6 +28,11 @@ public class FastMessageParser implements MessageParser {
     }
 
     @Override
+    public char parseChar() {
+        return CharParser.parseChar(FIELD_SEPARATOR, buffer, offset, end);
+    }
+
+    @Override
     public int parseInt() {
         return IntParser.parseInt(FIELD_SEPARATOR, buffer, offset, end);
     }
