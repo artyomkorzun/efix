@@ -14,18 +14,17 @@ public class TimeLayout implements Layout {
     protected static final int LAYOUT_LENGTH = TimestampType.MILLISECOND_TIMESTAMP_LENGTH + 3;
 
     @Override
-    public int size(boolean inbound, long time, Buffer buffer, int offset, int length) {
+    public int size(boolean inbound, long time, Buffer message, int offset, int length) {
         return length + LAYOUT_LENGTH;
     }
 
     @Override
-    public void format(boolean inbound, long time, Buffer srcBuffer, int srcOffset, MutableBuffer dstBuffer, int dstOffset, int length) {
-        int offset = dstOffset;
-        offset = formatTimestamp(time, dstBuffer, offset);
-        offset = formatChar(':', dstBuffer, offset);
-        offset = formatChar(' ', dstBuffer, offset);
-        offset = formatBytes(srcBuffer, srcOffset, length, dstBuffer, offset);
-        offset = formatChar('\n', dstBuffer, offset);
+    public void format(boolean inbound, long time, Buffer message, int offset, int length, MutableBuffer buffer, int bufferOffset) {
+        bufferOffset = formatTimestamp(time, buffer, bufferOffset);
+        bufferOffset = formatChar(':', buffer, bufferOffset);
+        bufferOffset = formatChar(' ', buffer, bufferOffset);
+        bufferOffset = formatBytes(message, offset, length, buffer, bufferOffset);
+        bufferOffset = formatChar('\n', buffer, bufferOffset);
     }
 
 }

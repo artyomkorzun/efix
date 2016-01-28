@@ -38,15 +38,15 @@ public class FileMessageLog implements MessageLog {
     }
 
     @Override
-    public void log(boolean inbound, long time, Buffer buffer, int offset, int length) {
-        int size = layout.size(inbound, time, buffer, offset, length);
+    public void log(boolean inbound, long time, Buffer message, int offset, int length) {
+        int size = layout.size(inbound, time, message, offset, length);
         if (byteBuffer.remaining() < size) {
             flush();
             checkEntrySize(size);
         }
 
         int position = byteBuffer.position();
-        layout.format(inbound, time, buffer, offset, this.buffer, position, length);
+        layout.format(inbound, time, message, offset, length, this.buffer, position);
         byteBuffer.position(position + size);
     }
 
