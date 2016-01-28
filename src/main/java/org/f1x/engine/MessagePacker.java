@@ -2,21 +2,23 @@ package org.f1x.engine;
 
 import org.f1x.FIXVersion;
 import org.f1x.SessionID;
-import org.f1x.message.FieldUtil;
-import org.f1x.message.builder.FastMessageBuilder;
-import org.f1x.message.builder.MessageBuilder;
 import org.f1x.message.field.Tag;
 import org.f1x.util.ByteSequence;
 import org.f1x.util.InsufficientSpaceException;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.format.IntFormatter;
 import org.f1x.util.type.TimestampType;
+
+import static org.f1x.message.FieldUtil.*;
+import static org.f1x.util.format.BooleanFormatter.formatBoolean;
+import static org.f1x.util.format.ByteFormatter.formatByte;
+import static org.f1x.util.format.ByteFormatter.formatBytes;
+import static org.f1x.util.format.IntFormatter.*;
+import static org.f1x.util.format.TimestampFormatter.formatTimestamp;
 
 
 public class MessagePacker {
 
-    protected final MessageBuilder builder = new FastMessageBuilder();
     protected final ByteSequence beginString;
     protected final SessionID sessionID;
     protected final MutableBuffer buffer;
@@ -28,113 +30,152 @@ public class MessagePacker {
     }
 
     public int pack(int msgSeqNum, long time, ByteSequence msgType,
-                    Buffer body, int offset, int length) {
-        int bodyLength = computeBodyLength(msgSeqNum, time, msgType, length);
-        int messageLength = computeMessageLength(bodyLength);
-        checkMessageLength(messageLength);
+                    Buffer body, int bodyOffset, int length) {
 
-        builder.wrap(buffer);
-        addStandardHeader(bodyLength, msgSeqNum, time, msgType, builder);
-        builder.appendBytes(body, offset, length);
-        addCheckSum(builder);
+        int bodyLength = bodyLength(msgSeqNum, time, msgType, length);
+        int messageLength = messageLength(bodyLength);
 
-        return messageLength;
-    }
-
-    public int pack(int msgSeqNum, long time, long origTime,
-                    ByteSequence msgType, Buffer body, int offset, int length) {
-
-        int bodyLength = computeBodyLength(msgSeqNum, time, origTime, msgType, length);
-        int messageLength = computeMessageLength(bodyLength);
-        checkMessageLength(messageLength);
-
-        builder.wrap(buffer);
-        addStandardHeader(bodyLength, msgSeqNum, time, msgType, builder);
-        builder.addTimestamp(Tag.OrigSendingTime, origTime);
-        builder.addBoolean(Tag.PossDupFlag, true);
-        builder.appendBytes(body, offset, length);
-        addCheckSum(builder);
+        int offset = 0;
+        offset = addStandardHeader(bodyLength, msgSeqNum, time, msgType, buffer, offset);
+        offset = addBody(body, bodyOffset, length, buffer, offset);
+        offset = addCheckSum(buffer, offset);
 
         return messageLength;
     }
 
-    protected void addStandardHeader(int bodyLength, int msgSeqNum, long time, CharSequence msgType, MessageBuilder builder) {
-        builder.addByteSequence(Tag.BeginString, beginString);
-        builder.addInt(Tag.BodyLength, bodyLength);
-        builder.addCharSequence(Tag.MsgType, msgType);
-        builder.addInt(Tag.MsgSeqNum, msgSeqNum);
+    public int pack(int msgSeqNum, long time, long origTime, ByteSequence msgType,
+                    Buffer body, int bodyOffset, int length) {
 
-        builder.addByteSequence(Tag.SenderCompID, sessionID.senderCompId());
-        if (sessionID.senderSubId() != null)
-            builder.addByteSequence(Tag.SenderSubID, sessionID.senderSubId());
+        int bodyLength = bodyLength(msgSeqNum, time, origTime, msgType, length);
+        int messageLength = messageLength(bodyLength);
 
-        builder.addByteSequence(Tag.TargetCompID, sessionID.targetCompId());
-        if (sessionID.targetSubId() != null)
-            builder.addByteSequence(Tag.TargetSubID, sessionID.targetSubId());
+        int offset = 0;
+        offset = addStandardHeader(bodyLength, msgSeqNum, time, msgType, buffer, offset);
+        offset = addTimestamp(Tag.OrigSendingTime, origTime, buffer, offset);
+        offset = addBoolean(Tag.PossDupFlag, true, buffer, offset);
+        offset = addBody(body, bodyOffset, length, buffer, offset);
+        offset = addCheckSum(buffer, offset);
 
-        builder.addTimestamp(Tag.SendingTime, time);
+        return messageLength;
     }
 
-    protected void addCheckSum(MessageBuilder builder) {
-        int checkSum = computeCheckSum(buffer, 0, builder.length());
-        builder.startField(Tag.CheckSum);
-        if (checkSum < 100) {
-            builder.appendChar('0');
-            if (checkSum < 10)
-                builder.appendChar('0');
-        }
+    protected int addStandardHeader(int bodyLength, int msgSeqNum, long time, ByteSequence msgType,
+                                    MutableBuffer buffer, int offset) {
 
-        builder.appendInt(checkSum).endField();
+        offset = addByteSequence(Tag.BeginString, beginString, buffer, offset);
+        offset = addUInt(Tag.BodyLength, bodyLength, buffer, offset);
+        offset = addByteSequence(Tag.MsgType, msgType, buffer, offset);
+        offset = addUInt(Tag.MsgSeqNum, msgSeqNum, buffer, offset);
+        offset = addByteSequence(Tag.SenderCompID, sessionID.senderCompId(), buffer, offset);
+        offset = addNullableByteSequence(Tag.SenderSubID, sessionID.senderSubId(), buffer, offset);
+        offset = addByteSequence(Tag.TargetCompID, sessionID.targetCompId(), buffer, offset);
+        offset = addNullableByteSequence(Tag.TargetSubID, sessionID.targetSubId(), buffer, offset);
+        offset = addTimestamp(Tag.SendingTime, time, buffer, offset);
+
+        return offset;
     }
 
-    protected int computeBodyLength(int msgSeqNum, long time, long origTime, CharSequence msgType, int length) {
-        int bodyLength = 0;
-
-        bodyLength += computeBodyLength(msgSeqNum, time, msgType, length);
-        bodyLength += 5 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
-        bodyLength += 5;
-
-        return bodyLength;
+    protected static int addBody(Buffer body, int bodyOffset, int length, MutableBuffer buffer, int offset) {
+        return formatBytes(body, bodyOffset, length, buffer, offset);
     }
 
-    protected int computeBodyLength(int msgSeqNum, long time, CharSequence msgType, int length) {
+    protected static int addCheckSum(MutableBuffer buffer, int offset) {
+        int checkSum = checkSum(buffer, 0, offset);
+
+        offset = formatUInt(Tag.CheckSum, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = format3DigitUInt(checkSum, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+
+        return offset;
+    }
+
+    protected static int addNullableByteSequence(int tag, ByteSequence value, MutableBuffer buffer, int offset) {
+        return value == null ? offset : addByteSequence(tag, value, buffer, offset);
+    }
+
+    protected static int addBoolean(int tag, boolean value, MutableBuffer buffer, int offset) {
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatBoolean(value, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+
+        return offset;
+    }
+
+    protected static int addByteSequence(int tag, ByteSequence value, MutableBuffer buffer, int offset) {
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatBytes(value.buffer(), 0, value.length(), buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+
+        return offset;
+    }
+
+    protected static int addUInt(int tag, int value, MutableBuffer buffer, int offset) {
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatUInt(value, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+
+        return offset;
+    }
+
+    protected static int addTimestamp(int tag, long value, MutableBuffer buffer, int offset) {
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatTimestamp(value, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+
+        return offset;
+    }
+
+    protected int bodyLength(int msgSeqNum, long time, ByteSequence msgType, int length) {
         int bodyLength = 0;
 
         bodyLength += 4 + msgType.length();
-        bodyLength += 4 + IntFormatter.uintLength(msgSeqNum);
+        bodyLength += 4 + uintLength(msgSeqNum);
         bodyLength += 4 + sessionID.senderCompId().length();
-        if (sessionID.senderSubId() != null)
-            bodyLength += 4 + sessionID.senderSubId().length();
-
+        bodyLength += (sessionID.senderSubId() == null) ? 0 : 4 + sessionID.senderSubId().length();
         bodyLength += 4 + sessionID.targetCompId().length();
-        if (sessionID.targetSubId() != null)
-            bodyLength += 4 + sessionID.targetSubId().length();
-
+        bodyLength += (sessionID.targetSubId() == null) ? 0 : 4 + sessionID.targetSubId().length();
         bodyLength += 4 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
         bodyLength += length;
 
         return bodyLength;
     }
 
-    protected int computeMessageLength(int bodyLength) {
-        return 3 + beginString.length() +
-                3 + IntFormatter.uintLength(bodyLength) +
-                bodyLength +
-                FieldUtil.CHECK_SUM_FIELD_LENGTH;
+    protected int bodyLength(int msgSeqNum, long time, long origTime, ByteSequence msgType, int length) {
+        int bodyLength = 0;
+
+        bodyLength += bodyLength(msgSeqNum, time, msgType, length);
+        bodyLength += 5 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
+        bodyLength += 5;
+
+        return bodyLength;
     }
 
-    protected int computeCheckSum(Buffer buffer, int offset, int length) {
+    protected int messageLength(int bodyLength) {
+        int length = 0;
+
+        length += 3 + beginString.length();
+        length += 3 + uintLength(bodyLength);
+        length += bodyLength;
+        length += CHECK_SUM_FIELD_LENGTH;
+
+        int capacity = buffer.capacity();
+        if (length > capacity)
+            throw new InsufficientSpaceException(String.format("Message length %s exceeds buffer size %s", length, capacity));
+
+        return length;
+    }
+
+    protected static int checkSum(Buffer buffer, int offset, int length) {
         int sum = 0;
         for (int i = offset, end = offset + length; i < end; i++)
             sum += buffer.getByte(i);
 
-        return FieldUtil.checkSum(sum);
-    }
-
-    protected void checkMessageLength(int length) {
-        int capacity = buffer.capacity();
-        if (length > capacity)
-            throw new InsufficientSpaceException(String.format("Message length %s exceeds buffer size %s", length, capacity));
+        return sum & 0xFF;
     }
 
 }

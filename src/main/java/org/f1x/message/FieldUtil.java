@@ -13,10 +13,6 @@ public class FieldUtil {
 
     public static final int INT_NULL = Integer.MIN_VALUE;
 
-    public static int checkSum(int sum) {
-        return sum & 0xFF;
-    }
-
     public static int checkTag(int expected, int tag) {
         if (tag != expected)
             throw new FieldException(tag, String.format("Unexpected field %s, expected %s", tag, expected));
