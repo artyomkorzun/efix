@@ -1,6 +1,5 @@
 package org.f1x.util.format;
 
-import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
@@ -9,6 +8,7 @@ import org.junit.Test;
 import static org.f1x.util.StringUtil.asciiBytes;
 import static org.junit.Assert.assertEquals;
 
+
 public class ByteFormatterTest extends AbstractFormatterTest {
 
     protected static final Verifier<Byte> VERIFIER = value -> Character.toString((char) value.byteValue());
@@ -16,7 +16,7 @@ public class ByteFormatterTest extends AbstractFormatterTest {
 
     @Test
     public void shouldFormatBytes() {
-        for (byte value = 0; value != 127; value++)
+        for (byte value = 0; value >= 0; value++)
             shouldFormatByte(value);
     }
 
@@ -37,8 +37,8 @@ public class ByteFormatterTest extends AbstractFormatterTest {
     }
 
     protected void shouldFormatByteArray(String value, int offset, int length) {
-        MutableBuffer buffer = new UnsafeBuffer(new byte[length]);
-        ByteFormatter.formatBytes(asciiBytes(value), offset, length, buffer, new MutableInt(), length);
+        MutableBuffer buffer = UnsafeBuffer.allocateHeap(length);
+        ByteFormatter.formatBytes(asciiBytes(value), offset, length, buffer, 0);
 
         String expected = value.substring(offset, offset + length);
         String actual = BufferUtil.toString(buffer);
@@ -47,8 +47,8 @@ public class ByteFormatterTest extends AbstractFormatterTest {
     }
 
     protected void shouldFormatBuffer(String value, int offset, int length) {
-        MutableBuffer buffer = new UnsafeBuffer(new byte[length]);
-        ByteFormatter.formatBytes(BufferUtil.fromString(value), offset, length, buffer, new MutableInt(), length);
+        MutableBuffer buffer = UnsafeBuffer.allocateHeap(length);
+        ByteFormatter.formatBytes(BufferUtil.fromString(value), offset, length, buffer, 0);
 
         String expected = value.substring(offset, offset + length);
         String actual = BufferUtil.toString(buffer);

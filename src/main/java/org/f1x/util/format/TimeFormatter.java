@@ -1,11 +1,8 @@
 package org.f1x.util.format;
 
-import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.type.TimeType;
 
 import static org.f1x.util.format.DateFormatter.DAY_MILLIS;
-import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
 import static org.f1x.util.format.IntFormatter.format2DigitUInt;
 import static org.f1x.util.format.IntFormatter.format3DigitUInt;
 
@@ -15,14 +12,7 @@ public class TimeFormatter {
     protected static final int MINUTE_MILLIS = SECOND_MILLIS * 60;
     protected static final int HOUR_MILLIS = MINUTE_MILLIS * 60;
 
-    public static void formatTime(long timestamp, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.get();
-        checkFreeSpace(end - off, TimeType.MILLISECOND_TIME_LENGTH);
-        formatTime(timestamp, buffer, off);
-        offset.set(off + TimeType.MILLISECOND_TIME_LENGTH);
-    }
-
-    protected static void formatTime(long timestamp, MutableBuffer buffer, int offset) {
+    public static int formatTime(long timestamp, MutableBuffer buffer, int offset) {
         int days = (int) (timestamp / DAY_MILLIS);
 
         int millis = (int) (timestamp - days * DAY_MILLIS);
@@ -38,16 +28,21 @@ public class TimeFormatter {
         int second = millis / SECOND_MILLIS;
         millis -= second * SECOND_MILLIS;
 
-        format2DigitUInt(hour, buffer, offset + TimeType.HOUR_OFFSET);
-        buffer.putByte(offset + TimeType.FIRST_COLON_OFFSET, (byte) ':');
+        return formatTime(hour, minute, second, millis, buffer, offset);
+    }
 
-        format2DigitUInt(minute, buffer, offset + TimeType.MINUTE_OFFSET);
-        buffer.putByte(offset + TimeType.SECOND_COLON_OFFSET, (byte) ':');
+    public static int formatTime(int hour, int minute, int second, int millis, MutableBuffer buffer, int offset) {
+        offset = format2DigitUInt(hour, buffer, offset);
+        buffer.putByte(offset++, (byte) ':');
 
-        format2DigitUInt(second, buffer, offset + TimeType.SECOND_OFFSET);
-        buffer.putByte(offset + TimeType.DOT_OFFSET, (byte) '.');
+        offset = format2DigitUInt(minute, buffer, offset);
+        buffer.putByte(offset++, (byte) ':');
 
-        format3DigitUInt(millis, buffer, offset + TimeType.MILLISECOND_OFFSET);
+        offset = format2DigitUInt(second, buffer, offset);
+        buffer.putByte(offset++, (byte) '.');
+
+        offset = format3DigitUInt(millis, buffer, offset);
+        return offset;
     }
 
 }

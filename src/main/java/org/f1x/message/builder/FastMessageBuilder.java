@@ -2,7 +2,6 @@ package org.f1x.message.builder;
 
 import org.f1x.message.FieldUtil;
 import org.f1x.util.ByteSequence;
-import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.format.*;
@@ -10,11 +9,10 @@ import org.f1x.util.format.*;
 
 public class FastMessageBuilder implements MessageBuilder {
 
-    protected final MutableInt offset = new MutableInt();
-
     protected MutableBuffer buffer;
     protected int start;
     protected int end;
+    protected int offset;
 
     @Override
     public MessageBuilder addBoolean(int tag, boolean value) {
@@ -108,8 +106,7 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder startField(int tag) {
-        int off = IntFormatter.formatUInt(tag, buffer, offset.get());
-        offset.set(off);
+        offset = IntFormatter.formatUInt(tag, buffer, offset);
         return appendByte(FieldUtil.TAG_VALUE_SEPARATOR);
     }
 
@@ -120,62 +117,61 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder appendBoolean(boolean value) {
-        BooleanFormatter.formatBoolean(value, buffer, offset, end);
+        offset = BooleanFormatter.formatBoolean(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendByte(byte value) {
-        ByteFormatter.formatByte(value, buffer, offset, end);
+        offset = ByteFormatter.formatByte(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendChar(char value) {
-        CharFormatter.formatChar(value, buffer, offset, end);
+        offset = CharFormatter.formatChar(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendInt(int value) {
-        int off = IntFormatter.formatInt(value, buffer, offset.get());
-        offset.set(off);
+        offset = IntFormatter.formatInt(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendLong(long value) {
-        LongFormatter.formatLong(value, buffer, offset, end);
+        offset = LongFormatter.formatLong(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendDouble(double value, int precision) {
-        DoubleFormatter.formatDouble(value, precision, buffer, offset, end);
+        offset = DoubleFormatter.formatDouble(value, precision, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendDouble(double value, int precision, boolean roundHalfUp) {
-        DoubleFormatter.formatDouble(value, precision, roundHalfUp, buffer, offset, end);
+        offset = DoubleFormatter.formatDouble(value, precision, roundHalfUp, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendTimestamp(long timestamp) {
-        TimestampFormatter.formatTimestamp(timestamp, buffer, offset, end);
+        offset = TimestampFormatter.formatTimestamp(timestamp, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendTime(long timestamp) {
-        TimeFormatter.formatTime(timestamp, buffer, offset, end);
+        offset = TimeFormatter.formatTime(timestamp, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendDate(long timestamp) {
-        DateFormatter.formatDate(timestamp, buffer, offset, end);
+        offset = DateFormatter.formatDate(timestamp, buffer, offset);
         return this;
     }
 
@@ -186,7 +182,7 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder appendBytes(byte[] value, int offset, int length) {
-        ByteFormatter.formatBytes(value, offset, length, buffer, this.offset, end);
+        this.offset = ByteFormatter.formatBytes(value, offset, length, buffer, this.offset);
         return this;
     }
 
@@ -197,7 +193,7 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder appendBytes(Buffer value, int offset, int length) {
-        ByteFormatter.formatBytes(value, offset, length, buffer, this.offset, end);
+        this.offset = ByteFormatter.formatBytes(value, offset, length, buffer, this.offset);
         return this;
     }
 
@@ -218,13 +214,13 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder appendCharSequence(CharSequence value, int offset, int length) {
-        CharFormatter.formatChars(value, offset, length, buffer, this.offset, end);
+        this.offset = CharFormatter.formatChars(value, offset, length, buffer, this.offset);
         return this;
     }
 
     @Override
     public MessageBuilder reset() {
-        offset.set(start);
+        offset = start;
         return this;
     }
 
@@ -236,7 +232,7 @@ public class FastMessageBuilder implements MessageBuilder {
     @Override
     public MessageBuilder wrap(MutableBuffer buffer, int offset, int length) {
         this.buffer = buffer;
-        this.offset.set(offset);
+        this.offset = offset;
         this.start = offset;
         this.end = offset + length;
         return this;
@@ -249,17 +245,17 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public int offset() {
-        return offset.get();
+        return offset;
     }
 
     @Override
     public int length() {
-        return offset.get() - start;
+        return offset - start;
     }
 
     @Override
     public int remaining() {
-        return end - offset.get();
+        return end - offset;
     }
 
 }

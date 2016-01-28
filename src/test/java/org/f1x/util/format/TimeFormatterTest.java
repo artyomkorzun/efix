@@ -3,6 +3,7 @@ package org.f1x.util.format;
 import org.f1x.util.TestUtil;
 import org.junit.Test;
 
+
 public class TimeFormatterTest extends AbstractFormatterTest {
 
     protected static final long MIN_TIMESTAMP = TestUtil.parseDate("00010101");
@@ -25,12 +26,6 @@ public class TimeFormatterTest extends AbstractFormatterTest {
         for (int i = 0; i < 10000000; i++)
             shouldFormat(TestUtil.generateLong(MIN_TIMESTAMP, MAX_TIMESTAMP));
     }
-
-    /*@Test
-    public void shouldFail() {
-        for (int i = 0; i < 10000000; i++)
-            shouldFormat(TestUtil.generateLong(MIN_TIMESTAMP, MAX_TIMESTAMP));
-    }*/
 
     protected static void shouldFormat(long timestamp) {
         shouldFormat(timestamp, VERIFIER, FORMATTER);

@@ -4,14 +4,11 @@ import org.junit.Test;
 
 import static org.f1x.util.TestUtil.generateInt;
 
+
 public class IntFormatterTest extends AbstractFormatterTest {
 
     protected static final Verifier<Integer> VERIFIER = Object::toString;
-
-    protected static final Formatter<Integer> FORMATTER = (value, buffer, offset, end) -> {
-        int off = IntFormatter.formatInt(value, buffer, offset.get());
-        offset.set(off);
-    };
+    protected static final Formatter<Integer> FORMATTER = IntFormatter::formatInt;
 
     @Test
     public void shouldFormatNumbers() {

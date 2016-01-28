@@ -1,25 +1,16 @@
 package org.f1x.util.format;
 
-import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.MutableBuffer;
+import org.f1x.util.type.LongType;
 
-import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
+import static org.f1x.util.format.IntFormatter.formatUInt;
 
-@SuppressWarnings("Duplicates")
+
 public class LongFormatter {
 
-    protected static final Buffer MIN_LONG = BufferUtil.fromString(Long.MIN_VALUE + "");
-
-    private static final long[] SIZE_TABLE = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999,
-            999999999, 9999999999L, 99999999999L, 999999999999L, 9999999999999L, 99999999999999L,
-            999999999999999L, 9999999999999999L, 99999999999999999L, 999999999999999999L, Long.MAX_VALUE
-    };
-
-    private static final byte[] DIGIT = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
-    };
+    protected static final Buffer MIN_LONG = BufferUtil.fromString(Long.toString(Long.MIN_VALUE));
 
     private static final byte[] DIGIT_TEN = {
             '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
@@ -47,68 +38,64 @@ public class LongFormatter {
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     };
 
-    public static void formatLong(long value, MutableBuffer buffer, MutableInt offset, int end) {
+    public static int formatLong(long value, MutableBuffer buffer, int offset) {
         if (value >= 0)
-            formatULong(value, buffer, offset, end);
+            return formatULong(value, buffer, offset);
         else
-            formatNegativeLong(value, buffer, offset, end);
+            return formatNegativeLong(value, buffer, offset);
     }
 
-    public static void formatULong(long value, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.get();
-        int length = ulongLength(value);
-        checkFreeSpace(end - off, length);
-
-        int index = off + length;
-        formatULong(value, index, buffer);
-        offset.set(off + length);
-    }
-
-    public static void formatNegativeLong(long value, MutableBuffer buffer, MutableInt offset, int end) {
+    public static int formatNegativeLong(long value, MutableBuffer buffer, int offset) {
         if (value == Long.MIN_VALUE) {
-            int off = offset.get();
-            int length = MIN_LONG.capacity();
-            checkFreeSpace(end - off, length);
-
-            buffer.putBytes(off, MIN_LONG);
-            offset.set(off + length);
-            return;
+            buffer.putBytes(offset, MIN_LONG);
+            return offset + LongType.MAX_NEGATIVE_LONG_LENGTH;
         }
 
-        int off = offset.get();
-        value = -value;
-        int length = ulongLength(value) + 1;
-        checkFreeSpace(end - off, length);
-
-        formatULong(value, off + length, buffer);
-        buffer.putByte(off, (byte) '-');
-        offset.set(off + length);
+        buffer.putByte(offset++, (byte) '-');
+        return formatULong(-value, buffer, offset);
     }
 
-    public static int ulongLength(long x) {
-        for (int i = 0; ; i++)
-            if (x <= SIZE_TABLE[i])
-                return i + 1;
+
+    public static int formatULong(long value, MutableBuffer buffer, int offset) {
+        int length = ulongLength(value);
+        int index = offset + length;
+        formatULong(value, buffer, offset, index);
+        return index;
     }
 
-    protected static void formatULong(long value, int index, MutableBuffer buffer) {
-        long integer;
-        int remainder;
-
-        while (value > 0xFFFF) {
-            integer = value / 100;
-            remainder = (int) (value - ((integer << 6) + (integer << 5) + (integer << 2)));
+    protected static void formatULong(long value, MutableBuffer buffer, int offset, int index) {
+        while (value > Integer.MAX_VALUE) {
+            long integer = value / 100;
+            int remainder = (int) (value - ((integer << 6) + (integer << 5) + (integer << 2)));
             buffer.putByte(--index, DIGIT_ONE[remainder]);
             buffer.putByte(--index, DIGIT_TEN[remainder]);
             value = integer;
         }
 
-        do {
-            integer = (value * 52429) >>> (16 + 3); // the same as value / 100
-            remainder = (int) (value - ((integer << 3) + (integer << 1)));
-            buffer.putByte(--index, DIGIT[remainder]);
-            value = integer;
-        } while (value != 0);
+        formatUInt((int) value, buffer, offset, index);
+    }
+
+    public static int ulongLength(long value) {
+        if (value < 10L) return 1;
+        if (value < 100L) return 2;
+        if (value < 1000L) return 3;
+        if (value < 10000L) return 4;
+        if (value < 100000L) return 5;
+        if (value < 1000000L) return 6;
+        if (value < 10000000L) return 7;
+        if (value < 100000000L) return 8;
+        if (value < 1000000000L) return 9;
+        if (value < 10000000000L) return 10;
+        if (value < 100000000000L) return 11;
+        if (value < 1000000000000L) return 12;
+        if (value < 10000000000000L) return 13;
+        if (value < 100000000000000L) return 14;
+        if (value < 1000000000000000L) return 15;
+        if (value < 10000000000000000L) return 16;
+        if (value < 100000000000000000L) return 17;
+        if (value < 1000000000000000000L) return 18;
+
+        return 19;
     }
 
 }

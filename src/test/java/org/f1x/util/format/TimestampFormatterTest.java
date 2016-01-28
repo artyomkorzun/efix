@@ -1,9 +1,11 @@
 package org.f1x.util.format;
 
 import org.f1x.util.TestUtil;
+import org.f1x.util.type.TimestampType;
 import org.junit.Test;
 
 import static org.f1x.util.TestUtil.generateLong;
+
 
 public class TimestampFormatterTest extends AbstractFormatterTest {
 
@@ -28,8 +30,18 @@ public class TimestampFormatterTest extends AbstractFormatterTest {
             shouldFormat(generateLong(MIN_TIMESTAMP, MAX_TIMESTAMP));
     }
 
+    @Test
+    public void shouldFailFormatDatesOutOfRange() {
+        shouldFailFormat(MIN_TIMESTAMP - 1);
+        shouldFailFormat(MAX_TIMESTAMP + 1);
+    }
+
     protected static void shouldFormat(long timestamp) {
         shouldFormat(timestamp, VERIFIER, FORMATTER);
+    }
+
+    protected static void shouldFailFormat(long timestamp) {
+        shouldFailFormat(timestamp, TimestampType.MILLISECOND_TIMESTAMP_LENGTH, FORMATTER);
     }
 
 }

@@ -1,9 +1,11 @@
 package org.f1x.util.format;
 
 import org.f1x.util.TestUtil;
+import org.f1x.util.type.DateType;
 import org.junit.Test;
 
 import static org.f1x.util.TestUtil.generateLong;
+
 
 public class DateFormatterTest extends AbstractFormatterTest {
 
@@ -15,12 +17,6 @@ public class DateFormatterTest extends AbstractFormatterTest {
 
     @Test
     public void shouldFormatDates() {
-      /*
-        shouldFormat(-62135596800000L); // 00010101
-        shouldFormat(-62135510399999L); // 00010102
-        shouldFormat(238531025695285L); // 95280930
-      */
-
         shouldFormat(MIN_TIMESTAMP);
         shouldFormat(MAX_TIMESTAMP);
         shouldFormat(3124193485230L);   // 20681231
@@ -32,9 +28,18 @@ public class DateFormatterTest extends AbstractFormatterTest {
             shouldFormat(generateLong(MIN_TIMESTAMP, MAX_TIMESTAMP));
     }
 
+    @Test
+    public void shouldFailFormatDatesOutOfRange() {
+        shouldFailFormat(MIN_TIMESTAMP - 1);
+        shouldFailFormat(MAX_TIMESTAMP + 1);
+    }
+
     protected static void shouldFormat(long timestamp) {
         shouldFormat(timestamp, VERIFIER, FORMATTER);
     }
 
+    protected static void shouldFailFormat(long timestamp) {
+        shouldFailFormat(timestamp, DateType.LENGTH, FORMATTER);
+    }
 
 }

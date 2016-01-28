@@ -1,12 +1,12 @@
 package org.f1x.util.format;
 
-import org.f1x.util.ByteSequenceWrapper;
-import org.f1x.util.MutableInt;
+import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+
 
 public class CharFormatterTest extends AbstractFormatterTest {
 
@@ -30,11 +30,11 @@ public class CharFormatterTest extends AbstractFormatterTest {
     }
 
     protected void shouldFormatChars(String value, int offset, int length) {
-        MutableBuffer buffer = new UnsafeBuffer(new byte[length]);
-        CharFormatter.formatChars(value, offset, length, buffer, new MutableInt(), length);
+        MutableBuffer buffer = UnsafeBuffer.allocateHeap(length);
+        CharFormatter.formatChars(value, offset, length, buffer, 0);
 
         String expected = value.substring(offset, offset + length);
-        String actual = new ByteSequenceWrapper(buffer).toString();
+        String actual = BufferUtil.toString(buffer);
 
         assertEquals("Fail to format " + value, expected, actual);
     }

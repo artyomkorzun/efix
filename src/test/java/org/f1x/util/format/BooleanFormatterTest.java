@@ -2,6 +2,7 @@ package org.f1x.util.format;
 
 import org.junit.Test;
 
+
 public class BooleanFormatterTest extends AbstractFormatterTest {
 
     protected static final Verifier<Boolean> VERIFIER = value -> value ? "Y" : "N";

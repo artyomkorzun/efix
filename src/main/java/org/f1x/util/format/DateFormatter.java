@@ -1,12 +1,10 @@
 package org.f1x.util.format;
 
-import org.f1x.util.MutableInt;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.type.DateType;
 
-import static org.f1x.util.format.FormatterUtil.checkFreeSpace;
 import static org.f1x.util.format.IntFormatter.format2DigitUInt;
 import static org.f1x.util.format.IntFormatter.format4DigitUInt;
+
 
 public class DateFormatter {
 
@@ -55,18 +53,9 @@ public class DateFormatter {
     private static final int[] MONTH_TO_DAY_OFFSET = {0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
     private static final int[] MONTH_TO_DAY_OFFSET_LEAP = {0, 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
 
-    public static void formatDate(long timestamp, MutableBuffer buffer, MutableInt offset, int end) {
-        int off = offset.get();
-        checkFreeSpace(end - off, DateType.LENGTH);
-        formatDate(timestamp, buffer, off);
-        offset.set(off + DateType.LENGTH);
-    }
-
     // TODO: add support for 0-1904 and 2100-9999 years + optimize
-    protected static void formatDate(long timestamp, MutableBuffer buffer, int offset) {
-        if (timestamp < -MILLIS_1904_TO_EPOCH || timestamp > MILLIS_EPOCH_TO_2100)
-            throw new IllegalArgumentException(String.format("timestamp %s is out of 1904-2100 years", timestamp));
-
+    public static int formatDate(long timestamp, MutableBuffer buffer, int offset) {
+        checkTimestamp(timestamp);
         timestamp += MILLIS_1904_TO_EPOCH;
 
         int days = (int) (timestamp / DAY_MILLIS);
@@ -92,9 +81,19 @@ public class DateFormatter {
             day = days - MONTH_TO_DAY_OFFSET[month] + 1;
         }
 
-        format4DigitUInt(year, buffer, offset + DateType.YEAR_OFFSET);
-        format2DigitUInt(month, buffer, offset + DateType.MONTH_OFFSET);
-        format2DigitUInt(day, buffer, offset + DateType.DAY_OFFSET);
+        return formatDate(year, month, day, buffer, offset);
+    }
+
+    public static int formatDate(int year, int month, int day, MutableBuffer buffer, int offset) {
+        offset = format4DigitUInt(year, buffer, offset);
+        offset = format2DigitUInt(month, buffer, offset);
+        offset = format2DigitUInt(day, buffer, offset);
+        return offset;
+    }
+
+    protected static void checkTimestamp(long timestamp) {
+        if (timestamp < -MILLIS_1904_TO_EPOCH || timestamp > MILLIS_EPOCH_TO_2100)
+            throw new FormatterException(String.format("Timestamp %s is out of 1904-2100 years", timestamp));
     }
 
     private static int daysToYear(int year) {
