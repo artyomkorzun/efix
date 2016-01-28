@@ -9,6 +9,7 @@ import org.junit.Test;
 import static org.f1x.util.TestUtil.*;
 import static org.junit.Assert.assertEquals;
 
+
 public class TimeLayoutTest {
 
     protected static final long TIME = parseTimestamp("20160101-00:00:00");

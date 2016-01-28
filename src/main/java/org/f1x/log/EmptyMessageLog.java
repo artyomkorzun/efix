@@ -2,6 +2,7 @@ package org.f1x.log;
 
 import org.f1x.util.buffer.Buffer;
 
+
 public final class EmptyMessageLog implements MessageLog {
 
     public static final EmptyMessageLog INSTANCE = new EmptyMessageLog();

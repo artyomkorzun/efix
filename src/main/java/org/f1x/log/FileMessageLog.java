@@ -17,6 +17,7 @@ import java.nio.file.StandardOpenOption;
 
 import static java.util.Objects.requireNonNull;
 
+
 public class FileMessageLog implements MessageLog {
 
     protected final Layout layout;
