@@ -29,6 +29,7 @@ public class DoubleFormatterTest extends AbstractFormatterTest {
         shouldFormat(-9.911900025316275E14, 0);
         shouldFormat(10.99, 1);
         shouldFormat(99.99, 1);
+        shouldFormat(10.095, 2);
     }
 
     @Test

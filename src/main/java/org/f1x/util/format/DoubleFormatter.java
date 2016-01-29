@@ -42,25 +42,27 @@ public class DoubleFormatter {
         }
 
         precision = correctPrecision(value, precision);
-        long number = roundUDouble(value * MULTIPLIER[precision], roundHalfUp);
-
-        while (precision > 0 && number % 10 == 0) {
-            number /= 10;
-            precision--;
-        }
-
-        if (precision == 0)
-            return formatULong(number, buffer, offset);
-
         long multiplier = MULTIPLIER[precision];
+        long number = roundUDouble(value * multiplier, roundHalfUp);
+
         long integer = number / multiplier;
         long fractional = number - integer * multiplier;
 
-        offset = formatULong(integer, buffer, offset);
-        buffer.putByte(offset++, (byte) '.');
-        formatULong(fractional, buffer, offset, offset + precision);
+        while (precision > 0 && (fractional % 10 == 0)) {
+            fractional /= 10;
+            precision--;
+        }
 
-        return offset + precision;
+        offset = formatULong(integer, buffer, offset);
+
+        if (precision > 0) {
+            buffer.putByte(offset++, (byte) '.');
+            int index = offset + precision;
+            formatULong(fractional, buffer, offset, index);
+            offset = index;
+        }
+
+        return offset;
     }
 
     protected static long roundUDouble(double value, boolean roundHalfUp) {
