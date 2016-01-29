@@ -54,14 +54,15 @@ public class WorkerRunner implements Runnable, AutoCloseable {
 
     @Override
     public void close() {
-        worker.deactivate();
-        Thread thread = this.thread.get();
+        Thread thread = this.thread.getAndSet(TOMB);
         if (thread != null && thread != TOMB) {
+            worker.deactivate();
+
             try {
-                thread.join(1000);
+                thread.join(3000);
                 while (thread.isAlive()) {
                     System.err.println("Timeout await expired for worker. Retrying...");
-                    thread.join(1000);
+                    thread.join(3000);
                 }
             } catch (InterruptedException e) {
                 LangUtil.rethrowUnchecked(e);
