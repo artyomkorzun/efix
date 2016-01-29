@@ -48,13 +48,12 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
             int alignedLength = align(recordLength);
             bytesRead += alignedLength;
             int messageType = buffer.getInt(messageTypeOffset(recordOffset));
-            int zeroingLength = 0;
+            int zeroingLength = alignedLength;
 
             try {
                 if (messageType == MESSAGE_TYPE_PADDING) {
                     zeroingLength = HEADER_LENGTH;
                 } else {
-                    zeroingLength = alignedLength;
                     handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength));
                     messagesRead++;
                 }
