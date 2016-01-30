@@ -7,9 +7,7 @@ import org.f1x.message.field.TimeInForce;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.*;
 
 import static org.f1x.util.BenchmarkUtil.makeMessage;
 
@@ -21,23 +19,39 @@ public class MessageBuilderBenchmark {
     private static final MutableBuffer BUFFER = UnsafeBuffer.allocateHeap(1024);
     private static final Buffer NEW_ORDER_SINGLE = makeMessage("1=ACCOUNT|11=4|38=5000|40=2|44=400.5|54=1|55=ESH6|58=TEXT|59=0|60=20140603-11:53:03.922|167=FUT|");
 
-    private final MessageBuilder builder = new FastMessageBuilder();
+    @Param({"fast", "checked"})
+    private String implementation;
+
+    private MessageBuilder builder;
+
+    @Setup
+    public void init() {
+        switch (implementation) {
+            case "fast":
+                builder = new FastMessageBuilder();
+                break;
+            case "checked":
+                builder = new CheckedMessageBuilder(new FastMessageBuilder());
+                break;
+            default:
+                throw new IllegalArgumentException(implementation);
+        }
+    }
 
     @Benchmark
     public void encodeNewOrderSingle() {
-        builder.wrap(BUFFER);
-
-        builder.addCharSequence(Tag.Account, "ACCOUNT");
-        builder.addLong(Tag.ClOrdID, 4);
-        builder.addDouble(Tag.OrderQty, 5000.0, 2);
-        builder.addByte(Tag.OrdType, OrdType.LIMIT);
-        builder.addDouble(Tag.Price, 400.5, 2);
-        builder.addByte(Tag.Side, Side.BUY);
-        builder.addCharSequence(Tag.Symbol, "ESH6");
-        builder.addCharSequence(Tag.Text, "TEXT");
-        builder.addByte(Tag.TimeInForce, TimeInForce.DAY);
-        builder.addTimestamp(Tag.TransactTime, TRANSACT_TIME);
-        builder.addCharSequence(Tag.SecurityType, "FUT");
+        builder.wrap(BUFFER)
+                .addCharSequence(Tag.Account, "ACCOUNT")
+                .addLong(Tag.ClOrdID, 4)
+                .addDouble(Tag.OrderQty, 5000.0, 2)
+                .addByte(Tag.OrdType, OrdType.LIMIT)
+                .addDouble(Tag.Price, 400.5, 2)
+                .addByte(Tag.Side, Side.BUY)
+                .addCharSequence(Tag.Symbol, "ESH6")
+                .addCharSequence(Tag.Text, "TEXT")
+                .addByte(Tag.TimeInForce, TimeInForce.DAY)
+                .addTimestamp(Tag.TransactTime, TRANSACT_TIME)
+                .addCharSequence(Tag.SecurityType, "FUT");
     }
 
 }

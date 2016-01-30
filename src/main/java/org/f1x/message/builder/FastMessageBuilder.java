@@ -1,10 +1,23 @@
 package org.f1x.message.builder;
 
-import org.f1x.message.FieldUtil;
 import org.f1x.util.ByteSequence;
 import org.f1x.util.buffer.Buffer;
 import org.f1x.util.buffer.MutableBuffer;
-import org.f1x.util.format.*;
+
+import static org.f1x.message.FieldUtil.FIELD_SEPARATOR;
+import static org.f1x.message.FieldUtil.TAG_VALUE_SEPARATOR;
+import static org.f1x.util.format.BooleanFormatter.formatBoolean;
+import static org.f1x.util.format.ByteFormatter.formatByte;
+import static org.f1x.util.format.ByteFormatter.formatBytes;
+import static org.f1x.util.format.CharFormatter.formatChar;
+import static org.f1x.util.format.CharFormatter.formatChars;
+import static org.f1x.util.format.DateFormatter.formatDate;
+import static org.f1x.util.format.DoubleFormatter.formatDouble;
+import static org.f1x.util.format.IntFormatter.formatInt;
+import static org.f1x.util.format.IntFormatter.formatUInt;
+import static org.f1x.util.format.LongFormatter.formatLong;
+import static org.f1x.util.format.TimeFormatter.formatTime;
+import static org.f1x.util.format.TimestampFormatter.formatTimestamp;
 
 
 public class FastMessageBuilder implements MessageBuilder {
@@ -16,173 +29,248 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder addBoolean(int tag, boolean value) {
-        return startField(tag).appendBoolean(value).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatBoolean(value, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addByte(int tag, byte value) {
-        return startField(tag).appendByte(value).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatByte(value, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addChar(int tag, char value) {
-        return startField(tag).appendChar(value).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatChar(value, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addInt(int tag, int value) {
-        return startField(tag).appendInt(value).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatInt(value, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addLong(int tag, long value) {
-        return startField(tag).appendLong(value).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatLong(value, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addDouble(int tag, double value, int precision) {
-        return startField(tag).appendDouble(value, precision).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatDouble(value, precision, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addDouble(int tag, double value, int precision, boolean roundUp) {
-        return startField(tag).appendDouble(value, precision, roundUp).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatDouble(value, precision, roundUp, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addTimestamp(int tag, long timestamp) {
-        return startField(tag).appendTimestamp(timestamp).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatTimestamp(timestamp, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addTime(int tag, long timestamp) {
-        return startField(tag).appendTime(timestamp).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatTime(timestamp, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addDate(int tag, long timestamp) {
-        return startField(tag).appendDate(timestamp).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatDate(timestamp, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addBytes(int tag, byte[] value) {
-        return startField(tag).appendBytes(value).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatBytes(value, 0, value.length, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
-    public MessageBuilder addBytes(int tag, byte[] value, int offset, int length) {
-        return startField(tag).appendBytes(value, offset, length).endField();
+    public MessageBuilder addBytes(int tag, byte[] value, int valueOffset, int length) {
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatBytes(value, valueOffset, length, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addBytes(int tag, Buffer value) {
-        return startField(tag).appendBytes(value).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatBytes(value, 0, value.capacity(), buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
-    public MessageBuilder addBytes(int tag, Buffer value, int offset, int length) {
-        return startField(tag).appendBytes(value, offset, length).endField();
+    public MessageBuilder addBytes(int tag, Buffer value, int valueOffset, int length) {
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatBytes(value, valueOffset, length, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addByteSequence(int tag, ByteSequence value) {
-        return startField(tag).appendByteSequence(value).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatBytes(value.buffer(), 0, value.length(), buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
-    public MessageBuilder addByteSequence(int tag, ByteSequence value, int offset, int length) {
-        return startField(tag).appendByteSequence(value, offset, length).endField();
+    public MessageBuilder addByteSequence(int tag, ByteSequence value, int valueOffset, int length) {
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatBytes(value.buffer(), valueOffset, length, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder addCharSequence(int tag, CharSequence value) {
-        return startField(tag).appendCharSequence(value).endField();
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatChars(value, 0, value.length(), buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
-    public MessageBuilder addCharSequence(int tag, CharSequence value, int offset, int length) {
-        return startField(tag).appendCharSequence(value, offset, length).endField();
+    public MessageBuilder addCharSequence(int tag, CharSequence value, int valueOffset, int length) {
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = formatChars(value, valueOffset, length, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder startField(int tag) {
-        offset = IntFormatter.formatUInt(tag, buffer, offset);
-        return appendByte(FieldUtil.TAG_VALUE_SEPARATOR);
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder endField() {
-        return appendByte(FieldUtil.FIELD_SEPARATOR);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
     }
 
     @Override
     public MessageBuilder appendBoolean(boolean value) {
-        offset = BooleanFormatter.formatBoolean(value, buffer, offset);
+        offset = formatBoolean(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendByte(byte value) {
-        offset = ByteFormatter.formatByte(value, buffer, offset);
+        offset = formatByte(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendChar(char value) {
-        offset = CharFormatter.formatChar(value, buffer, offset);
+        offset = formatChar(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendInt(int value) {
-        offset = IntFormatter.formatInt(value, buffer, offset);
+        offset = formatInt(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendLong(long value) {
-        offset = LongFormatter.formatLong(value, buffer, offset);
+        offset = formatLong(value, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendDouble(double value, int precision) {
-        offset = DoubleFormatter.formatDouble(value, precision, buffer, offset);
+        offset = formatDouble(value, precision, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendDouble(double value, int precision, boolean roundHalfUp) {
-        offset = DoubleFormatter.formatDouble(value, precision, roundHalfUp, buffer, offset);
+        offset = formatDouble(value, precision, roundHalfUp, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendTimestamp(long timestamp) {
-        offset = TimestampFormatter.formatTimestamp(timestamp, buffer, offset);
+        offset = formatTimestamp(timestamp, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendTime(long timestamp) {
-        offset = TimeFormatter.formatTime(timestamp, buffer, offset);
+        offset = formatTime(timestamp, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendDate(long timestamp) {
-        offset = DateFormatter.formatDate(timestamp, buffer, offset);
+        offset = formatDate(timestamp, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendBytes(byte[] value) {
-        return appendBytes(value, 0, value.length);
+        offset = formatBytes(value, 0, value.length, buffer, offset);
+        return this;
     }
 
     @Override
-    public MessageBuilder appendBytes(byte[] value, int offset, int length) {
-        this.offset = ByteFormatter.formatBytes(value, offset, length, buffer, this.offset);
+    public MessageBuilder appendBytes(byte[] value, int valueOffset, int length) {
+        offset = formatBytes(value, valueOffset, length, buffer, offset);
         return this;
     }
 
@@ -192,19 +280,21 @@ public class FastMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public MessageBuilder appendBytes(Buffer value, int offset, int length) {
-        this.offset = ByteFormatter.formatBytes(value, offset, length, buffer, this.offset);
+    public MessageBuilder appendBytes(Buffer value, int valueOffset, int length) {
+        offset = formatBytes(value, valueOffset, length, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendByteSequence(ByteSequence value) {
-        return appendByteSequence(value, 0, value.length());
+        offset = formatBytes(value.buffer(), 0, value.length(), buffer, offset);
+        return this;
     }
 
     @Override
-    public MessageBuilder appendByteSequence(ByteSequence value, int offset, int length) {
-        return appendBytes(value.buffer(), offset, length);
+    public MessageBuilder appendByteSequence(ByteSequence value, int valueOffset, int length) {
+        offset = formatBytes(value.buffer(), valueOffset, length, buffer, offset);
+        return this;
     }
 
     @Override
@@ -213,8 +303,8 @@ public class FastMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public MessageBuilder appendCharSequence(CharSequence value, int offset, int length) {
-        this.offset = CharFormatter.formatChars(value, offset, length, buffer, this.offset);
+    public MessageBuilder appendCharSequence(CharSequence value, int valueOffset, int length) {
+        offset = formatChars(value, valueOffset, length, buffer, offset);
         return this;
     }
 
@@ -226,7 +316,11 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder wrap(MutableBuffer buffer) {
-        return wrap(buffer, 0, buffer.capacity());
+        this.buffer = buffer;
+        this.offset = 0;
+        this.start = 0;
+        this.end = buffer.capacity();
+        return this;
     }
 
     @Override
