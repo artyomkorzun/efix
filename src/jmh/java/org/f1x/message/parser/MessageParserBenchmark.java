@@ -21,7 +21,9 @@ public class MessageParserBenchmark {
 
     @Benchmark
     public void decodeNewOrderSingle() {
-        parser.wrap(NEW_ORDER_SINGLE);
+        MessageParser parser = this.parser.wrap(NEW_ORDER_SINGLE);
+        NewOrder newOrder = this.newOrder;
+
         while (parser.hasRemaining()) {
             int tag = parser.parseTag();
             switch (tag) {

@@ -6,15 +6,27 @@ import org.f1x.util.buffer.BufferUtil;
 import org.f1x.util.buffer.MutableBuffer;
 import org.f1x.util.buffer.UnsafeBuffer;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.f1x.util.StringUtil.asciiBytes;
 import static org.f1x.util.TestUtil.*;
 import static org.f1x.util.buffer.BufferUtil.fromString;
 import static org.junit.Assert.assertEquals;
 
+
+@RunWith(Parameterized.class)
 public class MessageBuilderTest {
 
-    protected final MessageBuilder builder = new FastMessageBuilder();
+    protected final MessageBuilder builder;
+
+    public MessageBuilderTest(MessageBuilder builder) {
+        this.builder = builder;
+    }
 
     @Test
     public void shouldBuildLogon() {
@@ -85,6 +97,12 @@ public class MessageBuilderTest {
     protected static void assertMessage(String expected, String actual) {
         expected = stringMessage(expected);
         assertEquals("Fail to build " + expected, expected, actual);
+    }
+
+    @Parameters(name = "{0}")
+    public static List<MessageBuilder> builders() {
+        FastMessageBuilder builder = new FastMessageBuilder();
+        return Arrays.asList(builder, CheckedMessageBuilder.wrap(builder));
     }
 
 }
