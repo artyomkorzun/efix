@@ -39,26 +39,34 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
 
         int bytesRead = 0;
 
-        while (bytesRead < capacity) {
-            int recordOffset = mask(tail + bytesRead);
-            int recordLength = buffer.getIntVolatile(recordLengthOffset(recordOffset));
-            if (recordLength == 0)
-                break;
+        try {
+            while (bytesRead < capacity) {
+                int recordOffset = mask(tail + bytesRead);
+                int recordLength = buffer.getIntVolatile(recordLengthOffset(recordOffset));
+                if (recordLength == 0)
+                    break;
 
-            int alignedLength = align(recordLength);
-            bytesRead += alignedLength;
-            int messageType = buffer.getInt(messageTypeOffset(recordOffset));
-            int zeroingLength = alignedLength;
+                bytesRead += align(recordLength);
 
-            try {
-                if (messageType == MESSAGE_TYPE_PADDING) {
-                    zeroingLength = HEADER_LENGTH;
+                int messageType = buffer.getInt(messageTypeOffset(recordOffset));
+                if (messageType == MESSAGE_TYPE_PADDING)
+                    continue;
+
+                handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength));
+                messagesRead++;
+            }
+        } finally {
+            if (bytesRead > 0) {
+                int tailIndex = mask(tail);
+                int continuous = capacity - tailIndex;
+
+                if (continuous >= bytesRead) {
+                    buffer.setMemory(tailIndex, bytesRead, (byte) 0);
                 } else {
-                    handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength));
-                    messagesRead++;
+                    buffer.setMemory(tailIndex, continuous, (byte) 0);
+                    buffer.setMemory(0, bytesRead - continuous, (byte) 0);
                 }
-            } finally {
-                buffer.setMemory(recordOffset, zeroingLength, (byte) 0);
+
                 tailSequence.setOrdered(tail + bytesRead);
             }
         }

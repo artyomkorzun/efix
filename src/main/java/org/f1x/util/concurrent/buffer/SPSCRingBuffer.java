@@ -33,27 +33,29 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
     public int read(MessageHandler handler) {
         int messagesRead = 0;
 
+        AtomicBuffer buffer = this.buffer;
         long tail = tailSequence.get();
         long head = headSequence.getVolatile();
 
         int available = (int) (head - tail);
         int bytesRead = 0;
 
-        while (bytesRead < available) {
-            int recordOffset = mask(tail + bytesRead);
-            int recordLength = buffer.getInt(recordLengthOffset(recordOffset));
-            int messageType = buffer.getInt(messageTypeOffset(recordOffset));
+        try {
+            while (bytesRead < available) {
+                int recordOffset = mask(tail + bytesRead);
+                int recordLength = buffer.getInt(recordLengthOffset(recordOffset));
+                int messageType = buffer.getInt(messageTypeOffset(recordOffset));
 
-            bytesRead += align(recordLength);
+                bytesRead += align(recordLength);
 
-            try {
-                if (messageType != MESSAGE_TYPE_PADDING) {
-                    handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength));
-                    messagesRead++;
-                }
-            } finally {
-                tailSequence.setOrdered(tail + bytesRead);
+                if (messageType == MESSAGE_TYPE_PADDING)
+                    continue;
+
+                handler.onMessage(messageType, buffer, messageOffset(recordOffset), messageLength(recordLength));
+                messagesRead++;
             }
+        } finally {
+            tailSequence.setOrdered(tail + bytesRead);
         }
 
         return messagesRead;
@@ -86,7 +88,6 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
 
             padding = continuous;
             putHeader(headIndex, padding, MESSAGE_TYPE_PADDING, buffer);
-            headSequence.setOrdered(head + padding);
         }
 
         return head + padding;
