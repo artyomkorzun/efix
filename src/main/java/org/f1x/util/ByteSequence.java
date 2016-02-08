@@ -13,6 +13,9 @@ public interface ByteSequence extends CharSequence {
     }
 
     default boolean equals(CharSequence sequence) {
+        if (sequence == null)
+            return false;
+
         int length = length();
         if (sequence.length() != length)
             return false;
@@ -25,6 +28,9 @@ public interface ByteSequence extends CharSequence {
     }
 
     default boolean equals(ByteSequence sequence) {
+        if (sequence == null)
+            return false;
+
         int length = length();
         if (sequence.length() != length)
             return false;
