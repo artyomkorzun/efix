@@ -61,6 +61,7 @@ public class Receiver {
 
     public void setChannel(Channel channel) {
         this.channel = channel;
+        this.offset = 0;
     }
 
     protected int parseMessageLength(Buffer buffer, int offset, int length) {
