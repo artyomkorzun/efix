@@ -357,8 +357,8 @@ public class SessionProcessor implements Worker {
         Channel channel = connector.connect();
         boolean connected = channel != null;
         if (connected) {
-            receiver.setChannel(channel);
-            sender.setChannel(channel);
+            receiver.channel(channel);
+            sender.channel(channel);
             updateStatus(SOCKET_CONNECTED);
         }
 
@@ -371,8 +371,8 @@ public class SessionProcessor implements Worker {
             updateStatus(SOCKET_CONNECTED);
 
         connector.disconnect();
-        receiver.setChannel(null);
-        sender.setChannel(null);
+        receiver.channel(null);
+        sender.channel(null);
 
         updateStatus(DISCONNECTED);
     }

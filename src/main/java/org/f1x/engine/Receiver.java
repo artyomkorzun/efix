@@ -59,7 +59,7 @@ public class Receiver {
         return bytesReceived;
     }
 
-    public void setChannel(Channel channel) {
+    public void channel(Channel channel) {
         this.channel = channel;
         this.offset = 0;
     }

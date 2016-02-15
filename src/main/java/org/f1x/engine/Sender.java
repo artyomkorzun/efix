@@ -7,7 +7,7 @@ public class Sender {
 
     protected Channel channel;
 
-    public void setChannel(Channel channel) {
+    public void channel(Channel channel) {
         this.channel = channel;
     }
 

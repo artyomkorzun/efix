@@ -57,7 +57,7 @@ public class ReceiverTest {
 
     protected void shouldReceiveMessages(String[] expected, String[] chunks) {
         Receiver receiver = new Receiver(BUFFER_SIZE);
-        receiver.setChannel(new TextChannel(chunks));
+        receiver.channel(new TextChannel(chunks));
 
         ArrayList<String> messages = new ArrayList<>();
         MessageHandler verifier = (messageType, buffer, offset, length) -> messages.add(BufferUtil.toString(buffer, offset, length));
@@ -68,7 +68,7 @@ public class ReceiverTest {
 
     protected void shouldThrowException(String... chunks) {
         Receiver receiver = new Receiver(BUFFER_SIZE);
-        receiver.setChannel(new TextChannel(chunks));
+        receiver.channel(new TextChannel(chunks));
         MessageHandler handler = (messageType, buffer, offset, length) -> {
         };
 
