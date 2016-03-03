@@ -9,4 +9,8 @@ public class FieldException extends RuntimeException {
         this.field = field;
     }
 
+    public int field() {
+        return field;
+    }
+
 }
