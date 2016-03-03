@@ -1,0 +1,85 @@
+package org.efix.message.field;
+
+import org.efix.util.ByteSequence;
+import org.efix.util.ByteSequenceWrapper;
+
+
+public class TradeCondition {
+
+    public static final ByteSequence CANCEL = ByteSequenceWrapper.of("0");
+    public static final ByteSequence CASH_MARKET = ByteSequenceWrapper.of("A");
+    public static final ByteSequence AVERAGE_PRICE_TRADE = ByteSequenceWrapper.of("B");
+    public static final ByteSequence CASH_TRADE = ByteSequenceWrapper.of("C");
+    public static final ByteSequence NEXT_DAY_MARKET = ByteSequenceWrapper.of("D");
+    public static final ByteSequence OPENING_REOPENING_TRADE_DETAIL = ByteSequenceWrapper.of("E");
+    public static final ByteSequence INTRADAY_TRADE_DETAIL = ByteSequenceWrapper.of("F");
+    public static final ByteSequence RULE127 = ByteSequenceWrapper.of("G");
+    public static final ByteSequence RULE155 = ByteSequenceWrapper.of("H");
+    public static final ByteSequence SOLD_LAST = ByteSequenceWrapper.of("I");
+    public static final ByteSequence NEXT_DAY_TRADE = ByteSequenceWrapper.of("J");
+    public static final ByteSequence OPENED = ByteSequenceWrapper.of("K");
+    public static final ByteSequence SELLER = ByteSequenceWrapper.of("L");
+    public static final ByteSequence SOLD = ByteSequenceWrapper.of("M");
+    public static final ByteSequence STOPPED_STOCK = ByteSequenceWrapper.of("N");
+    public static final ByteSequence IMBALANCE_MORE_BUYERS = ByteSequenceWrapper.of("P");
+    public static final ByteSequence IMBALANCE_MORE_SELLERS = ByteSequenceWrapper.of("Q");
+    public static final ByteSequence OPENING_PRICE = ByteSequenceWrapper.of("R");
+    public static final ByteSequence BARGAIN_CONDITION = ByteSequenceWrapper.of("S");
+    public static final ByteSequence CONVERTED_PRICE_INDICATOR = ByteSequenceWrapper.of("T");
+    public static final ByteSequence EXCHANGE_LAST = ByteSequenceWrapper.of("U");
+    public static final ByteSequence FINAL_PRICE_OF_SESSION = ByteSequenceWrapper.of("V");
+    public static final ByteSequence EX_PIT = ByteSequenceWrapper.of("W");
+    public static final ByteSequence CROSSED = ByteSequenceWrapper.of("X");
+    public static final ByteSequence TRADES_RESULTING_FROM_MANUAL_SLOW_QUOTE = ByteSequenceWrapper.of("Y");
+    public static final ByteSequence TRADES_RESULTING_FROM_INTERMARKET_SWEEP = ByteSequenceWrapper.of("Z");
+    public static final ByteSequence VOLUME_ONLY = ByteSequenceWrapper.of("a");
+    public static final ByteSequence DIRECT_PLUS = ByteSequenceWrapper.of("b");
+    public static final ByteSequence ACQUISITION = ByteSequenceWrapper.of("c");
+    public static final ByteSequence BUNCHED = ByteSequenceWrapper.of("d");
+    public static final ByteSequence DISTRIBUTION = ByteSequenceWrapper.of("e");
+    public static final ByteSequence BUNCHED_SALE = ByteSequenceWrapper.of("f");
+    public static final ByteSequence SPLIT_TRADE = ByteSequenceWrapper.of("g");
+    public static final ByteSequence CANCEL_STOPPED = ByteSequenceWrapper.of("h");
+    public static final ByteSequence CANCEL_ETH = ByteSequenceWrapper.of("i");
+    public static final ByteSequence CANCEL_STOPPED_ETH = ByteSequenceWrapper.of("j");
+    public static final ByteSequence OUT_OF_SEQUENCE_ETH = ByteSequenceWrapper.of("k");
+    public static final ByteSequence CANCEL_LAST_ETH = ByteSequenceWrapper.of("l");
+    public static final ByteSequence SOLD_LAST_SALE_ETH = ByteSequenceWrapper.of("m");
+    public static final ByteSequence CANCEL_LAST = ByteSequenceWrapper.of("n");
+    public static final ByteSequence SOLD_LAST_SALE = ByteSequenceWrapper.of("o");
+    public static final ByteSequence CANCEL_OPEN = ByteSequenceWrapper.of("p");
+    public static final ByteSequence CANCEL_OPEN_ETH = ByteSequenceWrapper.of("q");
+    public static final ByteSequence OPENED_SALE_ETH = ByteSequenceWrapper.of("r");
+    public static final ByteSequence CANCEL_ONLY = ByteSequenceWrapper.of("s");
+    public static final ByteSequence CANCEL_ONLY_ETH = ByteSequenceWrapper.of("t");
+    public static final ByteSequence LATE_OPEN_ETH = ByteSequenceWrapper.of("u");
+    public static final ByteSequence AUTO_EXECUTION_ETH = ByteSequenceWrapper.of("v");
+    public static final ByteSequence REOPEN = ByteSequenceWrapper.of("w");
+    public static final ByteSequence REOPEN_ETH = ByteSequenceWrapper.of("x");
+    public static final ByteSequence ADJUSTED = ByteSequenceWrapper.of("y");
+    public static final ByteSequence ADJUSTED_ETH = ByteSequenceWrapper.of("z");
+    public static final ByteSequence SPREAD = ByteSequenceWrapper.of("AA");
+    public static final ByteSequence SPREAD_ETH = ByteSequenceWrapper.of("AB");
+    public static final ByteSequence STRADDLE = ByteSequenceWrapper.of("AC");
+    public static final ByteSequence STRADDLE_ETH = ByteSequenceWrapper.of("AD");
+    public static final ByteSequence STOPPED = ByteSequenceWrapper.of("AE");
+    public static final ByteSequence STOPPED_ETH = ByteSequenceWrapper.of("AF");
+    public static final ByteSequence REGULAR_ETH = ByteSequenceWrapper.of("AG");
+    public static final ByteSequence COMBO = ByteSequenceWrapper.of("AH");
+    public static final ByteSequence COMBO_ETH = ByteSequenceWrapper.of("AI");
+    public static final ByteSequence OFFICIAL_CLOSING_PRICE = ByteSequenceWrapper.of("AJ");
+    public static final ByteSequence PRIOR_REFERENCE_PRICE = ByteSequenceWrapper.of("AK");
+    public static final ByteSequence STOPPED_SOLD_LAST = ByteSequenceWrapper.of("AL");
+    public static final ByteSequence STOPPED_OUT_OF_SEQUENCE = ByteSequenceWrapper.of("AM");
+    public static final ByteSequence OFFICAL_CLOSING_PRICE = ByteSequenceWrapper.of("AN");
+    public static final ByteSequence CROSSED2 = ByteSequenceWrapper.of("AO");
+    public static final ByteSequence FAST_MARKET = ByteSequenceWrapper.of("AP");
+    public static final ByteSequence AUTOMATIC_EXECUTION = ByteSequenceWrapper.of("AQ");
+    public static final ByteSequence FORM_T = ByteSequenceWrapper.of("AR");
+    public static final ByteSequence BASKET_INDEX = ByteSequenceWrapper.of("AS");
+    public static final ByteSequence BURST_BASKET = ByteSequenceWrapper.of("AT");
+    public static final ByteSequence NO_MARKET_ACTIVITY = ByteSequenceWrapper.of("1000");
+    public static final ByteSequence NO_DATA_AVAILABLE = ByteSequenceWrapper.of("1001");
+    public static final ByteSequence NOT_APPLICABLE = ByteSequenceWrapper.of("1002");
+
+}

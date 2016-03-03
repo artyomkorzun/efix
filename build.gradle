@@ -4,7 +4,7 @@ plugins {
     id 'me.champeau.gradle.jmh' version '0.2.0'
 }
 
-group = 'org.f1x'
+group = 'org.efix'
 version = '0.0.1'
 
 repositories {
@@ -40,5 +40,5 @@ jmh {
     iterations = 3
     threads = 1
     fork = 1
-    jvmArgsAppend = '-Df1x.disable.bounds.check=true'
+    jvmArgsAppend = '-Defix.disable.bounds.check=true'
 }
