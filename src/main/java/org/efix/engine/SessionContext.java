@@ -1,7 +1,7 @@
 package org.efix.engine;
 
 import org.efix.FixVersion;
-import org.efix.SessionID;
+import org.efix.SessionId;
 import org.efix.SessionType;
 import org.efix.connector.AcceptorConnector;
 import org.efix.connector.Connector;
@@ -72,7 +72,7 @@ public class SessionContext {
 
     protected SessionType sessionType;
     protected FixVersion fixVersion;
-    protected SessionID sessionID;
+    protected SessionId sessionId;
     protected int heartbeatInterval = Configuration.HEARTBEAT_INTERVAL;
     protected int heartbeatTimeout = Configuration.HEARTBEAT_TIMEOUT;
     protected int logonTimeout = Configuration.LOGON_TIMEOUT;
@@ -80,11 +80,11 @@ public class SessionContext {
     protected boolean resetSeqNumsOnLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
-    public SessionContext(InetSocketAddress address, SessionType sessionType, FixVersion fixVersion, SessionID sessionID) {
+    public SessionContext(InetSocketAddress address, SessionType sessionType, FixVersion fixVersion, SessionId sessionId) {
         this.address = address;
         this.sessionType = sessionType;
         this.fixVersion = fixVersion;
-        this.sessionID = sessionID;
+        this.sessionId = sessionId;
     }
 
     public EpochClock clock() {
@@ -285,12 +285,12 @@ public class SessionContext {
         return this;
     }
 
-    public SessionID sessionID() {
-        return sessionID;
+    public SessionId sessionID() {
+        return sessionId;
     }
 
-    public SessionContext sessionID(SessionID sessionID) {
-        this.sessionID = sessionID;
+    public SessionContext sessionID(SessionId sessionId) {
+        this.sessionId = sessionId;
         return this;
     }
 
@@ -360,9 +360,9 @@ public class SessionContext {
     public SessionContext conclude() {
         requireNonNull(sessionType);
         requireNonNull(fixVersion);
-        requireNonNull(sessionID);
-        requireNonNull(sessionID.senderCompId());
-        requireNonNull(sessionID.targetCompId());
+        requireNonNull(sessionId);
+        requireNonNull(sessionId.senderCompId());
+        requireNonNull(sessionId.targetCompId());
 
         if (clock == null)
             clock = SystemEpochClock.INSTANCE;

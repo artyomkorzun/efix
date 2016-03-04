@@ -4,29 +4,29 @@ import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
 
 
-public class SessionID {
+public class SessionId {
 
     protected final ByteSequence senderCompId;
     protected final ByteSequence senderSubId;
     protected final ByteSequence targetCompId;
     protected final ByteSequence targetSubId;
 
-    public SessionID(String senderCompId, String targetCompId) {
+    public SessionId(String senderCompId, String targetCompId) {
         this(byteSequence(senderCompId), byteSequence(targetCompId));
     }
 
-    public SessionID(String senderCompId, String senderSubId, String targetCompId, String targetSubId) {
+    public SessionId(String senderCompId, String senderSubId, String targetCompId, String targetSubId) {
         this(byteSequence(senderCompId), byteSequence(senderSubId), byteSequence(targetCompId), byteSequence(targetSubId));
     }
 
-    public SessionID(ByteSequence senderCompId, ByteSequence senderSubId, ByteSequence targetCompId, ByteSequence targetSubId) {
+    public SessionId(ByteSequence senderCompId, ByteSequence senderSubId, ByteSequence targetCompId, ByteSequence targetSubId) {
         this.senderCompId = senderCompId;
         this.senderSubId = senderSubId;
         this.targetCompId = targetCompId;
         this.targetSubId = targetSubId;
     }
 
-    public SessionID(ByteSequence senderCompId, ByteSequence targetCompId) {
+    public SessionId(ByteSequence senderCompId, ByteSequence targetCompId) {
         this(senderCompId, null, targetCompId, null);
     }
 

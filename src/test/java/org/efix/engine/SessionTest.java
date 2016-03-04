@@ -1,7 +1,7 @@
 package org.efix.engine;
 
 import org.efix.FixVersion;
-import org.efix.SessionID;
+import org.efix.SessionId;
 import org.efix.SessionType;
 import org.efix.connector.channel.TestConnector;
 import org.efix.connector.channel.TextChannel;
@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
 
 public abstract class SessionTest {
 
-    protected static final SessionID SESSION_ID = new SessionID("RECEIVER", "SENDER");
+    protected static final SessionId SESSION_ID = new SessionId("RECEIVER", "SENDER");
     protected static final EpochClock CLOCK = new HaltedEpochClock().time(parseTimestamp("20160101-00:00:00"));
 
     protected final SessionType sessionType;

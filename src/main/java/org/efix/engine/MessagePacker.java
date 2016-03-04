@@ -1,7 +1,7 @@
 package org.efix.engine;
 
 import org.efix.FixVersion;
-import org.efix.SessionID;
+import org.efix.SessionId;
 import org.efix.message.FieldUtil;
 import org.efix.message.field.Tag;
 import org.efix.util.ByteSequence;
@@ -19,12 +19,12 @@ import static org.efix.util.format.BooleanFormatter.formatBoolean;
 public class MessagePacker {
 
     protected final ByteSequence beginString;
-    protected final SessionID sessionID;
+    protected final SessionId sessionId;
     protected final MutableBuffer buffer;
 
-    public MessagePacker(FixVersion FixVersion, SessionID sessionID, MutableBuffer buffer) {
+    public MessagePacker(FixVersion FixVersion, SessionId sessionId, MutableBuffer buffer) {
         this.beginString = FixVersion.beginString();
-        this.sessionID = sessionID;
+        this.sessionId = sessionId;
         this.buffer = buffer;
     }
 
@@ -65,10 +65,10 @@ public class MessagePacker {
         offset = addUInt(Tag.BodyLength, bodyLength, buffer, offset);
         offset = addByteSequence(Tag.MsgType, msgType, buffer, offset);
         offset = addUInt(Tag.MsgSeqNum, msgSeqNum, buffer, offset);
-        offset = addByteSequence(Tag.SenderCompID, sessionID.senderCompId(), buffer, offset);
-        offset = addNullableByteSequence(Tag.SenderSubID, sessionID.senderSubId(), buffer, offset);
-        offset = addByteSequence(Tag.TargetCompID, sessionID.targetCompId(), buffer, offset);
-        offset = addNullableByteSequence(Tag.TargetSubID, sessionID.targetSubId(), buffer, offset);
+        offset = addByteSequence(Tag.SenderCompID, sessionId.senderCompId(), buffer, offset);
+        offset = addNullableByteSequence(Tag.SenderSubID, sessionId.senderSubId(), buffer, offset);
+        offset = addByteSequence(Tag.TargetCompID, sessionId.targetCompId(), buffer, offset);
+        offset = addNullableByteSequence(Tag.TargetSubID, sessionId.targetSubId(), buffer, offset);
         offset = addTimestamp(Tag.SendingTime, time, buffer, offset);
 
         return offset;
@@ -134,10 +134,10 @@ public class MessagePacker {
 
         bodyLength += 4 + msgType.length();
         bodyLength += 4 + IntFormatter.uintLength(msgSeqNum);
-        bodyLength += 4 + sessionID.senderCompId().length();
-        bodyLength += (sessionID.senderSubId() == null) ? 0 : 4 + sessionID.senderSubId().length();
-        bodyLength += 4 + sessionID.targetCompId().length();
-        bodyLength += (sessionID.targetSubId() == null) ? 0 : 4 + sessionID.targetSubId().length();
+        bodyLength += 4 + sessionId.senderCompId().length();
+        bodyLength += (sessionId.senderSubId() == null) ? 0 : 4 + sessionId.senderSubId().length();
+        bodyLength += 4 + sessionId.targetCompId().length();
+        bodyLength += (sessionId.targetSubId() == null) ? 0 : 4 + sessionId.targetSubId().length();
         bodyLength += 4 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
         bodyLength += length;
 

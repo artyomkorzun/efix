@@ -1,7 +1,7 @@
 package org.efix.engine;
 
 import org.efix.FixVersion;
-import org.efix.SessionID;
+import org.efix.SessionId;
 import org.efix.message.field.MsgType;
 import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
@@ -46,9 +46,9 @@ public class MessagePackerTest {
     @Test(expected = InsufficientSpaceException.class)
     public void shouldThrowExceptionMessageLengthExceedsMaxOnPackSendMessage() {
         int messageLength = 67;
-        SessionID sessionID = new SessionID("S", "T");
+        SessionId sessionId = new SessionId("S", "T");
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(messageLength - 1);
-        MessagePacker packer = new MessagePacker(FixVersion.FIX42, sessionID, buffer);
+        MessagePacker packer = new MessagePacker(FixVersion.FIX42, sessionId, buffer);
 
         int seqNum = 1;
         long time = System.currentTimeMillis();
@@ -61,9 +61,9 @@ public class MessagePackerTest {
     @Test(expected = InsufficientSpaceException.class)
     public void shouldThrowExceptionMessageLengthExceedsMaxOnPackResendMessage() {
         int messageLength = 109;
-        SessionID sessionID = new SessionID("S", "T");
+        SessionId sessionId = new SessionId("S", "T");
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(messageLength - 1);
-        MessagePacker packer = new MessagePacker(FixVersion.FIX42, sessionID, buffer);
+        MessagePacker packer = new MessagePacker(FixVersion.FIX42, sessionId, buffer);
 
         int seqNum = 99;
         long time = System.currentTimeMillis();
@@ -76,7 +76,7 @@ public class MessagePackerTest {
     protected static void shouldPackSendMessage(String expected, String senderCompID, String senderSubId, String targetCompID, String targetSubId,
                                                 int msgSeqNum, String sendingTime, String msgType, String body) {
 
-        SessionID id = new SessionID(senderCompID, senderSubId, targetCompID, targetSubId);
+        SessionId id = new SessionId(senderCompID, senderSubId, targetCompID, targetSubId);
         body = stringMessage(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
@@ -91,7 +91,7 @@ public class MessagePackerTest {
     protected static void shouldPackResendMessage(String expected, String senderCompID, String senderSubId, String targetCompID, String targetSubId,
                                                   int msgSeqNum, String sendingTime, String origSendingTime, String msgType, String body) {
 
-        SessionID id = new SessionID(senderCompID, senderSubId, targetCompID, targetSubId);
+        SessionId id = new SessionId(senderCompID, senderSubId, targetCompID, targetSubId);
         body = stringMessage(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
