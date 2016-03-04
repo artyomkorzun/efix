@@ -14,6 +14,7 @@ public class FieldUtil {
     public static final long LONG_NULL = Long.MIN_VALUE;
     public static final double DOUBLE_NULL = Double.NaN;
     public static final int INT_NULL = Integer.MIN_VALUE;
+    public static final byte BYTE_NULL = Byte.MIN_VALUE;
 
     public static int checkTag(int expected, int tag) {
         if (tag != expected)
@@ -30,6 +31,13 @@ public class FieldUtil {
     }
 
     public static int checkEqual(int tag, int value, int expected) {
+        if (value != expected)
+            throw new FieldException(tag, String.format("Field %s with value %s not equal %s", tag, value, expected));
+
+        return value;
+    }
+
+    public static byte checkEqual(int tag, byte value, byte expected) {
         if (value != expected)
             throw new FieldException(tag, String.format("Field %s with value %s not equal %s", tag, value, expected));
 
@@ -57,6 +65,13 @@ public class FieldUtil {
         return value;
     }
 
+    public static byte checkPositive(int tag, byte value) {
+        if (value <= 0)
+            throw new FieldException(tag, String.format("Field %s with non positive value %s", tag, value));
+
+        return value;
+    }
+
     public static long checkNonNegative(int tag, long value) {
         if (value < 0)
             throw new FieldException(tag, String.format("Field %s with negative value %s", tag, value));
@@ -78,6 +93,13 @@ public class FieldUtil {
         return value;
     }
 
+    public static byte checkNonNegative(int tag, byte value) {
+        if (value < 0)
+            throw new FieldException(tag, String.format("Field %s with negative value %s", tag, value));
+
+        return value;
+    }
+
     public static long checkPresent(int tag, long value) {
         return checkPresent(tag, value, LONG_NULL);
     }
@@ -93,6 +115,10 @@ public class FieldUtil {
         return checkPresent(tag, value, INT_NULL);
     }
 
+    public static byte checkPresent(int tag, byte value) {
+        return checkPresent(tag, value, BYTE_NULL);
+    }
+
     public static long checkPresent(int tag, long value, long nullValue) {
         if (value == nullValue)
             throw new FieldException(tag, String.format("Missing field %s", tag));
@@ -101,6 +127,13 @@ public class FieldUtil {
     }
 
     public static int checkPresent(int tag, int value, int nullValue) {
+        if (value == nullValue)
+            throw new FieldException(tag, String.format("Missing field %s", tag));
+
+        return value;
+    }
+
+    public static byte checkPresent(int tag, byte value, byte nullValue) {
         if (value == nullValue)
             throw new FieldException(tag, String.format("Missing field %s", tag));
 
