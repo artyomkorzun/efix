@@ -11,14 +11,14 @@ import java.nio.channels.SocketChannel;
 public class InitiatorConnector extends SocketChannelConnector {
 
     protected final EpochClock clock;
-    protected final int reconnectInterval;
+    protected final int connectInterval;
 
-    protected long errorTime = Long.MIN_VALUE;
+    protected long connectTime = Long.MIN_VALUE;
 
-    public InitiatorConnector(SocketAddress address, SocketOptions options, EpochClock clock, int reconnectInterval) {
+    public InitiatorConnector(SocketAddress address, SocketOptions options, EpochClock clock, int connectInterval) {
         super(address, options);
         this.clock = clock;
-        this.reconnectInterval = reconnectInterval;
+        this.connectInterval = connectInterval;
     }
 
     @Override
@@ -27,25 +27,30 @@ public class InitiatorConnector extends SocketChannelConnector {
 
     @Override
     protected NioSocketChannel doConnect() {
-        long now = clock.time();
-        if (canConnect(now)) {
-            try {
-                if (channel == null) {
+        NioSocketChannel nioChannel = null;
+
+        try {
+            if (channel == null) {
+                long now = clock.time();
+
+                if (canConnect(now)) {
+                    connectTime = now;
+
                     channel = SocketChannel.open();
                     configure(channel);
-                    channel.connect(address);
+                    if (channel.connect(address))
+                        nioChannel = new NioSocketChannel(channel);
                 }
-
+            } else {
                 if (channel.finishConnect())
-                    return new NioSocketChannel(channel);
-            } catch (IOException e) {
-                errorTime = now;
-                disconnect();
-                throw new ConnectionException(e);
+                    nioChannel = new NioSocketChannel(channel);
             }
+        } catch (IOException e) {
+            disconnect();
+            throw new ConnectionException(e);
         }
 
-        return null;
+        return nioChannel;
     }
 
     @Override
@@ -54,7 +59,7 @@ public class InitiatorConnector extends SocketChannelConnector {
     }
 
     protected boolean canConnect(long now) {
-        return now >= errorTime + reconnectInterval;
+        return now >= connectTime + connectInterval;
     }
 
 }

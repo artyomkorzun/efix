@@ -23,7 +23,11 @@ public class NioSocketChannel implements Channel {
     public int read(MutableBuffer buffer, int offset, int length) {
         ByteBuffer byteBuffer = byteBuffer(buffer, offset, length);
         try {
-            return channel.read(byteBuffer);
+            int bytesRead = channel.read(byteBuffer);
+            if (bytesRead == -1)
+                throw new ConnectionException("An existing connection was forcibly closed by the remote host");
+
+            return bytesRead;
         } catch (IOException e) {
             throw new ConnectionException(e);
         }

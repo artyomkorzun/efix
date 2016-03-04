@@ -222,13 +222,7 @@ public class SessionProcessor implements Worker {
 
         if (state.status() != DISCONNECTED) {
             try {
-                int bytesRead = receiver.receive(inMessageHandler);
-                if (bytesRead == -1) {
-                    disconnect("No more data");
-                    work += 1;
-                } else {
-                    work += bytesRead;
-                }
+                work += receiver.receive(inMessageHandler);
             } catch (Exception e) {
                 work += 1;
                 processError(e);

@@ -26,10 +26,10 @@ public class ReceiverTest {
         };
 
         String[] chunks = {
-                "8=FIX.4.2|9=87|35=A|34=1|49=DELTIX|52=20160122-11:33:24.322|56=TTDEV14O|95=3|96=ffd|98=0|108=30|141=Y|10=228|",
+                "8=FIX.4.2|9=87|35=A|34=1|49=DELTIX|52=20160122-11:33:24.322|56=TTDEV14O|95=3|96=ffd|98=0|108=30|141=Y|10=228|", "",
                 "8=FIX.4.2|", "9=77|35=1|34=2|49=TTDEV14O|56=DELTIX|52=20", "160122-11:33:24.349|112=MsgSeqNum check|10=075|",
-                "8=FIX.4.2|9=77|35=0|34=2|49=DELTIX|52=20160122-11:33:24.350|56=TTDEV14O|112=MsgSeqNum check|", "10=066|" +
-                "8=FIX.4.2|9=87|35=A|34=1|49=DELTIX|52=20160122-11:33:24.322|", "56=TTDEV14O|95=3|96=ffd|98=0|108=30|141=Y|10=228|"
+                "8=FIX.4.2|9=77|35=0|34=2|49=DELTIX|52=20160122-11:33:24.350|56=TTDEV14O|112=MsgSeqNum check|", "10=066|", "",
+                "8=FIX.4.2|9=87|35=A|34=1|49=DELTIX|52=20160122-11:33:24.322|", "56=TTDEV14O|95=3|96=ffd|98=0|108=30|141=Y|10=228|",
         };
 
         shouldReceiveMessages(expected, chunks);
@@ -57,11 +57,13 @@ public class ReceiverTest {
 
     protected void shouldReceiveMessages(String[] expected, String[] chunks) {
         Receiver receiver = new Receiver(BUFFER_SIZE);
-        receiver.channel(new TextChannel(chunks));
+        TextChannel channel = new TextChannel(chunks);
+        receiver.channel(channel);
 
         ArrayList<String> messages = new ArrayList<>();
         MessageHandler verifier = (messageType, buffer, offset, length) -> messages.add(BufferUtil.toString(buffer, offset, length));
-        while (receiver.receive(verifier) > 0) ;
+        while (!channel.inQueue().isEmpty())
+            receiver.receive(verifier);
 
         assertArrayEquals(stringMessages(expected), messages.toArray());
     }

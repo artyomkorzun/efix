@@ -61,7 +61,7 @@ public class SessionContext {
 
     protected Connector connector;
     protected InetSocketAddress address;
-    protected int reconnectInterval = Configuration.RECONNECT_INTERVAL;
+    protected int reconnectInterval = Configuration.CONNECT_INTERVAL;
     protected int socketReceiveBufferSize = Configuration.SOCKET_RECEIVE_BUFFER_SIZE;
     protected int socketSendBufferSize = Configuration.SOCKET_SEND_BUFFER_SIZE;
     protected boolean socketTcpNoDelay = Configuration.SOCKET_TCP_NO_DELAY;
