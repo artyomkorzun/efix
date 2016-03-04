@@ -1,6 +1,6 @@
 package org.efix.engine;
 
-import org.efix.FIXVersion;
+import org.efix.FixVersion;
 import org.efix.SessionID;
 import org.efix.SessionType;
 import org.efix.connector.channel.TestConnector;
@@ -53,7 +53,7 @@ public abstract class SessionTest {
         state = new MemorySessionState();
         store = new MemoryMessageStore(1 << 16);
 
-        SessionContext context = new SessionContext(new InetSocketAddress(1234), sessionType, FIXVersion.FIX44, SESSION_ID);
+        SessionContext context = new SessionContext(new InetSocketAddress(1234), sessionType, FixVersion.FIX44, SESSION_ID);
         context.clock(CLOCK).state(state).store(store).connector(new TestConnector(channel));
 
         processor = new SessionProcessor(context) {

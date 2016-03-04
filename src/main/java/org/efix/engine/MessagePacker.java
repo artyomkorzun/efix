@@ -1,6 +1,6 @@
 package org.efix.engine;
 
-import org.efix.FIXVersion;
+import org.efix.FixVersion;
 import org.efix.SessionID;
 import org.efix.message.FieldUtil;
 import org.efix.message.field.Tag;
@@ -22,8 +22,8 @@ public class MessagePacker {
     protected final SessionID sessionID;
     protected final MutableBuffer buffer;
 
-    public MessagePacker(FIXVersion FIXVersion, SessionID sessionID, MutableBuffer buffer) {
-        this.beginString = FIXVersion.beginString();
+    public MessagePacker(FixVersion FixVersion, SessionID sessionID, MutableBuffer buffer) {
+        this.beginString = FixVersion.beginString();
         this.sessionID = sessionID;
         this.buffer = buffer;
     }

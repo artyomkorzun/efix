@@ -1,6 +1,6 @@
 package org.efix.engine;
 
-import org.efix.FIXVersion;
+import org.efix.FixVersion;
 import org.efix.SessionID;
 import org.efix.SessionType;
 import org.efix.connector.AcceptorConnector;
@@ -71,7 +71,7 @@ public class SessionContext {
     protected int sendBufferSize = Configuration.SEND_BUFFER_SIZE;
 
     protected SessionType sessionType;
-    protected FIXVersion fixVersion;
+    protected FixVersion fixVersion;
     protected SessionID sessionID;
     protected int heartbeatInterval = Configuration.HEARTBEAT_INTERVAL;
     protected int heartbeatTimeout = Configuration.HEARTBEAT_TIMEOUT;
@@ -80,7 +80,7 @@ public class SessionContext {
     protected boolean resetSeqNumsOnLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
-    public SessionContext(InetSocketAddress address, SessionType sessionType, FIXVersion fixVersion, SessionID sessionID) {
+    public SessionContext(InetSocketAddress address, SessionType sessionType, FixVersion fixVersion, SessionID sessionID) {
         this.address = address;
         this.sessionType = sessionType;
         this.fixVersion = fixVersion;
@@ -294,11 +294,11 @@ public class SessionContext {
         return this;
     }
 
-    public FIXVersion fixVersion() {
+    public FixVersion fixVersion() {
         return fixVersion;
     }
 
-    public SessionContext fixVersion(FIXVersion fixVersion) {
+    public SessionContext fixVersion(FixVersion fixVersion) {
         this.fixVersion = fixVersion;
         return this;
     }

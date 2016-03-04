@@ -3,7 +3,7 @@ package org.efix;
 import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
 
-public enum FIXVersion {
+public enum FixVersion {
 
     FIX42("FIX.4.2"),
     FIX43("FIX.4.3"),
@@ -12,7 +12,7 @@ public enum FIXVersion {
 
     private final ByteSequence beginString;
 
-    FIXVersion(String beginString) {
+    FixVersion(String beginString) {
         this.beginString = ByteSequenceWrapper.of(beginString);
     }
 

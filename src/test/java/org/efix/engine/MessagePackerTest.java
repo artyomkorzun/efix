@@ -1,6 +1,6 @@
 package org.efix.engine;
 
-import org.efix.FIXVersion;
+import org.efix.FixVersion;
 import org.efix.SessionID;
 import org.efix.message.field.MsgType;
 import org.efix.util.ByteSequence;
@@ -48,7 +48,7 @@ public class MessagePackerTest {
         int messageLength = 67;
         SessionID sessionID = new SessionID("S", "T");
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(messageLength - 1);
-        MessagePacker packer = new MessagePacker(FIXVersion.FIX42, sessionID, buffer);
+        MessagePacker packer = new MessagePacker(FixVersion.FIX42, sessionID, buffer);
 
         int seqNum = 1;
         long time = System.currentTimeMillis();
@@ -63,7 +63,7 @@ public class MessagePackerTest {
         int messageLength = 109;
         SessionID sessionID = new SessionID("S", "T");
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(messageLength - 1);
-        MessagePacker packer = new MessagePacker(FIXVersion.FIX42, sessionID, buffer);
+        MessagePacker packer = new MessagePacker(FixVersion.FIX42, sessionID, buffer);
 
         int seqNum = 99;
         long time = System.currentTimeMillis();
@@ -80,7 +80,7 @@ public class MessagePackerTest {
         body = stringMessage(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
-        MessagePacker packer = new MessagePacker(FIXVersion.FIX44, id, buffer);
+        MessagePacker packer = new MessagePacker(FixVersion.FIX44, id, buffer);
         int length = packer.pack(msgSeqNum, parseTimestamp(sendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
@@ -95,7 +95,7 @@ public class MessagePackerTest {
         body = stringMessage(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
-        MessagePacker packer = new MessagePacker(FIXVersion.FIX44, id, buffer);
+        MessagePacker packer = new MessagePacker(FixVersion.FIX44, id, buffer);
         int length = packer.pack(msgSeqNum, parseTimestamp(sendingTime), parseTimestamp(origSendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
