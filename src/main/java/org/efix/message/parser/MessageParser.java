@@ -1,5 +1,6 @@
 package org.efix.message.parser;
 
+import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.buffer.Buffer;
 
@@ -21,6 +22,8 @@ public interface MessageParser {
     boolean parseBoolean();
 
     CharSequence parseCharSequence();
+
+    ByteSequence parseByteSequence();
 
     void parseByteSequence(ByteSequenceWrapper sequence);
 

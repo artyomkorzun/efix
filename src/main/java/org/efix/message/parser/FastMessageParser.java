@@ -1,5 +1,6 @@
 package org.efix.message.parser;
 
+import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
@@ -55,8 +56,12 @@ public class FastMessageParser implements MessageParser {
 
     @Override
     public CharSequence parseCharSequence() {
-        parseByteSequence(sequence);
-        return sequence;
+        return ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, sequence);
+    }
+
+    @Override
+    public ByteSequence parseByteSequence() {
+        return ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, sequence);
     }
 
     @Override
