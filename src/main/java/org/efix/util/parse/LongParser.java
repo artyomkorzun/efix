@@ -95,7 +95,7 @@ public class LongParser {
 
     protected static void checkValueLength(int length, int max) {
         if (length > max)
-            throw new ParserException(String.format("number is too long, length %s, max length %s", length, max));
+            throw new ParserException(String.format("Integer is too long, length %s, max length %s", length, max));
     }
 
 }

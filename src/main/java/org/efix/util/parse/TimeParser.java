@@ -52,21 +52,21 @@ public class TimeParser {
 
     protected static int checkHour(int hour) {
         if (hour > TimeType.MAX_HOUR_VALUE)
-            throw new ParserException("invalid hour " + hour);
+            throw new ParserException("Invalid hour " + hour);
 
         return hour;
     }
 
     protected static int checkMinute(int minute) {
         if (minute > TimeType.MAX_MINUTE_VALUE)
-            throw new ParserException("invalid minute " + minute);
+            throw new ParserException("Invalid minute " + minute);
 
         return minute;
     }
 
     protected static int checkSecond(int second) {
         if (second > TimeType.MAX_SECOND_VALUE)
-            throw new ParserException("invalid second " + second);
+            throw new ParserException("Invalid second " + second);
 
         return second;
     }

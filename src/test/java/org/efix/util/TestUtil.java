@@ -81,6 +81,21 @@ public class TestUtil {
         return ThreadLocalRandom.current().nextDouble(from, Math.nextUp(to));
     }
 
+    public static String generateDecimal(int integerPartLength, int fractionalPartLength) {
+        StringBuilder builder = new StringBuilder();
+        if (generateInt(0, 99) < 50)
+            builder.append('-');
+
+        for (int i = 0; i < integerPartLength; i++)
+            builder.append(generateInt(0, 9));
+
+        builder.append('.');
+        for (int i = 0; i < fractionalPartLength; i++)
+            builder.append(generateInt(0, 9));
+
+        return builder.toString();
+    }
+
     @SafeVarargs
     public static <T> T[] arrayOf(T... objects) {
         return objects;

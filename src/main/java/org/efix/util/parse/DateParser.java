@@ -55,19 +55,19 @@ public class DateParser {
         checkDay(day, daysInMonth);
         days += day - 1 - daysToNewYear - DAYS_TO_EPOCH;
 
-        return days * DAY_IN_MILLIS; // TODO: optimize multiplication
+        return days * DAY_IN_MILLIS;
     }
 
     private static int checkDay(int day, int daysInMonth) {
         if (day == 0 || day > daysInMonth)
-            throw new ParserException("invalid day " + day);
+            throw new ParserException("Invalid day " + day);
 
         return day;
     }
 
     protected static int checkMonth(int month) {
         if (month == 0 || month > 12)
-            throw new ParserException("invalid month " + month);
+            throw new ParserException("Invalid month " + month);
 
         return month;
     }

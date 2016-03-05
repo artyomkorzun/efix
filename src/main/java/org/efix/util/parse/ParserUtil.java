@@ -41,11 +41,11 @@ public class ParserUtil {
     }
 
     public static ParserException throwInvalidChar(byte b) {
-        throw new ParserException("invalid character " + (char) b);
+        throw new ParserException("Invalid character " + (char) b);
     }
 
     public static ParserException throwSeparatorNotFound(byte separator) {
-        throw new ParserException(String.format("separator %s is not found", (char) separator));
+        throw new ParserException(String.format("Separator %s is not found", (char) separator));
     }
 
 }

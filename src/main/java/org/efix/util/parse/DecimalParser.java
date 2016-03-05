@@ -2,23 +2,25 @@ package org.efix.util.parse;
 
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
-import org.efix.util.type.DoubleType;
+import org.efix.util.type.DecimalType;
 
 import static org.efix.util.parse.ParserUtil.*;
 
+
 @SuppressWarnings("Duplicates")
-public class DoubleParser {
+public class DecimalParser {
 
-    private static final double[] INVERSE_POW_10 = {1E0, 1E-1, 1E-2, 1E-3, 1E-4, 1E-5, 1E-6, 1E-7, 1E-8, 1E-9, 1E-10, 1E-11, 1E-12, 1E-13, 1E-14};
+    public static final int MAX_UNSIGNED_INTEGER_LENGTH = DecimalType.MAX_UNSIGNED_INTEGER_LENGTH - 1;
+    public static final int MAX_NEGATIVE_INTEGER_LENGTH = DecimalType.MAX_NEGATIVE_INTEGER_LENGTH - 1;
 
-    public static double parseDouble(byte separator, Buffer buffer, MutableInt offset, int end) {
+    public static long parseDecimal(int scale, byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.get();
         int off = start;
 
-        checkFreeSpace(end - off, DoubleType.MIN_LENGTH + 1);
+        checkFreeSpace(end - off, DecimalType.MIN_LENGTH + 1);
 
         byte b = buffer.getByte(off++);
-        if (isDigit(b)) {
+        if (isDigit(b)) { // fast path
             long value = digit(b);
 
             do {
@@ -26,25 +28,27 @@ public class DoubleParser {
                 if (isDigit(b)) {
                     value = (value << 3) + (value << 1) + digit(b);
                 } else if (b == '.') {
-                    int fractionalOffset = off;
+                    checkIntegerPartLength(off - start - 1, MAX_UNSIGNED_INTEGER_LENGTH - scale);
+                    start = off;
 
                     while (off < end) {
                         b = buffer.getByte(off++);
                         if (isDigit(b)) {
                             value = (value << 3) + (value << 1) + digit(b);
                         } else if (b == separator) {
-                            checkValueLength(off - start - 1, DoubleType.MAX_UNSIGNED_FRACTIONAL_LENGTH);
+                            int fractions = off - start - 1;
+                            checkFractionalPartLength(fractions, scale);
                             offset.set(off);
-                            return computeDouble(value, off - fractionalOffset - 1);
+                            return value * DecimalType.multiplier(scale - fractions);
                         } else {
                             throwInvalidChar(b);
                         }
                     }
 
                 } else if (b == separator) {
-                    checkValueLength(off - start - 1, DoubleType.MAX_UNSIGNED_INTEGER_LENGTH);
+                    checkIntegerPartLength(off - start - 1, MAX_UNSIGNED_INTEGER_LENGTH - scale);
                     offset.set(off);
-                    return value;
+                    return value * DecimalType.multiplier(scale);
                 } else {
                     throwInvalidChar(b);
                 }
@@ -60,25 +64,27 @@ public class DoubleParser {
                     if (isDigit(b)) {
                         value = (value << 3) + (value << 1) + digit(b);
                     } else if (b == '.') {
-                        int fractionalOffset = off;
+                        checkIntegerPartLength(off - start - 1, MAX_NEGATIVE_INTEGER_LENGTH - scale);
+                        start = off;
 
                         while (off < end) {
                             b = buffer.getByte(off++);
                             if (isDigit(b)) {
                                 value = (value << 3) + (value << 1) + digit(b);
                             } else if (b == separator) {
-                                checkValueLength(off - start - 1, DoubleType.MAX_NEGATIVE_FRACTIONAL_LENGTH);
+                                int fractions = off - start - 1;
+                                checkFractionalPartLength(fractions, scale);
                                 offset.set(off);
-                                return -computeDouble(value, off - fractionalOffset - 1);
+                                return -(value * DecimalType.multiplier(scale - fractions));
                             } else {
                                 throwInvalidChar(b);
                             }
                         }
 
                     } else if (b == separator) {
-                        checkValueLength(off - start - 1, DoubleType.MAX_NEGATIVE_INTEGER_LENGTH);
+                        checkIntegerPartLength(off - start - 1, MAX_NEGATIVE_INTEGER_LENGTH - scale);
                         offset.set(off);
-                        return -((double) value);
+                        return -(value * DecimalType.multiplier(scale));
                     } else {
                         throwInvalidChar(b);
                     }
@@ -94,13 +100,14 @@ public class DoubleParser {
         throw throwSeparatorNotFound(separator);
     }
 
-    protected static double computeDouble(long value, int fractionalLength) {
-        return value * INVERSE_POW_10[fractionalLength];
+    protected static void checkIntegerPartLength(int length, int max) {
+        if (length > max)
+            throw new ParserException(String.format("Integer part of decimal is too long, length %s, max length %s", length, max));
     }
 
-    protected static void checkValueLength(int length, int max) {
+    protected static void checkFractionalPartLength(int length, int max) {
         if (length > max)
-            throw new ParserException(String.format("Decimal is too long, length %s, max length %s", length, max));
+            throw new ParserException(String.format("Fractional part of decimal is too long, length %s, max length %s", length, max));
     }
 
 }

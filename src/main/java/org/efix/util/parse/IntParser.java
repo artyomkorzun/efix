@@ -111,12 +111,12 @@ public class IntParser {
 
     protected static void checkUnsignedValue(long value, int length) {
         if (length > IntType.MAX_UNSIGNED_INT_LENGTH || value > Integer.MAX_VALUE)
-            throw new ParserException(String.format("number is too big, length %s", length));
+            throw new ParserException(String.format("Integer is too big, length %s", length));
     }
 
     protected static void checkNegativeValue(long value, int length) {
         if (length > IntType.MAX_NEGATIVE_INT_LENGTH || value < Integer.MIN_VALUE)
-            throw new ParserException(String.format("number is too small, length %s", length));
+            throw new ParserException(String.format("Integer is too small, length %s", length));
     }
 
 }
