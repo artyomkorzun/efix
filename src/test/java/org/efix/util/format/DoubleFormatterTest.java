@@ -40,7 +40,6 @@ public class DoubleFormatterTest extends AbstractFormatterTest {
 
             for (int precision = -1; precision <= maxPrecision; precision++)
                 shouldFormat(value, precision);
-
         }
     }
 
