@@ -2,6 +2,9 @@ package org.efix.util.parse;
 
 public class ParserUtil {
 
+    public static int SIGN_LENGTH = 1;
+    public static int SEPARATOR_LENGTH = 1;
+
     public static void checkFreeSpace(int free, int required) {
         if (free < required)
             throw new ParserException(String.format("free %s < required %s", free, required));

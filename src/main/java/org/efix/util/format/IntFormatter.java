@@ -22,7 +22,7 @@ public class IntFormatter {
     public static int formatNegativeInt(int value, MutableBuffer buffer, int offset) {
         if (value == Integer.MIN_VALUE) {
             buffer.putBytes(offset, MIN_INT);
-            return offset + IntType.MAX_NEGATIVE_INT_LENGTH;
+            return offset + IntType.MAX_LENGTH;
         }
 
         buffer.putByte(offset++, (byte) '-');

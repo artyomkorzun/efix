@@ -4,88 +4,48 @@ import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.IntType;
 
-@SuppressWarnings("Duplicates")
+import static org.efix.util.parse.ParserUtil.*;
+
+
 public class IntParser {
 
     public static int parseInt(byte separator, Buffer buffer, MutableInt offset, int end) {
-        int start = offset.get();
-        int off = start;
+        int off = offset.get();
+        checkFreeSpace(end - off, SIGN_LENGTH);
 
-        ParserUtil.checkFreeSpace(end - off, IntType.MIN_LENGTH + 1);
-
-        byte b = buffer.getByte(off++);
-        if (ParserUtil.isDigit(b)) { // fast path
-            long value = ParserUtil.digit(b);
-
-            do {
-                b = buffer.getByte(off++);
-                if (ParserUtil.isDigit(b)) {
-                    value = (value << 3) + (value << 1) + ParserUtil.digit(b);
-                } else if (b == separator) {
-                    checkUnsignedValue(value, off - start - 1);
-                    offset.set(off);
-                    return (int) value;
-                } else {
-                    ParserUtil.throwInvalidChar(b);
-                }
-            } while (off < end);
-
-        } else if (b == '-') {
-            b = buffer.getByte(off++);
-            if (ParserUtil.isDigit(b)) {
-                long value = ParserUtil.digit(b);
-
-                while (off < end) {
-                    b = buffer.getByte(off++);
-                    if (ParserUtil.isDigit(b)) {
-                        value = (value << 3) + (value << 1) + ParserUtil.digit(b);
-                    } else if (b == separator) {
-                        value = -value;
-                        checkNegativeValue(value, off - start - 1);
-                        offset.set(off);
-                        return (int) value;
-                    } else {
-                        ParserUtil.throwInvalidChar(b);
-                    }
-                }
-
-            } else {
-                ParserUtil.throwInvalidChar(b);
-            }
+        if (buffer.getByte(off) == '-') {
+            offset.set(off + SIGN_LENGTH);
+            return -parseUInt(separator, buffer, offset, end);
         } else {
-            ParserUtil.throwInvalidChar(b);
+            return parseUInt(separator, buffer, offset, end);
         }
-
-        throw ParserUtil.throwSeparatorNotFound(separator);
     }
 
     public static int parseUInt(byte separator, Buffer buffer, MutableInt offset, int end) {
         int start = offset.get();
         int off = start;
 
-        ParserUtil.checkFreeSpace(end - off, IntType.MIN_LENGTH + 1);
+        checkFreeSpace(end - off, IntType.MIN_LENGTH + SEPARATOR_LENGTH);
 
-        long value = 0;
         byte b = buffer.getByte(off++);
-        if (ParserUtil.isDigit(b))
-            value = ParserUtil.digit(b);
-        else
-            ParserUtil.throwInvalidChar(b);
+        long value = digit(b);
+        if (!isDigit(b))
+            throwInvalidChar(b);
 
         do {
             b = buffer.getByte(off++);
-            if (ParserUtil.isDigit(b)) {
-                value = (value << 3) + (value << 1) + ParserUtil.digit(b);
+            if (isDigit(b)) {
+                value = (value << 3) + (value << 1) + digit(b);
             } else if (b == separator) {
-                checkUnsignedValue(value, off - start - 1);
+                checkUInt(value, off - start - SEPARATOR_LENGTH);
                 offset.set(off);
                 return (int) value;
             } else {
-                ParserUtil.throwInvalidChar(b);
+                throwInvalidChar(b);
             }
         } while (off < end);
 
-        throw ParserUtil.throwSeparatorNotFound(separator);
+        throw throwSeparatorNotFound(separator);
     }
 
     protected static int parse2DigitUInt(Buffer buffer, int offset) {
@@ -109,14 +69,9 @@ public class IntParser {
         return value;
     }
 
-    protected static void checkUnsignedValue(long value, int length) {
-        if (length > IntType.MAX_UNSIGNED_INT_LENGTH || value > Integer.MAX_VALUE)
+    protected static void checkUInt(long value, int length) {
+        if (length > IntType.MAX_UINT_LENGTH || value > Integer.MAX_VALUE)
             throw new ParserException(String.format("Integer is too big, length %s", length));
-    }
-
-    protected static void checkNegativeValue(long value, int length) {
-        if (length > IntType.MAX_NEGATIVE_INT_LENGTH || value < Integer.MIN_VALUE)
-            throw new ParserException(String.format("Integer is too small, length %s", length));
     }
 
 }

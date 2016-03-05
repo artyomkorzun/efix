@@ -4,6 +4,11 @@ import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.TimeType;
 
+import static org.efix.util.parse.IntParser.parse2DigitUInt;
+import static org.efix.util.parse.IntParser.parse3DigitUInt;
+import static org.efix.util.parse.ParserUtil.*;
+
+
 public class TimeParser {
 
     /**
@@ -13,35 +18,35 @@ public class TimeParser {
         int off = offset.get();
         int free = end - off;
 
-        ParserUtil.checkFreeSpace(free, TimeType.SECOND_TIME_LENGTH + 1);
+        checkFreeSpace(free, TimeType.SECOND_TIME_LENGTH + SEPARATOR_LENGTH);
         int time = parseSecondTime(buffer, off);
 
         byte b = buffer.getByte(off + TimeType.DOT_OFFSET);
         if (b == '.') {
-            ParserUtil.checkFreeSpace(free, TimeType.MILLISECOND_TIME_LENGTH + 1);
-            time += IntParser.parse3DigitUInt(buffer, off + TimeType.MILLISECOND_OFFSET);
+            checkFreeSpace(free, TimeType.MILLISECOND_TIME_LENGTH + SEPARATOR_LENGTH);
+            time += parse3DigitUInt(buffer, off + TimeType.MILLISECOND_OFFSET);
             b = buffer.getByte(off + TimeType.MILLISECOND_TIME_LENGTH);
-            off += TimeType.MILLISECOND_TIME_LENGTH + 1;
+            off += TimeType.MILLISECOND_TIME_LENGTH + SEPARATOR_LENGTH;
         } else {
-            off += TimeType.SECOND_TIME_LENGTH + 1;
+            off += TimeType.SECOND_TIME_LENGTH + SEPARATOR_LENGTH;
         }
 
-        ParserUtil.checkByte(b, separator);
+        checkByte(b, separator);
         offset.set(off);
 
         return time;
     }
 
     protected static int parseSecondTime(Buffer buffer, int offset) {
-        int hour = IntParser.parse2DigitUInt(buffer, offset + TimeType.HOUR_OFFSET);
+        int hour = parse2DigitUInt(buffer, offset + TimeType.HOUR_OFFSET);
         checkHour(hour);
-        ParserUtil.checkByte(buffer.getByte(offset + TimeType.FIRST_COLON_OFFSET), (byte) ':');
+        checkByte(buffer.getByte(offset + TimeType.FIRST_COLON_OFFSET), (byte) ':');
 
-        int minute = IntParser.parse2DigitUInt(buffer, offset + TimeType.MINUTE_OFFSET);
+        int minute = parse2DigitUInt(buffer, offset + TimeType.MINUTE_OFFSET);
         checkMinute(minute);
-        ParserUtil.checkByte(buffer.getByte(offset + TimeType.SECOND_COLON_OFFSET), (byte) ':');
+        checkByte(buffer.getByte(offset + TimeType.SECOND_COLON_OFFSET), (byte) ':');
 
-        int second = IntParser.parse2DigitUInt(buffer, offset + TimeType.SECOND_OFFSET);
+        int second = parse2DigitUInt(buffer, offset + TimeType.SECOND_OFFSET);
         checkSecond(second);
 
         //return ((hour * 60 + minute) * 60 + second) * 1000;

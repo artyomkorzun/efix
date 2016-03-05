@@ -10,7 +10,7 @@ public class BooleanParser {
 
     public static boolean parseBoolean(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
-        checkFreeSpace(end - off, BooleanType.LENGTH + 1);
+        checkFreeSpace(end - off, BooleanType.LENGTH + SEPARATOR_LENGTH);
 
         boolean value = toBoolean(buffer.getByte(off++));
         checkByte(buffer.getByte(off++), separator);

@@ -148,7 +148,7 @@ public class CheckedMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder startField(int tag) {
-        checkSpace(IntType.MAX_UNSIGNED_INT_LENGTH + 1);
+        checkSpace(IntType.MAX_UINT_LENGTH + 1);
         builder.startField(tag);
         return this;
     }
@@ -329,7 +329,7 @@ public class CheckedMessageBuilder implements MessageBuilder {
     }
 
     private void checkSpaceForField(int valueLength) {
-        checkSpace(valueLength + IntType.MAX_UNSIGNED_INT_LENGTH + 2);
+        checkSpace(valueLength + IntType.MAX_UINT_LENGTH + 2);
     }
 
     private void checkSpace(int space) {

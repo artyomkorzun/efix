@@ -46,7 +46,7 @@ public class LongFormatter {
     public static int formatNegativeLong(long value, MutableBuffer buffer, int offset) {
         if (value == Long.MIN_VALUE) {
             buffer.putBytes(offset, MIN_LONG);
-            return offset + LongType.MAX_NEGATIVE_LONG_LENGTH;
+            return offset + LongType.MAX_LENGTH;
         }
 
         buffer.putByte(offset++, (byte) '-');

@@ -13,12 +13,12 @@ public class ByteSequenceParser {
     public static ByteSequence parseByteSequence(byte separator, Buffer buffer, MutableInt offset, int end, ByteSequenceWrapper sequence) {
         int off = offset.get();
         int start = off;
-        checkFreeSpace(end - off, ByteSequenceType.MIN_LENGTH + 1);
+        checkFreeSpace(end - off, ByteSequenceType.MIN_LENGTH + SEPARATOR_LENGTH);
         checkByteNotEqual(buffer.getByte(off++), separator);
 
         do {
             if (buffer.getByte(off++) == separator) {
-                sequence.wrap(buffer, start, off - start - 1);
+                sequence.wrap(buffer, start, off - start - SEPARATOR_LENGTH);
                 offset.set(off);
                 return sequence;
             }
@@ -29,7 +29,7 @@ public class ByteSequenceParser {
 
     public static void parseByteSequence(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
-        checkFreeSpace(end - off, ByteSequenceType.MIN_LENGTH + 1);
+        checkFreeSpace(end - off, ByteSequenceType.MIN_LENGTH + SEPARATOR_LENGTH);
         checkByteNotEqual(buffer.getByte(off++), separator);
 
         do {

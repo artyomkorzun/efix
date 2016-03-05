@@ -4,6 +4,10 @@ import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.DateType;
 
+import static org.efix.util.parse.IntParser.parse2DigitUInt;
+import static org.efix.util.parse.IntParser.parse4DigitUInt;
+import static org.efix.util.parse.ParserUtil.*;
+
 public class DateParser {
 
     protected static final int DAYS_TO_EPOCH = 1969 * 365 + 1969 / 4 - 1969 / 100 + 1969 / 400;
@@ -19,19 +23,19 @@ public class DateParser {
     public static long parseDate(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
 
-        ParserUtil.checkFreeSpace(end - off, DateType.LENGTH + 1);
+        checkFreeSpace(end - off, DateType.LENGTH + SEPARATOR_LENGTH);
         long time = parseDate(buffer, off);
 
-        ParserUtil.checkByte(buffer.getByte(off + DateType.LENGTH), separator);
-        offset.set(off + DateType.LENGTH + 1);
+        checkByte(buffer.getByte(off + DateType.LENGTH), separator);
+        offset.set(off + DateType.LENGTH + SEPARATOR_LENGTH);
 
         return time;
     }
 
     protected static long parseDate(Buffer buffer, int offset) {
-        int year = IntParser.parse4DigitUInt(buffer, offset + DateType.YEAR_OFFSET);
-        int month = IntParser.parse2DigitUInt(buffer, offset + DateType.MONTH_OFFSET);
-        int day = IntParser.parse2DigitUInt(buffer, offset + DateType.DAY_OFFSET);
+        int year = parse4DigitUInt(buffer, offset + DateType.YEAR_OFFSET);
+        int month = parse2DigitUInt(buffer, offset + DateType.MONTH_OFFSET);
+        int day = parse2DigitUInt(buffer, offset + DateType.DAY_OFFSET);
 
         checkMonth(month);
 

@@ -2,9 +2,8 @@ package org.efix.util.parse;
 
 import org.junit.Test;
 
-import java.util.Random;
-
 import static org.efix.util.TestUtil.arrayOf;
+import static org.efix.util.TestUtil.generateInt;
 
 public class IntParserTest extends AbstractParserTest {
 
@@ -51,9 +50,8 @@ public class IntParserTest extends AbstractParserTest {
 
     @Test
     public void shouldParseRandomNumbers() {
-        Random random = new Random();
         for (int i = 0; i < 50000; i++) {
-            int number = random.nextInt();
+            int number = generateInt(Integer.MIN_VALUE + 1, Integer.MAX_VALUE);
             if (number >= 0)
                 shouldParse(number, ALL_PARSERS);
             else
@@ -64,7 +62,7 @@ public class IntParserTest extends AbstractParserTest {
     @Test
     public void shouldFailParseNumbers() {
         shouldFailParse(makeString(1L + Integer.MAX_VALUE), ALL_PARSERS);
-        shouldFailParse(makeString(-1L + Integer.MIN_VALUE), ALL_PARSERS);
+        shouldFailParse(makeString(Integer.MIN_VALUE), ALL_PARSERS);
         shouldFailParse("hd", ALL_PARSERS);
         shouldFailParse("3ttt", ALL_PARSERS);
         shouldFailParse("111", ALL_PARSERS);
