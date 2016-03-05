@@ -1,14 +1,17 @@
 package org.efix.util.parse;
 
+import org.efix.util.type.ByteType;
+
+
 public class ParserUtil {
 
-    public static int SIGN_LENGTH = 1;
-    public static int DOT_LENGTH = 1;
-    public static int SEPARATOR_LENGTH = 1;
+    public static int SIGN_LENGTH = ByteType.LENGTH;
+    public static int DOT_LENGTH = ByteType.LENGTH;
+    public static int SEPARATOR_LENGTH = ByteType.LENGTH;
 
-    public static void checkBounds(int available, int required) {
+    public static void checkBounds(int required, int available) {
         if (available < required)
-            throw new ParserException(String.format("Available %s but required %s", available, required));
+            throw new ParserException(String.format("Required %s bytes but available %s", required, available));
     }
 
     public static int checkDigit(byte b) {

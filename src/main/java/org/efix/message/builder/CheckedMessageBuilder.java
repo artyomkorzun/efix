@@ -22,266 +22,280 @@ public class CheckedMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder addBoolean(int tag, boolean value) {
-        checkSpaceForField(BooleanType.LENGTH);
+        checkBounds(tag, BooleanType.LENGTH);
         builder.addBoolean(tag, value);
         return this;
     }
 
     @Override
     public MessageBuilder addByte(int tag, byte value) {
-        checkSpaceForField(ByteType.LENGTH);
+        checkBounds(tag, ByteType.LENGTH);
         builder.addByte(tag, value);
         return this;
     }
 
     @Override
     public MessageBuilder addChar(int tag, char value) {
-        checkSpaceForField(CharType.LENGTH);
+        checkBounds(tag, CharType.LENGTH);
         builder.addChar(tag, value);
         return this;
     }
 
     @Override
     public MessageBuilder addInt(int tag, int value) {
-        checkSpaceForField(IntType.MAX_LENGTH);
+        checkBounds(tag, IntType.MAX_LENGTH);
         builder.addInt(tag, value);
         return this;
     }
 
     @Override
     public MessageBuilder addLong(int tag, long value) {
-        checkSpaceForField(LongType.MAX_LENGTH);
+        checkBounds(tag, LongType.MAX_LENGTH);
         builder.addLong(tag, value);
         return this;
     }
 
     @Override
     public MessageBuilder addDouble(int tag, double value, int precision) {
-        checkSpaceForField(DoubleType.MAX_LENGTH);
+        checkBounds(tag, DoubleType.MAX_LENGTH);
         builder.addDouble(tag, value, precision);
         return this;
     }
 
     @Override
     public MessageBuilder addDouble(int tag, double value, int precision, boolean roundUp) {
-        checkSpaceForField(DoubleType.MAX_LENGTH);
+        checkBounds(tag, DoubleType.MAX_LENGTH);
         builder.addDouble(tag, value, precision, roundUp);
         return this;
     }
 
     @Override
+    public MessageBuilder addDecimal(int tag, long value, int scale) {
+        checkBounds(tag, DecimalType.MAX_LENGTH);
+        builder.addDecimal(tag, value, scale);
+        return this;
+    }
+
+    @Override
     public MessageBuilder addTimestamp(int tag, long timestamp) {
-        checkSpaceForField(TimestampType.MILLISECOND_TIMESTAMP_LENGTH);
+        checkBounds(tag, TimestampType.MILLISECOND_TIMESTAMP_LENGTH);
         builder.addTimestamp(tag, timestamp);
         return this;
     }
 
     @Override
     public MessageBuilder addTime(int tag, long timestamp) {
-        checkSpaceForField(TimeType.MILLISECOND_TIME_LENGTH);
+        checkBounds(tag, TimeType.MILLISECOND_TIME_LENGTH);
         builder.addTime(tag, timestamp);
         return this;
     }
 
     @Override
     public MessageBuilder addDate(int tag, long timestamp) {
-        checkSpaceForField(DateType.LENGTH);
+        checkBounds(tag, DateType.LENGTH);
         builder.addDate(tag, timestamp);
         return this;
     }
 
     @Override
     public MessageBuilder addBytes(int tag, byte[] value) {
-        checkSpaceForField(value.length);
+        checkBounds(tag, value.length);
         builder.addBytes(tag, value);
         return this;
     }
 
     @Override
     public MessageBuilder addBytes(int tag, byte[] value, int offset, int length) {
-        checkSpaceForField(length);
+        checkBounds(tag, length);
         builder.addBytes(tag, value, offset, length);
         return this;
     }
 
     @Override
     public MessageBuilder addBytes(int tag, Buffer value) {
-        checkSpaceForField(value.capacity());
+        checkBounds(tag, value.capacity());
         builder.addBytes(tag, value);
         return this;
     }
 
     @Override
     public MessageBuilder addBytes(int tag, Buffer value, int offset, int length) {
-        checkSpaceForField(length);
+        checkBounds(tag, length);
         builder.addBytes(tag, value, offset, length);
         return this;
     }
 
     @Override
     public MessageBuilder addByteSequence(int tag, ByteSequence value) {
-        checkSpaceForField(value.length());
+        checkBounds(tag, value.length());
         builder.addByteSequence(tag, value);
         return this;
     }
 
     @Override
     public MessageBuilder addByteSequence(int tag, ByteSequence value, int offset, int length) {
-        checkSpaceForField(length);
+        checkBounds(tag, length);
         builder.addByteSequence(tag, value, offset, length);
         return this;
     }
 
     @Override
     public MessageBuilder addCharSequence(int tag, CharSequence value) {
-        checkSpaceForField(value.length());
+        checkBounds(tag, value.length());
         builder.addCharSequence(tag, value);
         return this;
     }
 
     @Override
     public MessageBuilder addCharSequence(int tag, CharSequence value, int offset, int length) {
-        checkSpaceForField(length);
+        checkBounds(tag, length);
         builder.addCharSequence(tag, value, offset, length);
         return this;
     }
 
     @Override
     public MessageBuilder startField(int tag) {
-        checkSpace(IntType.MAX_UINT_LENGTH + 1);
+        checkBounds(IntType.MAX_UINT_LENGTH + ByteType.LENGTH);
         builder.startField(tag);
         return this;
     }
 
     @Override
     public MessageBuilder endField() {
-        checkSpace(1);
+        checkBounds(ByteType.LENGTH);
         builder.endField();
         return this;
     }
 
     @Override
     public MessageBuilder appendBoolean(boolean value) {
-        checkSpace(BooleanType.LENGTH);
+        checkBounds(BooleanType.LENGTH);
         builder.appendBoolean(value);
         return this;
     }
 
     @Override
     public MessageBuilder appendByte(byte value) {
-        checkSpace(ByteType.LENGTH);
+        checkBounds(ByteType.LENGTH);
         builder.appendByte(value);
         return this;
     }
 
     @Override
     public MessageBuilder appendChar(char value) {
-        checkSpace(CharType.LENGTH);
+        checkBounds(CharType.LENGTH);
         builder.appendChar(value);
         return this;
     }
 
     @Override
     public MessageBuilder appendInt(int value) {
-        checkSpace(IntType.MAX_LENGTH);
+        checkBounds(IntType.MAX_LENGTH);
         builder.appendInt(value);
         return this;
     }
 
     @Override
     public MessageBuilder appendLong(long value) {
-        checkSpace(LongType.MAX_LENGTH);
+        checkBounds(LongType.MAX_LENGTH);
         builder.appendLong(value);
         return this;
     }
 
     @Override
     public MessageBuilder appendDouble(double value, int precision) {
-        checkSpace(DoubleType.MAX_LENGTH);
+        checkBounds(DoubleType.MAX_LENGTH);
         builder.appendDouble(value, precision);
         return this;
     }
 
     @Override
     public MessageBuilder appendDouble(double value, int precision, boolean roundHalfUp) {
-        checkSpace(DoubleType.MAX_LENGTH);
+        checkBounds(DoubleType.MAX_LENGTH);
         builder.appendDouble(value, precision, roundHalfUp);
         return this;
     }
 
     @Override
+    public MessageBuilder appendDecimal(long value, int scale) {
+        checkBounds(DecimalType.MAX_LENGTH);
+        builder.appendDecimal(value, scale);
+        return this;
+    }
+
+    @Override
     public MessageBuilder appendTimestamp(long timestamp) {
-        checkSpace(TimestampType.MILLISECOND_TIMESTAMP_LENGTH);
+        checkBounds(TimestampType.MILLISECOND_TIMESTAMP_LENGTH);
         builder.appendTimestamp(timestamp);
         return this;
     }
 
     @Override
     public MessageBuilder appendTime(long timestamp) {
-        checkSpace(TimeType.MILLISECOND_TIME_LENGTH);
+        checkBounds(TimeType.MILLISECOND_TIME_LENGTH);
         builder.appendTime(timestamp);
         return this;
     }
 
     @Override
     public MessageBuilder appendDate(long timestamp) {
-        checkSpace(DateType.LENGTH);
+        checkBounds(DateType.LENGTH);
         builder.appendDate(timestamp);
         return this;
     }
 
     @Override
     public MessageBuilder appendBytes(byte[] value) {
-        checkSpace(value.length);
+        checkBounds(value.length);
         builder.appendBytes(value);
         return this;
     }
 
     @Override
     public MessageBuilder appendBytes(byte[] value, int offset, int length) {
-        checkSpace(length);
+        checkBounds(length);
         builder.appendBytes(value, offset, length);
         return this;
     }
 
     @Override
     public MessageBuilder appendBytes(Buffer value) {
-        checkSpace(value.capacity());
+        checkBounds(value.capacity());
         builder.appendBytes(value);
         return this;
     }
 
     @Override
     public MessageBuilder appendBytes(Buffer value, int offset, int length) {
-        checkSpace(length);
+        checkBounds(length);
         builder.appendBytes(value, offset, length);
         return this;
     }
 
     @Override
     public MessageBuilder appendByteSequence(ByteSequence value) {
-        checkSpace(value.length());
+        checkBounds(value.length());
         builder.appendByteSequence(value);
         return this;
     }
 
     @Override
     public MessageBuilder appendByteSequence(ByteSequence value, int offset, int length) {
-        checkSpace(length);
+        checkBounds(length);
         builder.appendByteSequence(value, offset, length);
         return this;
     }
 
     @Override
     public MessageBuilder appendCharSequence(CharSequence value) {
-        checkSpace(value.length());
+        checkBounds(value.length());
         builder.appendCharSequence(value);
         return this;
     }
 
     @Override
     public MessageBuilder appendCharSequence(CharSequence value, int offset, int length) {
-        checkSpace(length);
+        checkBounds(length);
         builder.appendCharSequence(value, offset, length);
         return this;
     }
@@ -328,15 +342,15 @@ public class CheckedMessageBuilder implements MessageBuilder {
         return new CheckedMessageBuilder(builder);
     }
 
-    private void checkSpaceForField(int valueLength) {
-        checkSpace(valueLength + IntType.MAX_UINT_LENGTH + 2);
+    private void checkBounds(int tag, int valueLength) {
+        checkBounds(IntType.MAX_UINT_LENGTH + ByteType.LENGTH + valueLength + ByteType.LENGTH);
     }
 
-    private void checkSpace(int space) {
+    private void checkBounds(int required) {
         if (CHECK_BOUNDS) {
             int remaining = remaining();
-            if (space > remaining)
-                throw new InsufficientSpaceException(String.format("Insufficient free space %s in buffer, remaining %s", space, remaining));
+            if (required > remaining)
+                throw new InsufficientSpaceException(String.format("Insufficient space in buffer, required %s, remaining %s", required, remaining));
         }
     }
 

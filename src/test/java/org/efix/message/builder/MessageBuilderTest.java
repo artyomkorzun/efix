@@ -56,7 +56,7 @@ public class MessageBuilderTest {
     public void shouldBuildMessage() {
         String expected = "1=Y|2=b|3=c|4=4|5=5|6=6.1|7=7.2|8=19700101-00:00:00.000|9=00:00:00.000|10=19700101|" +
                 "11=array|12=buffer|13=byte sequence|14=char sequence|15=N|16=b|17=c|18=812|19=923123|20=3.14|" +
-                "21=3.15|22=20000101-00:00:00.000|23=23:59:59.000|24=20000101|25=array|26=buffer|27=sequence|28=sequence|";
+                "21=3.15|22=20000101-00:00:00.000|23=23:59:59.000|24=20000101|25=array|26=buffer|27=sequence|28=sequence|29=0.0001|30=10.099";
 
         MutableBuffer buffer = new UnsafeBuffer(new byte[1024]);
         builder.wrap(buffer)
@@ -88,7 +88,8 @@ public class MessageBuilderTest {
                 .startField(26).appendBytes(fromString("buffer")).endField()
                 .startField(27).appendByteSequence(new ByteSequenceWrapper(fromString("sequence"))).endField()
                 .startField(28).appendCharSequence("sequence").endField()
-        ;
+                .addDecimal(29, 1, 4)
+                .startField(30).appendDecimal(10099, 3);
 
         String actual = BufferUtil.toString(buffer, 0, builder.length());
         assertMessage(expected, actual);

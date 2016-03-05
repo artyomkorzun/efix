@@ -19,6 +19,8 @@ public interface MessageParser {
 
     double parseDouble();
 
+    long parseDecimal(int scale);
+
     boolean parseBoolean();
 
     CharSequence parseCharSequence();

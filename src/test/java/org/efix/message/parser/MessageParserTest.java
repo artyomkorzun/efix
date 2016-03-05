@@ -24,7 +24,7 @@ public class MessageParserTest {
 
     @Test
     public void shouldParseFields() {
-        String message = "1=charSequence|2=12345|3=123456789012345|4=3.14159|5=b|6=Y|7=20121009-13:44:49.421|8=20121009|9=13:44:49.421|10=skipped value|11=byteSequence|";
+        String message = "1=charSequence|2=12345|3=123456789012345|4=3.14159|5=b|6=Y|7=20121009-13:44:49.421|8=20121009|9=13:44:49.421|10=skipped value|11=byteSequence|12=0.0001|";
         MessageParser parser = new FastMessageParser();
         parser.wrap(byteMessage(message));
 
@@ -65,6 +65,9 @@ public class MessageParserTest {
                 case 11:
                     assertEquals("byteSequence", parser.parseByteSequence().toString());
                     break;
+                case 12:
+                    assertEquals(1, parser.parseDecimal(4));
+                    break;
                 default:
                     fail("unexpected field " + tag);
             }
@@ -72,7 +75,7 @@ public class MessageParserTest {
             tags++;
         }
 
-        assertEquals(11, tags);
+        assertEquals(12, tags);
     }
 
     @Test

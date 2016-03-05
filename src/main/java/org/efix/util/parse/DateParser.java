@@ -23,7 +23,7 @@ public class DateParser {
     public static long parseDate(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
 
-        checkBounds(end - off, DateType.LENGTH + SEPARATOR_LENGTH);
+        checkBounds(DateType.LENGTH + SEPARATOR_LENGTH, end - off);
         long time = parseDate(buffer, off);
 
         checkByte(buffer.getByte(off + DateType.LENGTH), separator);

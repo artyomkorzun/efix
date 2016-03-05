@@ -10,7 +10,7 @@ public class CharParser {
 
     public static char parseChar(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
-        checkBounds(end - off, CharType.LENGTH + SEPARATOR_LENGTH);
+        checkBounds(CharType.LENGTH + SEPARATOR_LENGTH, end - off);
 
         byte b = checkByteNotEqual(buffer.getByte(off++), separator);
         checkByte(buffer.getByte(off++), separator);

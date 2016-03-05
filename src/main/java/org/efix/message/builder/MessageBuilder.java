@@ -23,6 +23,9 @@ public interface MessageBuilder {
     MessageBuilder addDouble(int tag, double value, int precision, boolean roundUp);
 
 
+    MessageBuilder addDecimal(int tag, long value, int scale);
+
+
     MessageBuilder addTimestamp(int tag, long timestamp);
 
     MessageBuilder addTime(int tag, long timestamp);
@@ -70,6 +73,9 @@ public interface MessageBuilder {
     MessageBuilder appendDouble(double value, int precision);
 
     MessageBuilder appendDouble(double value, int precision, boolean roundHalfUp);
+
+
+    MessageBuilder appendDecimal(long value, int scale);
 
 
     MessageBuilder appendTimestamp(long timestamp);

@@ -18,12 +18,12 @@ public class TimeParser {
         int off = offset.get();
         int free = end - off;
 
-        checkBounds(free, TimeType.SECOND_TIME_LENGTH + SEPARATOR_LENGTH);
+        checkBounds(TimeType.SECOND_TIME_LENGTH + SEPARATOR_LENGTH, free);
         int time = parseSecondTime(buffer, off);
 
         byte b = buffer.getByte(off + TimeType.DOT_OFFSET);
         if (b == '.') {
-            checkBounds(free, TimeType.MILLISECOND_TIME_LENGTH + SEPARATOR_LENGTH);
+            checkBounds(TimeType.MILLISECOND_TIME_LENGTH + SEPARATOR_LENGTH, free);
             time += parse3DigitUInt(buffer, off + TimeType.MILLISECOND_OFFSET);
             b = buffer.getByte(off + TimeType.MILLISECOND_TIME_LENGTH);
             off += TimeType.MILLISECOND_TIME_LENGTH + SEPARATOR_LENGTH;

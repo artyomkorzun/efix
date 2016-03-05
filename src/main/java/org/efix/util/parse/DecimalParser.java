@@ -11,7 +11,7 @@ public class DecimalParser {
 
     public static long parseDecimal(int scale, byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
-        checkBounds(end - off, SIGN_LENGTH);
+        checkBounds(SIGN_LENGTH, end - off);
 
         if (buffer.getByte(off) == '-') {
             offset.set(off + SIGN_LENGTH);
@@ -25,7 +25,7 @@ public class DecimalParser {
         int start = offset.get();
         int off = start;
 
-        checkBounds(end - off, DecimalType.MIN_LENGTH + SEPARATOR_LENGTH);
+        checkBounds(DecimalType.MIN_LENGTH + SEPARATOR_LENGTH, end - off);
 
         byte b = buffer.getByte(off++);
         long value = digit(b);

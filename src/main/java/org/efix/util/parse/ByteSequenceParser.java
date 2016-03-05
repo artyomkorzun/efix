@@ -8,12 +8,13 @@ import org.efix.util.type.ByteSequenceType;
 
 import static org.efix.util.parse.ParserUtil.*;
 
+
 public class ByteSequenceParser {
 
     public static ByteSequence parseByteSequence(byte separator, Buffer buffer, MutableInt offset, int end, ByteSequenceWrapper sequence) {
         int off = offset.get();
         int start = off;
-        checkBounds(end - off, ByteSequenceType.MIN_LENGTH + SEPARATOR_LENGTH);
+        checkBounds(ByteSequenceType.MIN_LENGTH + SEPARATOR_LENGTH, end - off);
         checkByteNotEqual(buffer.getByte(off++), separator);
 
         do {
@@ -29,7 +30,7 @@ public class ByteSequenceParser {
 
     public static void parseByteSequence(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
-        checkBounds(end - off, ByteSequenceType.MIN_LENGTH + SEPARATOR_LENGTH);
+        checkBounds(ByteSequenceType.MIN_LENGTH + SEPARATOR_LENGTH, end - off);
         checkByteNotEqual(buffer.getByte(off++), separator);
 
         do {
