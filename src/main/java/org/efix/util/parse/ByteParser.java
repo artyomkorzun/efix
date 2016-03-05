@@ -10,7 +10,7 @@ public class ByteParser {
 
     public static byte parseByte(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
-        checkFreeSpace(end - off, ByteType.LENGTH + SEPARATOR_LENGTH);
+        checkBounds(end - off, ByteType.LENGTH + SEPARATOR_LENGTH);
 
         byte b = checkByteNotEqual(buffer.getByte(off++), separator);
         checkByte(buffer.getByte(off++), separator);

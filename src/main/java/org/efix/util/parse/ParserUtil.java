@@ -3,11 +3,12 @@ package org.efix.util.parse;
 public class ParserUtil {
 
     public static int SIGN_LENGTH = 1;
+    public static int DOT_LENGTH = 1;
     public static int SEPARATOR_LENGTH = 1;
 
-    public static void checkFreeSpace(int free, int required) {
-        if (free < required)
-            throw new ParserException(String.format("free %s < required %s", free, required));
+    public static void checkBounds(int available, int required) {
+        if (available < required)
+            throw new ParserException(String.format("Available %s but required %s", available, required));
     }
 
     public static int checkDigit(byte b) {

@@ -11,7 +11,7 @@ public class IntParser {
 
     public static int parseInt(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
-        checkFreeSpace(end - off, SIGN_LENGTH);
+        checkBounds(end - off, SIGN_LENGTH);
 
         if (buffer.getByte(off) == '-') {
             offset.set(off + SIGN_LENGTH);
@@ -25,7 +25,7 @@ public class IntParser {
         int start = offset.get();
         int off = start;
 
-        checkFreeSpace(end - off, IntType.MIN_LENGTH + SEPARATOR_LENGTH);
+        checkBounds(end - off, IntType.MIN_LENGTH + SEPARATOR_LENGTH);
 
         byte b = buffer.getByte(off++);
         long value = digit(b);

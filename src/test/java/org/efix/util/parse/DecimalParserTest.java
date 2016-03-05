@@ -3,6 +3,7 @@ package org.efix.util.parse;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.BufferUtil;
+import org.efix.util.type.DecimalType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -155,8 +156,8 @@ public class DecimalParserTest extends AbstractParserTest {
     @Test
     public void shouldParseRandomDecimals() {
         for (int i = 0; i < 1000000; i++) {
-            for (int integerLength = 1; integerLength <= DecimalParser.MAX_UNSIGNED_INTEGER_LENGTH; integerLength++) {
-                int fractionalLength = DecimalParser.MAX_UNSIGNED_INTEGER_LENGTH - integerLength;
+            for (int integerLength = 1; integerLength <= DecimalType.MAX_DIGITS; integerLength++) {
+                int fractionalLength = DecimalType.MAX_DIGITS - integerLength;
                 String decimal = generateDecimal(integerLength, fractionalLength);
                 int scale = fractionalLength;
                 shouldParse(decimal, scale);
@@ -185,6 +186,11 @@ public class DecimalParserTest extends AbstractParserTest {
         shouldFailParse(".0=", 0);
         shouldFailParse("0.11=", 1);
         shouldFailParse("-0.11=", 1);
+        shouldFailParse("-0.s11=", 2);
+        shouldFailParse("12345678901234.11=", 2);
+        shouldFailParse("1234567890123411=", 0);
+        shouldFailParse("123456789012341.1=", 1);
+        shouldFailParse("s", 1);
     }
 
     protected static void shouldParse(String value, int scale) {
@@ -207,7 +213,6 @@ public class DecimalParserTest extends AbstractParserTest {
         Buffer buffer = BufferUtil.fromString(string);
         MutableInt offset = new MutableInt(0);
         int end = buffer.capacity();
-
 
         try {
             DecimalParser.parseDecimal(scale, SEPARATOR, buffer, offset, end);
