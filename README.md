@@ -1,1 +1,1 @@
-# eFIX beta version
+# efix is java implementation of FIX protocol
