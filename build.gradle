@@ -31,12 +31,12 @@ jmhJar {
 
 jmh {
     jmhVersion = '1.11.2'
-    include = 'Message*'
+    include = 'MessageParser'
     benchmarkMode = 'avgt'
     timeUnit = 'ns'
     warmup = '3s'
     warmupIterations = 2
-    timeOnIteration = '5s'
+    timeOnIteration = '3s'
     iterations = 3
     threads = 1
     fork = 1

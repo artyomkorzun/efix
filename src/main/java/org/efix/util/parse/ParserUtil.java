@@ -40,11 +40,7 @@ public class ParserUtil {
     }
 
     public static boolean isDigit(byte b) {
-        return byteInRange(b, '0', '9');
-    }
-
-    public static boolean byteInRange(byte b, char from, char to) {
-        return b >= from && b <= to;
+        return (char) (b - '0') <= ('9' - '0');
     }
 
     public static ParserException throwInvalidChar(byte b) {
