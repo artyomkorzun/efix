@@ -40,7 +40,7 @@ public class ParserUtil {
     }
 
     public static boolean isDigit(byte b) {
-        return (char) (b - '0') <= ('9' - '0');
+        return ((b - '0') & 0x7FFFFFFF) <= ('9' - '0');
     }
 
     public static ParserException throwInvalidChar(byte b) {
