@@ -9,6 +9,9 @@ public class ParserUtil {
     public static int DOT_LENGTH = ByteType.LENGTH;
     public static int SEPARATOR_LENGTH = ByteType.LENGTH;
 
+    public static final int BASE_OFFSET = Integer.MAX_VALUE - '9';
+    public static final int SHIFTED_ZERO = '0' + BASE_OFFSET;
+
     public static void checkBounds(int required, int available) {
         if (available < required)
             throw new ParserException(String.format("Required %s bytes but available %s", required, available));
@@ -40,7 +43,7 @@ public class ParserUtil {
     }
 
     public static boolean isDigit(byte b) {
-        return ((b - '0') & 0x7FFFFFFF) <= ('9' - '0');
+        return b + BASE_OFFSET >= SHIFTED_ZERO;
     }
 
     public static ParserException throwUnexpectedByte(byte b) {

@@ -51,7 +51,7 @@ jmh {
     timeUnit = 'ns'
     warmup = '3s'
     warmupIterations = 2
-    timeOnIteration = '3s'
+    timeOnIteration = '5s'
     iterations = 3
     threads = 1
     fork = 1
