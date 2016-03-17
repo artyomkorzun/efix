@@ -16,21 +16,21 @@ public class ParserUtil {
 
     public static int checkDigit(byte b) {
         if (!isDigit(b))
-            throwInvalidChar(b);
+            throwUnexpectedByte(b);
 
         return digit(b);
     }
 
     public static byte checkByte(byte b, byte expected) {
         if (b != expected)
-            throwInvalidChar(b);
+            throwUnexpectedByte(b);
 
         return b;
     }
 
     public static byte checkByteNotEqual(byte b, byte notExpected) {
         if (b == notExpected)
-            throwInvalidChar(b);
+            throwUnexpectedByte(b);
 
         return b;
     }
@@ -43,8 +43,8 @@ public class ParserUtil {
         return ((b - '0') & 0x7FFFFFFF) <= ('9' - '0');
     }
 
-    public static ParserException throwInvalidChar(byte b) {
-        throw new ParserException("Invalid character " + (char) b);
+    public static ParserException throwUnexpectedByte(byte b) {
+        throw new ParserException("Unexpected byte " + (char) b);
     }
 
     public static ParserException throwSeparatorNotFound(byte separator) {

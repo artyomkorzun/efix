@@ -32,7 +32,7 @@ public class DoubleParser {
         byte b = buffer.getByte(off++);
         long value = digit(b);
         if (!isDigit(b))
-            throwInvalidChar(b);
+            throwUnexpectedByte(b);
 
         do {
             b = buffer.getByte(off++);
@@ -46,20 +46,22 @@ public class DoubleParser {
                     if (isDigit(b)) {
                         value = (value << 3) + (value << 1) + digit(b);
                     } else if (b == separator) {
-                        checkUDoubleLength(off - start - SEPARATOR_LENGTH, DoubleType.MAX_UDECIMAL_LENGTH);
+                        int digits = off - start - SEPARATOR_LENGTH - DOT_LENGTH;
+                        checkDouble(digits);
                         offset.set(off);
                         return toDouble(value, off - fractionalOffset - SEPARATOR_LENGTH);
                     } else {
-                        throwInvalidChar(b);
+                        throwUnexpectedByte(b);
                     }
                 }
 
             } else if (b == separator) {
-                checkUDoubleLength(off - start - SEPARATOR_LENGTH, DoubleType.MAX_UINTEGER_LENGTH);
+                int digits = off - start - SEPARATOR_LENGTH;
+                checkDouble(digits);
                 offset.set(off);
                 return value;
             } else {
-                throwInvalidChar(b);
+                throwUnexpectedByte(b);
             }
         } while (off < end);
 
@@ -70,9 +72,9 @@ public class DoubleParser {
         return value * INVERSE_POW_10[scale];
     }
 
-    protected static void checkUDoubleLength(int length, int max) {
-        if (length > max)
-            throw new ParserException(String.format("Decimal is too long, length %s, max length %s", length, max));
+    protected static void checkDouble(int digits) {
+        if (digits > DoubleType.MAX_DIGITS)
+            throw new ParserException(String.format("Decimal contains too many digits %s, max %s", digits, DoubleType.MAX_DIGITS));
     }
 
 }

@@ -30,18 +30,19 @@ public class IntParser {
         byte b = buffer.getByte(off++);
         long value = digit(b);
         if (!isDigit(b))
-            throwInvalidChar(b);
+            throwUnexpectedByte(b);
 
         do {
             b = buffer.getByte(off++);
             if (isDigit(b)) {
                 value = (value << 3) + (value << 1) + digit(b);
             } else if (b == separator) {
-                checkUInt(value, off - start - SEPARATOR_LENGTH);
+                int digits = off - start - SEPARATOR_LENGTH;
+                checkUInt(value, digits);
                 offset.set(off);
                 return (int) value;
             } else {
-                throwInvalidChar(b);
+                throwUnexpectedByte(b);
             }
         } while (off < end);
 
@@ -69,9 +70,9 @@ public class IntParser {
         return value;
     }
 
-    protected static void checkUInt(long value, int length) {
-        if (length > IntType.MAX_UINT_LENGTH || value > Integer.MAX_VALUE)
-            throw new ParserException(String.format("Integer is too big, length %s", length));
+    protected static void checkUInt(long value, int digits) {
+        if (digits > IntType.MAX_UINT_LENGTH || value > Integer.MAX_VALUE)
+            throw new ParserException(String.format("Integer is too big, digits %s", digits));
     }
 
 }

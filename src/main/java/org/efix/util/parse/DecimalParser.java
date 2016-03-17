@@ -30,7 +30,7 @@ public class DecimalParser {
         byte b = buffer.getByte(off++);
         long value = digit(b);
         if (!isDigit(b))
-            throwInvalidChar(b);
+            throwUnexpectedByte(b);
 
         do {
             b = buffer.getByte(off++);
@@ -38,8 +38,8 @@ public class DecimalParser {
             if (isDigit(b)) {
                 value = (value << 3) + (value << 1) + digit(b);
             } else if (b == '.') {
-                int integerLength = off - start - DOT_LENGTH;
-                checkIntegerLength(integerLength, scale);
+                int integerDigits = off - start - DOT_LENGTH;
+                checkInteger(integerDigits, scale);
                 start = off;
 
                 while (off < end) {
@@ -47,21 +47,22 @@ public class DecimalParser {
                     if (isDigit(b)) {
                         value = (value << 3) + (value << 1) + digit(b);
                     } else if (b == separator) {
-                        int fractionalLength = off - start - SEPARATOR_LENGTH;
-                        checkFractionalLength(integerLength, fractionalLength, scale);
+                        int fractionalDigits = off - start - SEPARATOR_LENGTH;
+                        checkFractional(integerDigits, fractionalDigits, scale);
                         offset.set(off);
-                        return value * DecimalType.multiplier(scale - fractionalLength);
+                        return value * DecimalType.multiplier(scale - fractionalDigits);
                     } else {
-                        throwInvalidChar(b);
+                        throwUnexpectedByte(b);
                     }
                 }
 
             } else if (b == separator) {
-                checkIntegerLength(off - start - SEPARATOR_LENGTH, scale);
+                int digits = off - start - SEPARATOR_LENGTH;
+                checkInteger(digits, scale);
                 offset.set(off);
                 return value * DecimalType.multiplier(scale);
             } else {
-                throwInvalidChar(b);
+                throwUnexpectedByte(b);
             }
 
         } while (off < end);
@@ -69,16 +70,112 @@ public class DecimalParser {
         throw throwSeparatorNotFound(separator);
     }
 
-    protected static void checkIntegerLength(int length, int scale) {
-        int max = Math.min(DecimalType.MAX_DIGITS, DecimalType.MAX_SCALE - scale);
-        if (length > max)
-            throw new ParserException(String.format("Integer part of decimal contains too many digits %s, max %s", length, max));
+    public static long parseDecimal(int scale, boolean roundUp, byte separator, Buffer buffer, MutableInt offset, int end) {
+        int off = offset.get();
+        checkBounds(SIGN_LENGTH, end - off);
+
+        if (buffer.getByte(off) == '-') {
+            offset.set(off + SIGN_LENGTH);
+            return -parseUDecimal(scale, roundUp, separator, buffer, offset, end);
+        } else {
+            return parseUDecimal(scale, roundUp, separator, buffer, offset, end);
+        }
     }
 
-    protected static void checkFractionalLength(int integerLength, int fractionalLength, int scale) {
-        int max = Math.min(DecimalType.MAX_DIGITS - integerLength, scale);
-        if (fractionalLength > max)
-            throw new ParserException(String.format("Fractional part of decimal contains too many digits %s, max %s", fractionalLength, max));
+    public static long parseUDecimal(int scale, boolean roundUp, byte separator, Buffer buffer, MutableInt offset, int end) {
+        int start = offset.get();
+        int off = start;
+
+        checkBounds(DecimalType.MIN_LENGTH + SEPARATOR_LENGTH, end - off);
+
+        byte b = buffer.getByte(off++);
+        long value = digit(b);
+        if (!isDigit(b))
+            throwUnexpectedByte(b);
+
+        do {
+            b = buffer.getByte(off++);
+
+            if (isDigit(b)) {
+                value = (value << 3) + (value << 1) + digit(b);
+            } else if (b == '.') {
+                int integerDigits = off - start - DOT_LENGTH;
+                checkInteger(integerDigits, scale);
+                start = off;
+
+                while (off < end) {
+                    b = buffer.getByte(off++);
+                    if (isDigit(b)) {
+                        value = (value << 3) + (value << 1) + digit(b);
+                    } else if (b == separator) {
+                        int fractionalDigits = off - start - SEPARATOR_LENGTH;
+                        checkDecimal(integerDigits, fractionalDigits);
+                        offset.set(off);
+                        return round(value, fractionalDigits, scale, roundUp);
+                    } else {
+                        throwUnexpectedByte(b);
+                    }
+                }
+
+            } else if (b == separator) {
+                int digits = off - start - SEPARATOR_LENGTH;
+                checkInteger(digits, scale);
+                offset.set(off);
+                return value * DecimalType.multiplier(scale);
+            } else {
+                throwUnexpectedByte(b);
+            }
+
+        } while (off < end);
+
+        throw throwSeparatorNotFound(separator);
+    }
+
+    protected static long round(long value, int fractionalDigits, int scale, boolean roundUp) {
+        if (fractionalDigits <= scale) {
+            return value * DecimalType.multiplier(scale - fractionalDigits);
+        } else {
+            long multiplier = DecimalType.multiplier(fractionalDigits - scale);
+            long truncatedValue = value / multiplier;
+            long remainder = value - truncatedValue * multiplier;
+
+            remainder = (remainder << 3) + (remainder << 1);
+            multiplier += (multiplier << 2);
+
+            if (roundUp) {
+                if (remainder >= multiplier)
+                    truncatedValue++;
+            } else {
+                if (remainder > multiplier)
+                    truncatedValue++;
+            }
+
+            return truncatedValue;
+        }
+    }
+
+    protected static void checkInteger(int digits, int scale) {
+        int max = Math.min(DecimalType.MAX_DIGITS, DecimalType.MAX_SCALE - scale);
+        if (digits > max)
+            throw new ParserException(String.format("Decimal contains too many integer digits %s, scale %s", digits, scale));
+    }
+
+    protected static void checkFractional(int integerDigits, int fractionalDigits, int scale) {
+        int max = Math.min(DecimalType.MAX_DIGITS - integerDigits, scale);
+        if (fractionalDigits > max) {
+            throw new ParserException(
+                    String.format("Decimal contains too many digits, integer %s, fractional %s, scale %s",
+                            integerDigits, fractionalDigits, scale)
+            );
+        }
+    }
+
+    protected static void checkDecimal(int integerDigits, int fractionalDigits) {
+        if (integerDigits + fractionalDigits > DecimalType.MAX_DIGITS) {
+            throw new ParserException(
+                    String.format("Decimal contains too many digits, integer %s, fractional %s", integerDigits, fractionalDigits)
+            );
+        }
     }
 
 }

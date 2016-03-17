@@ -9,7 +9,7 @@ import static org.efix.util.parse.ParserUtil.*;
 
 public class LongParser {
 
-    protected static final int MAX_ULONG_LENGTH = LongType.MAX_ULONG_LENGTH - 1;
+    protected static final int MAX_DIGITS = LongType.MAX_ULONG_LENGTH - 1;
 
     public static long parseLong(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
@@ -32,27 +32,28 @@ public class LongParser {
         byte b = buffer.getByte(off++);
         long value = digit(b);
         if (!isDigit(b))
-            throwInvalidChar(b);
+            throwUnexpectedByte(b);
 
         do {
             b = buffer.getByte(off++);
             if (isDigit(b)) {
                 value = (value << 3) + (value << 1) + digit(b);
             } else if (b == separator) {
-                checkULongLength(off - start - SEPARATOR_LENGTH);
+                int digits = off - start - SEPARATOR_LENGTH;
+                checkLong(digits);
                 offset.set(off);
                 return value;
             } else {
-                throwInvalidChar(b);
+                throwUnexpectedByte(b);
             }
         } while (off < end);
 
         throw throwSeparatorNotFound(separator);
     }
 
-    protected static void checkULongLength(int length) {
-        if (length > MAX_ULONG_LENGTH)
-            throw new ParserException(String.format("Integer is too long, length %s, max length %s", length, MAX_ULONG_LENGTH));
+    protected static void checkLong(int digits) {
+        if (digits > MAX_DIGITS)
+            throw new ParserException(String.format("Integer contains too many digits %s, max %s", digits, MAX_DIGITS));
     }
 
 }

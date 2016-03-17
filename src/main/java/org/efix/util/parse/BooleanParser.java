@@ -26,7 +26,7 @@ public class BooleanParser {
             case BooleanType.FALSE:
                 return false;
             default:
-                throw throwInvalidChar(b);
+                throw throwUnexpectedByte(b);
         }
     }
 

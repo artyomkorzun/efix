@@ -55,6 +55,11 @@ public class FastMessageParser implements MessageParser {
     }
 
     @Override
+    public long parseDecimal(int scale, boolean roundUp) {
+        return DecimalParser.parseDecimal(scale, roundUp, FIELD_SEPARATOR, buffer, offset, end);
+    }
+
+    @Override
     public boolean parseBoolean() {
         return BooleanParser.parseBoolean(FIELD_SEPARATOR, buffer, offset, end);
     }

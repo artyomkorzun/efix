@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import static org.efix.util.TestUtil.generateDecimal;
 
@@ -151,16 +152,36 @@ public class DecimalParserTest extends AbstractParserTest {
 
         shouldParse("000000000000000.", 3);
         shouldParse("-000000000000000.", 3);
+
+        shouldParse("0.011", 4, true);
+        shouldParse("-0.011", 4, false);
+
+        shouldParse("9.999", 2, true);
+        shouldParse("10.99", 1, false);
+        shouldParse("99.99", 1, true);
+        shouldParse("10.095", 2, false);
+        shouldParse("10.05000", 1, false);
+        shouldParse("10.05000", 1, true);
+        shouldParse("-10.05000", 1, false);
+        shouldParse("-10.05000", 1, true);
+        shouldParse("10.05001", 1, false);
+        shouldParse("10.05001", 1, true);
     }
 
     @Test
     public void shouldParseRandomDecimals() {
         for (int i = 0; i < 1000000; i++) {
-            for (int integerLength = 1; integerLength <= DecimalType.MAX_DIGITS; integerLength++) {
-                int fractionalLength = DecimalType.MAX_DIGITS - integerLength;
-                String decimal = generateDecimal(integerLength, fractionalLength);
-                int scale = fractionalLength;
+            for (int integerDigits = 1; integerDigits <= DecimalType.MAX_DIGITS; integerDigits++) {
+                int fractionalDigits = DecimalType.MAX_DIGITS - integerDigits;
+                String decimal = generateDecimal(integerDigits, fractionalDigits);
+
+                int scale = fractionalDigits;
                 shouldParse(decimal, scale);
+
+                for (scale = 0; scale <= fractionalDigits; scale++) {
+                    shouldParse(decimal, scale, true);
+                    shouldParse(decimal, scale, false);
+                }
             }
         }
     }
@@ -191,6 +212,26 @@ public class DecimalParserTest extends AbstractParserTest {
         shouldFailParse("1234567890123411=", 0);
         shouldFailParse("123456789012341.1=", 1);
         shouldFailParse("s", 1);
+
+        shouldFailParse("hd", 0, true);
+        shouldFailParse("3ttt", 0, true);
+        shouldFailParse("111", 0, true);
+        shouldFailParse("111111111111111111111111111111=", 0, true);
+        shouldFailParse("1", 0, true);
+        shouldFailParse("12345", 0, true);
+        shouldFailParse("-", 0, true);
+        shouldFailParse("-=", 0, true);
+        shouldFailParse("-123", 0, true);
+        shouldFailParse("=", 0, true);
+        shouldFailParse("", 0, true);
+        shouldFailParse(".0=", 0, true);
+        shouldFailParse("-0.s11=", 2, true);
+        shouldFailParse("12345678901234.11=", 2, true);
+        shouldFailParse("1234567890123411=", 0, true);
+        shouldFailParse("123456789012341.1=", 1, true);
+        shouldFailParse("s", 1, true);
+        shouldFailParse("1234567890123.1=", 6, true);
+        shouldFailParse("1.123456789012345=", 0, true);
     }
 
     protected static void shouldParse(String value, int scale) {
@@ -216,6 +257,35 @@ public class DecimalParserTest extends AbstractParserTest {
 
         try {
             DecimalParser.parseDecimal(scale, SEPARATOR, buffer, offset, end);
+            Assert.fail("Should fail parse " + string);
+        } catch (ParserException e) {
+            Assert.assertTrue("Caught", true);
+        }
+    }
+
+    protected static void shouldParse(String value, int scale, boolean roundUp) {
+        Buffer buffer = BufferUtil.fromString(value + (char) SEPARATOR);
+        MutableInt offset = new MutableInt(0);
+        int end = buffer.capacity();
+
+        long expected = new BigDecimal(value)
+                .setScale(scale, roundUp ? RoundingMode.HALF_UP : RoundingMode.HALF_DOWN)
+                .movePointRight(scale)
+                .longValueExact();
+
+        long actual = DecimalParser.parseDecimal(scale, roundUp, SEPARATOR, buffer, offset, end);
+
+        Assert.assertEquals("Can't parse " + value, end, offset.get());
+        Assert.assertEquals("Can't parse " + value, expected, actual);
+    }
+
+    protected static void shouldFailParse(String string, int scale, boolean roundUp) {
+        Buffer buffer = BufferUtil.fromString(string);
+        MutableInt offset = new MutableInt(0);
+        int end = buffer.capacity();
+
+        try {
+            DecimalParser.parseDecimal(scale, roundUp, SEPARATOR, buffer, offset, end);
             Assert.fail("Should fail parse " + string);
         } catch (ParserException e) {
             Assert.assertTrue("Caught", true);

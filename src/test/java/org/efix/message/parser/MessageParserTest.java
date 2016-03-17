@@ -5,6 +5,7 @@ import org.junit.Test;
 import static org.efix.util.TestUtil.*;
 import static org.junit.Assert.*;
 
+
 public class MessageParserTest {
 
     @Test
@@ -24,7 +25,7 @@ public class MessageParserTest {
 
     @Test
     public void shouldParseFields() {
-        String message = "1=charSequence|2=12345|3=123456789012345|4=3.14159|5=b|6=Y|7=20121009-13:44:49.421|8=20121009|9=13:44:49.421|10=skipped value|11=byteSequence|12=0.0001|";
+        String message = "1=charSequence|2=12345|3=123456789012345|4=3.14159|5=b|6=Y|7=20121009-13:44:49.421|8=20121009|9=13:44:49.421|10=skipped value|11=byteSequence|12=0.0001|13=0.05|";
         MessageParser parser = new FastMessageParser();
         parser.wrap(byteMessage(message));
 
@@ -68,6 +69,10 @@ public class MessageParserTest {
                 case 12:
                     assertEquals(1, parser.parseDecimal(4));
                     break;
+                case 13:
+                    assertEquals(1, parser.parseDecimal(1, true));
+                    break;
+
                 default:
                     fail("unexpected field " + tag);
             }
@@ -75,7 +80,7 @@ public class MessageParserTest {
             tags++;
         }
 
-        assertEquals(12, tags);
+        assertEquals(13, tags);
     }
 
     @Test

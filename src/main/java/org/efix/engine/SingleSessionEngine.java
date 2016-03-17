@@ -48,7 +48,12 @@ public class SingleSessionEngine implements Disposable {
     }
 
     protected static String threadName(SessionContext context) {
-        return String.format("Session fixVersion %s, %s", context.fixVersion().beginString(), context.sessionID());
+        return String.format(
+                "Session %s %s -> %s",
+                context.fixVersion().beginString(),
+                context.sessionId().senderCompId(),
+                context.sessionId().targetCompId()
+        );
     }
 
 }

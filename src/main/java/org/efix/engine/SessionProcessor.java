@@ -98,7 +98,7 @@ public class SessionProcessor implements Worker {
         this.receiver = new Receiver(context.receiveBufferSize());
         this.sender = new Sender();
         this.resender = new Resender(this);
-        this.packer = new MessagePacker(context.fixVersion(), context.sessionID(), sendBuffer);
+        this.packer = new MessagePacker(context.fixVersion(), context.sessionId(), sendBuffer);
 
         this.heartbeatInterval = context.heartbeatInterval();
         this.heartbeatTimeout = context.heartbeatTimeout();

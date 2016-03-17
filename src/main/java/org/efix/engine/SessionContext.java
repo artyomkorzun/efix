@@ -285,11 +285,11 @@ public class SessionContext {
         return this;
     }
 
-    public SessionId sessionID() {
+    public SessionId sessionId() {
         return sessionId;
     }
 
-    public SessionContext sessionID(SessionId sessionId) {
+    public SessionContext sessionId(SessionId sessionId) {
         this.sessionId = sessionId;
         return this;
     }
