@@ -6,7 +6,7 @@ public abstract class AbstractSessionState implements SessionState {
     protected long lastReceivedTime = Long.MIN_VALUE;
     protected long lastSentTime = Long.MIN_VALUE;
     protected boolean targetSeqNumSynchronized;
-    protected boolean isTestRequestSent;
+    protected boolean testRequestSent;
 
     @Override
     public SessionStatus status() {
@@ -50,12 +50,12 @@ public abstract class AbstractSessionState implements SessionState {
 
     @Override
     public boolean testRequestSent() {
-        return isTestRequestSent;
+        return testRequestSent;
     }
 
     @Override
     public void testRequestSent(boolean sent) {
-        this.isTestRequestSent = sent;
+        this.testRequestSent = sent;
     }
 
 }
