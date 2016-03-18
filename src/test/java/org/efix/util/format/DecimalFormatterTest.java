@@ -55,6 +55,8 @@ public class DecimalFormatterTest {
         shouldFailFormat(-9999999999999991L, 1);
         shouldFailFormat(1234567890123456L, 18);
         shouldFailFormat(1, 15);
+        shouldFailFormat(Long.MAX_VALUE, 0);
+        shouldFailFormat(Long.MIN_VALUE, 0);
     }
 
     protected static void shouldFormat(long decimal, int scale) {
@@ -67,7 +69,7 @@ public class DecimalFormatterTest {
     }
 
     protected static void shouldFailFormat(long decimal, int scale) {
-        MutableBuffer buffer = UnsafeBuffer.allocateDirect(DecimalType.MAX_LENGTH);
+        MutableBuffer buffer = UnsafeBuffer.allocateDirect(32);
 
         try {
             DecimalFormatter.formatDecimal(decimal, scale, buffer, 0);

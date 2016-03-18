@@ -34,11 +34,12 @@ public class DoubleFormatter {
     }
 
     public static int formatDouble(double value, int precision, boolean roundHalfUp, MutableBuffer buffer, int offset) {
-        checkValue(value);
-
         if (value < 0) {
+            checkNegativeDouble(value);
             value = -value;
             buffer.putByte(offset++, (byte) '-');
+        } else {
+            checkUDouble(value);
         }
 
         precision = correctPrecision(value, precision);
@@ -79,10 +80,18 @@ public class DoubleFormatter {
     }
 
     /**
-     * Checks NaN and Infinities as well.
+     * Checks NaN and positive infinity as well
      */
-    protected static void checkValue(double value) {
-        if (!(DoubleType.MIN_VALUE <= value && value <= DoubleType.MAX_VALUE))
+    protected static void checkUDouble(double value) {
+        if (!(value <= DoubleType.MAX_VALUE))
+            throw new FormatterException(String.format("Value %s is out of range [%s, %s]", value, DoubleType.MIN_VALUE, DoubleType.MAX_VALUE));
+    }
+
+    /**
+     * Checks NaN and negative infinity as well
+     */
+    protected static void checkNegativeDouble(double value) {
+        if (!(value >= DoubleType.MIN_VALUE))
             throw new FormatterException(String.format("Value %s is out of range [%s, %s]", value, DoubleType.MIN_VALUE, DoubleType.MAX_VALUE));
     }
 
