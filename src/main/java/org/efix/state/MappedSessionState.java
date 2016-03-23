@@ -68,7 +68,7 @@ public class MappedSessionState extends AbstractSessionState {
             byteBuffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, LENGTH).load();
             buffer = new UnsafeBuffer(byteBuffer);
         } catch (IOException e) {
-            LangUtil.rethrowUnchecked(e);
+            LangUtil.rethrow(e);
         }
 
         if (justCreated) {

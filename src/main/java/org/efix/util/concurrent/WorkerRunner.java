@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Objects.requireNonNull;
 
+
 public class WorkerRunner implements Runnable, AutoCloseable {
 
     protected static final Thread TOMB = new Thread("TOMB");
@@ -65,7 +66,7 @@ public class WorkerRunner implements Runnable, AutoCloseable {
                     thread.join(3000);
                 }
             } catch (InterruptedException e) {
-                LangUtil.rethrowUnchecked(e);
+                LangUtil.rethrow(e);
             }
         }
     }

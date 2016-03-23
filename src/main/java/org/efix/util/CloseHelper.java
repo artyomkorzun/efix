@@ -2,6 +2,7 @@ package org.efix.util;
 
 import java.util.List;
 
+
 public class CloseHelper {
 
     public static void quietClose(AutoCloseable resource) {
@@ -18,7 +19,7 @@ public class CloseHelper {
             if (resource != null)
                 resource.close();
         } catch (Exception e) {
-            throw LangUtil.rethrowUnchecked(e);
+            throw LangUtil.rethrow(e);
         }
     }
 
@@ -36,7 +37,7 @@ public class CloseHelper {
         }
 
         if (exception != null)
-            throw LangUtil.rethrowUnchecked(exception);
+            throw LangUtil.rethrow(exception);
     }
 
 }

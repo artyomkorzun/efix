@@ -20,7 +20,7 @@ public class UnsafeAccess {
             };
             unsafe = AccessController.doPrivileged(action);
         } catch (final Exception ex) {
-            LangUtil.rethrowUnchecked(ex);
+            LangUtil.rethrow(ex);
         }
 
         UNSAFE = unsafe;

@@ -58,7 +58,7 @@ public class FileMessageLog implements MessageLog {
             byteBuffer = ByteBuffer.allocateDirect(bufferSize);
             buffer = new UnsafeBuffer(byteBuffer);
         } catch (IOException e) {
-            LangUtil.rethrowUnchecked(e);
+            LangUtil.rethrow(e);
         }
     }
 
@@ -91,7 +91,7 @@ public class FileMessageLog implements MessageLog {
         try {
             channel.write(byteBuffer);
         } catch (IOException e) {
-            LangUtil.rethrowUnchecked(e);
+            LangUtil.rethrow(e);
         }
     }
 

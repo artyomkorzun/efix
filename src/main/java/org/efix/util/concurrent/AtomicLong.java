@@ -12,7 +12,7 @@ public final class AtomicLong {
         try {
             VALUE_FIELD_OFFSET = UnsafeAccess.UNSAFE.objectFieldOffset(AtomicLong.class.getDeclaredField("value"));
         } catch (NoSuchFieldException e) {
-            throw LangUtil.rethrowUnchecked(e);
+            throw LangUtil.rethrow(e);
         }
     }
 
