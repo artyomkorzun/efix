@@ -61,7 +61,7 @@ public class SessionContext {
 
     protected Connector connector;
     protected InetSocketAddress address;
-    protected int reconnectInterval = Configuration.CONNECT_INTERVAL;
+    protected int connectInterval = Configuration.CONNECT_INTERVAL_MS;
     protected int socketReceiveBufferSize = Configuration.SOCKET_RECEIVE_BUFFER_SIZE;
     protected int socketSendBufferSize = Configuration.SOCKET_SEND_BUFFER_SIZE;
     protected boolean socketTcpNoDelay = Configuration.SOCKET_TCP_NO_DELAY;
@@ -73,10 +73,10 @@ public class SessionContext {
     protected SessionType sessionType;
     protected FixVersion fixVersion;
     protected SessionId sessionId;
-    protected int heartbeatInterval = Configuration.HEARTBEAT_INTERVAL;
-    protected int heartbeatTimeout = Configuration.HEARTBEAT_TIMEOUT;
-    protected int logonTimeout = Configuration.LOGON_TIMEOUT;
-    protected int logoutTimeout = Configuration.LOGOUT_TIMEOUT;
+    protected int heartbeatInterval = Configuration.HEARTBEAT_INTERVAL_S;
+    protected int maxHeartbeatDelay = Configuration.MAX_HEARTBEAT_DELAY_MS;
+    protected int logonTimeout = Configuration.LOGON_TIMEOUT_MS;
+    protected int logoutTimeout = Configuration.LOGOUT_TIMEOUT_MS;
     protected boolean resetSeqNumsOnLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
@@ -213,12 +213,12 @@ public class SessionContext {
         return this;
     }
 
-    public int reconnectInterval() {
-        return reconnectInterval;
+    public int connectInterval() {
+        return connectInterval;
     }
 
-    public SessionContext reconnectInterval(int reconnectInterval) {
-        this.reconnectInterval = reconnectInterval;
+    public SessionContext connectInterval(int connectInterval) {
+        this.connectInterval = connectInterval;
         return this;
     }
 
@@ -312,12 +312,12 @@ public class SessionContext {
         return this;
     }
 
-    public int heartbeatTimeout() {
-        return heartbeatTimeout;
+    public int maxHeartbeatDelay() {
+        return maxHeartbeatDelay;
     }
 
-    public SessionContext heartbeatTimeout(int heartbeatTimeout) {
-        this.heartbeatTimeout = heartbeatTimeout;
+    public SessionContext maxHeartbeatDelay(int maxHeartbeatDelay) {
+        this.maxHeartbeatDelay = maxHeartbeatDelay;
         return this;
     }
 
@@ -408,7 +408,7 @@ public class SessionContext {
             options.add(StandardSocketOptions.SO_SNDBUF, socketSendBufferSize);
 
             connector = sessionType.initiator() ?
-                    new InitiatorConnector(address, options, clock, reconnectInterval) :
+                    new InitiatorConnector(address, options, clock, connectInterval) :
                     new AcceptorConnector(address, options);
         }
 

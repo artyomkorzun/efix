@@ -65,7 +65,8 @@ public class SessionProcessor implements Worker {
 
     protected final SessionType sessionType;
     protected final int heartbeatInterval;
-    protected final int heartbeatTimeout;
+    protected final int inHeartbeatTimeout;
+    protected final int outHeartbeatTimeout;
     protected final int logonTimeout;
     protected final int logoutTimeout;
     protected final boolean resetSeqNumsOnLogon;
@@ -101,7 +102,8 @@ public class SessionProcessor implements Worker {
         this.packer = new MessagePacker(context.fixVersion(), context.sessionId(), sendBuffer);
 
         this.heartbeatInterval = context.heartbeatInterval();
-        this.heartbeatTimeout = context.heartbeatTimeout();
+        this.inHeartbeatTimeout = context.heartbeatInterval() * 1000 + context.maxHeartbeatDelay();
+        this.outHeartbeatTimeout = context.heartbeatInterval() * 1000;
         this.logonTimeout = context.logonTimeout();
         this.logoutTimeout = context.logoutTimeout();
         this.sessionType = context.sessionType();
@@ -324,10 +326,11 @@ public class SessionProcessor implements Worker {
     protected int checkInHeartbeatTimeout(long now) {
         int work = 0;
         long elapsed = now - state.lastReceivedTime();
-        if (elapsed >= 2 * heartbeatTimeout)
-            throw new TimeoutException(String.format("Heartbeat timeout %s ms. Elapsed %s ms", heartbeatTimeout, elapsed));
+        if (elapsed >= 2 * inHeartbeatTimeout)
+            throw new TimeoutException(String.format("No response on TestRequest. Heartbeat timeout %s ms. " +
+                    "Elapsed time since last received message %s ms", inHeartbeatTimeout, elapsed));
 
-        if (elapsed >= heartbeatTimeout && !state.testRequestSent()) {
+        if (elapsed >= inHeartbeatTimeout && !state.testRequestSent()) {
             sendTestRequest("Heartbeat timeout");
             work += 1;
         }
@@ -338,7 +341,7 @@ public class SessionProcessor implements Worker {
     protected int checkOutHeartbeatTimeout(long now) {
         int work = 0;
         long elapsed = now - state.lastSentTime();
-        if (elapsed >= heartbeatTimeout) {
+        if (elapsed >= outHeartbeatTimeout) {
             sendHeartbeat(null);
             work += 1;
         }
