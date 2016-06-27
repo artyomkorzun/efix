@@ -12,6 +12,7 @@ public class FieldUtil {
     public static final int CHECK_SUM_FIELD_LENGTH = 7;
 
     public static final long LONG_NULL = Long.MIN_VALUE;
+    public static final long DECIMAL_NULL = Long.MIN_VALUE;
     public static final double DOUBLE_NULL = Double.NaN;
     public static final int INT_NULL = Integer.MIN_VALUE;
     public static final byte BYTE_NULL = Byte.MIN_VALUE;
