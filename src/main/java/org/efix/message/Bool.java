@@ -10,7 +10,7 @@ public enum Bool {
         this.value = value;
     }
 
-    public boolean yes(){
+    public boolean yes() {
         return value;
     }
 
