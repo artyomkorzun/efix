@@ -4,6 +4,7 @@ import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.buffer.Buffer;
 
+
 public interface MessageParser {
 
     int parseTag();
@@ -49,10 +50,34 @@ public interface MessageParser {
 
     Buffer buffer();
 
+    /**
+     * @return offset from which the current message starts
+     */
+    int start();
+
+    /**
+     * @return offset from which the next message starts
+     */
+    int end();
+
+    /**
+     * @param offset from which continue parsing message
+     */
+    void offset(int offset);
+
+    /**
+     * @return offset from which to continue parsing message
+     */
     int offset();
 
+    /**
+     * @return length of parsed chunk of message
+     */
     int length();
 
+    /**
+     * @return length of not parsed chunk of message
+     */
     int remaining();
 
     boolean hasRemaining();

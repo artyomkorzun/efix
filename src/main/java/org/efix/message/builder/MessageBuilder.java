@@ -4,6 +4,7 @@ import org.efix.util.ByteSequence;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
 
+
 public interface MessageBuilder {
 
     MessageBuilder addBoolean(int tag, boolean value);
@@ -114,10 +115,34 @@ public interface MessageBuilder {
 
     MutableBuffer buffer();
 
+    /**
+     * @return offset from which message starts
+     */
+    int start();
+
+    /**
+     * @return offset where buffer ends + 1
+     */
+    int end();
+
+    /**
+     * @param offset from which continue appending message
+     */
+    void offset(int offset);
+
+    /**
+     * @return offset from which continue appending message
+     */
     int offset();
 
+    /**
+     * @return length of appended chunk of message
+     */
     int length();
 
+    /**
+     * @return length of free space in buffer
+     */
     int remaining();
 
 }

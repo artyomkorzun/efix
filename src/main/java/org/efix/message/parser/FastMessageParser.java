@@ -125,6 +125,21 @@ public class FastMessageParser implements MessageParser {
     }
 
     @Override
+    public int start() {
+        return start;
+    }
+
+    @Override
+    public int end() {
+        return end;
+    }
+
+    @Override
+    public void offset(int offset) {
+        this.offset.set(offset);
+    }
+
+    @Override
     public int offset() {
         return offset.get();
     }

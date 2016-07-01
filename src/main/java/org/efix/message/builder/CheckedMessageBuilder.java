@@ -324,6 +324,21 @@ public class CheckedMessageBuilder implements MessageBuilder {
     }
 
     @Override
+    public int start() {
+        return builder.start();
+    }
+
+    @Override
+    public int end() {
+        return builder.end();
+    }
+
+    @Override
+    public void offset(int offset) {
+        builder.offset(offset);
+    }
+
+    @Override
     public int offset() {
         return builder.offset();
     }
