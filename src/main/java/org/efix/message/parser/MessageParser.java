@@ -63,7 +63,7 @@ public interface MessageParser {
     /**
      * @param offset from which continue parsing message
      */
-    void offset(int offset);
+    MessageParser offset(int offset);
 
     /**
      * @return offset from which to continue parsing message

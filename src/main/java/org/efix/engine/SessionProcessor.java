@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 
 import static org.efix.engine.SessionUtil.*;
+import static org.efix.message.FieldUtil.CHECK_SUM_FIELD_LENGTH;
 import static org.efix.state.SessionStatus.*;
 
 
@@ -390,6 +391,10 @@ public class SessionProcessor implements Worker {
         Header header = parseHeader(parser, this.header);
         validateHeader(header);
 
+        parser.offset(parser.end() - CHECK_SUM_FIELD_LENGTH);
+        int checkSum = parseCheckSum(parser);
+        validateCheckSum(checkSum, buffer, offset, length);
+
         parser.reset();
 
         if (AdminMsgType.isAdmin(header.msgType()))
@@ -548,6 +553,10 @@ public class SessionProcessor implements Worker {
 
     protected void validateHeader(Header header) {
         SessionUtil.validateHeader(fixVersion, sessionId, header);
+    }
+
+    protected void validateCheckSum(int checkSum, Buffer buffer, int offset, int length) {
+        SessionUtil.validateCheckSum(checkSum, buffer, offset, length);
     }
 
     protected void validateLogon(Logon logon) {

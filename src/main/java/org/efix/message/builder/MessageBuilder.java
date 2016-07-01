@@ -128,7 +128,7 @@ public interface MessageBuilder {
     /**
      * @param offset from which continue appending message
      */
-    void offset(int offset);
+    MessageBuilder offset(int offset);
 
     /**
      * @return offset from which continue appending message

@@ -11,6 +11,7 @@ import org.efix.message.parser.MessageParser;
 import org.efix.state.SessionStatus;
 import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
+import org.efix.util.buffer.Buffer;
 
 import static org.efix.message.FieldUtil.*;
 
@@ -20,30 +21,44 @@ public class SessionUtil {
     public static void validateHeader(FixVersion fixVersion, SessionId sessionId, Header header) {
         ByteSequence actual = header.beginString();
         ByteSequence expected = fixVersion.beginString();
-        if (!expected.equals(actual)) {
+        if (!actual.equals(expected)) {
             throw new FieldException(Tag.BeginString, String.format("BeginString(8) does not match, expected %s but received %s",
                     expected, actual));
         }
 
         actual = header.senderCompId();
         expected = sessionId.targetCompId();
-        if (!expected.equals(actual)) {
+        if (!actual.equals(expected)) {
             throw new FieldException(Tag.SenderCompID, String.format("SenderCompID(49) does not match, expected %s but received %s",
                     expected, actual));
         }
 
         actual = header.targetCompId();
         expected = sessionId.senderCompId();
-        if (!expected.equals(actual)) {
+        if (!actual.equals(expected)) {
             throw new FieldException(Tag.TargetCompID, String.format("TargetCompID(46) does not match, expected %s but received %s",
                     expected, actual));
         }
     }
 
+    public static void validateCheckSum(int checkSum, Buffer buffer, int offset, int length) {
+        int expected = 0;
+        for (int end = offset + length - CHECK_SUM_FIELD_LENGTH; offset < end; offset++)
+            expected += buffer.getByte(offset);
+
+        expected &= 0xFF;
+        if (checkSum != expected) {
+            throw new FieldException(Tag.CheckSum, String.format("CheckSum(10) does not match, expected %s but received %s",
+                    expected, checkSum));
+        }
+    }
+
     public static void validateLogon(int heartBtInt, Logon logon) {
         int actual = checkPresent(Tag.HeartBtInt, logon.heartBtInt());
-        if (actual != heartBtInt)
-            throw new FieldException(Tag.HeartBtInt, String.format("HeartBtInt does not match, expected %s but received %s", heartBtInt, actual));
+        if (actual != heartBtInt) {
+            throw new FieldException(Tag.HeartBtInt, String.format("HeartBtInt(108) does not match, expected %s but received %s",
+                    heartBtInt, actual));
+        }
     }
 
     public static void validateTestRequest(TestRequest request) {
@@ -282,6 +297,11 @@ public class SessionUtil {
         checkTag(Tag.MsgType, parser.parseTag());
         parser.parseByteSequence(out);
         return out;
+    }
+
+    public static int parseCheckSum(MessageParser parser) {
+        checkTag(Tag.CheckSum, parser.parseTag());
+        return parser.parseInt();
     }
 
 }

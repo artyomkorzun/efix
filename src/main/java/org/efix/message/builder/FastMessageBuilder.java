@@ -364,8 +364,9 @@ public class FastMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public void offset(int offset) {
+    public MessageBuilder offset(int offset) {
         this.offset = offset;
+        return this;
     }
 
     @Override
