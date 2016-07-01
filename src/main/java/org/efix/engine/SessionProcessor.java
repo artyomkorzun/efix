@@ -1,6 +1,8 @@
 package org.efix.engine;
 
+import org.efix.FixVersion;
 import org.efix.SessionComponent;
+import org.efix.SessionId;
 import org.efix.SessionType;
 import org.efix.connector.Connector;
 import org.efix.connector.channel.Channel;
@@ -63,7 +65,9 @@ public class SessionProcessor implements Worker {
     protected final SequenceReset sequenceReset = new SequenceReset();
     protected final ByteSequenceWrapper outMsgType = new ByteSequenceWrapper();
 
-    protected final SessionType sessionType;
+    protected SessionType sessionType;
+    protected FixVersion fixVersion;
+    protected SessionId sessionId;
     protected final int heartbeatInterval;
     protected final int inHeartbeatTimeout;
     protected final int outHeartbeatTimeout;
@@ -101,12 +105,14 @@ public class SessionProcessor implements Worker {
         this.resender = new Resender(this);
         this.packer = new MessagePacker(context.fixVersion(), context.sessionId(), sendBuffer);
 
+        this.sessionType = context.sessionType();
+        this.fixVersion = context.fixVersion();
+        this.sessionId = context.sessionId();
         this.heartbeatInterval = context.heartbeatInterval();
         this.inHeartbeatTimeout = context.heartbeatInterval() * 1000 + context.maxHeartbeatDelay();
         this.outHeartbeatTimeout = context.heartbeatInterval() * 1000;
         this.logonTimeout = context.logonTimeout();
         this.logoutTimeout = context.logoutTimeout();
-        this.sessionType = context.sessionType();
         this.resetSeqNumsOnLogon = context.resetSeqNumsOnLogon();
         this.logonWithNextExpectedSeqNum = context.logonWithNextExpectedSeqNum();
     }
@@ -541,6 +547,7 @@ public class SessionProcessor implements Worker {
     }
 
     protected void validateHeader(Header header) {
+        SessionUtil.validateHeader(fixVersion, sessionId, header);
     }
 
     protected void validateLogon(Logon logon) {

@@ -1,5 +1,7 @@
 package org.efix.engine;
 
+import org.efix.FixVersion;
+import org.efix.SessionId;
 import org.efix.message.*;
 import org.efix.message.builder.MessageBuilder;
 import org.efix.message.field.EncryptMethod;
@@ -10,26 +12,51 @@ import org.efix.state.SessionStatus;
 import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
 
+import static org.efix.message.FieldUtil.*;
+
 
 public class SessionUtil {
 
+    public static void validateHeader(FixVersion fixVersion, SessionId sessionId, Header header) {
+        ByteSequence actual = header.beginString();
+        ByteSequence expected = fixVersion.beginString();
+        if (!expected.equals(actual)) {
+            throw new FieldException(Tag.BeginString, String.format("BeginString(8) does not match, expected %s but received %s",
+                    expected, actual));
+        }
+
+        actual = header.senderCompId();
+        expected = sessionId.targetCompId();
+        if (!expected.equals(actual)) {
+            throw new FieldException(Tag.SenderCompID, String.format("SenderCompID(49) does not match, expected %s but received %s",
+                    expected, actual));
+        }
+
+        actual = header.targetCompId();
+        expected = sessionId.senderCompId();
+        if (!expected.equals(actual)) {
+            throw new FieldException(Tag.TargetCompID, String.format("TargetCompID(46) does not match, expected %s but received %s",
+                    expected, actual));
+        }
+    }
+
     public static void validateLogon(int heartBtInt, Logon logon) {
-        int actual = FieldUtil.checkPresent(Tag.HeartBtInt, logon.heartBtInt());
+        int actual = checkPresent(Tag.HeartBtInt, logon.heartBtInt());
         if (actual != heartBtInt)
             throw new FieldException(Tag.HeartBtInt, String.format("HeartBtInt does not match, expected %s but received %s", heartBtInt, actual));
     }
 
     public static void validateTestRequest(TestRequest request) {
-        FieldUtil.checkPresent(Tag.TestReqID, request.testReqID());
+        checkPresent(Tag.TestReqID, request.testReqID());
     }
 
     public static void validateResendRequest(ResendRequest request) {
         int beginSeqNo = request.beginSeqNo();
-        FieldUtil.checkPresent(Tag.BeginSeqNo, beginSeqNo);
+        checkPresent(Tag.BeginSeqNo, beginSeqNo);
         FieldUtil.checkPositive(Tag.BeginSeqNo, beginSeqNo);
 
         int endSeqNo = request.endSeqNo();
-        FieldUtil.checkPresent(Tag.EndSeqNo, endSeqNo);
+        checkPresent(Tag.EndSeqNo, endSeqNo);
         FieldUtil.checkNonNegative(Tag.EndSeqNo, endSeqNo);
 
         if (endSeqNo != 0 && beginSeqNo > endSeqNo)
@@ -37,7 +64,7 @@ public class SessionUtil {
     }
 
     public static void validateSequenceReset(int targetSeqNum, SequenceReset reset) {
-        int newSeqNo = FieldUtil.checkPresent(Tag.NewSeqNo, reset.newSeqNo());
+        int newSeqNo = checkPresent(Tag.NewSeqNo, reset.newSeqNo());
         if (newSeqNo <= targetSeqNum)
             throw new FieldException(Tag.NewSeqNo, String.format("NewSeqNo(36) %s should be more expected target MsgSeqNum %s", newSeqNo, targetSeqNum));
     }
@@ -105,7 +132,7 @@ public class SessionUtil {
     }
 
     public static Logon parseLogon(MessageParser parser, Logon logon) {
-        int heartBtInt = FieldUtil.INT_NULL;
+        int heartBtInt = INT_NULL;
         boolean resetSeqNum = false;
 
         while (parser.hasRemaining()) {
@@ -139,14 +166,14 @@ public class SessionUtil {
                 parser.parseValue();
         }
 
-        FieldUtil.checkPresent(Tag.TestReqID, testReqID);
+        checkPresent(Tag.TestReqID, testReqID);
 
         return request;
     }
 
     public static ResendRequest parseResendRequest(MessageParser parser, ResendRequest request) {
-        int beginSeqNo = FieldUtil.INT_NULL;
-        int endSeqNo = FieldUtil.INT_NULL;
+        int beginSeqNo = INT_NULL;
+        int endSeqNo = INT_NULL;
         while (parser.hasRemaining()) {
             int tag = parser.parseTag();
             switch (tag) {
@@ -168,7 +195,7 @@ public class SessionUtil {
     }
 
     public static SequenceReset parseSequenceReset(MessageParser parser, SequenceReset reset) {
-        int newSeqNo = FieldUtil.INT_NULL;
+        int newSeqNo = INT_NULL;
         boolean gapFill = false;
 
         while (parser.hasRemaining()) {
@@ -192,59 +219,69 @@ public class SessionUtil {
     }
 
     public static Header parseHeader(MessageParser parser, Header header) {
-        parseBeginString(parser);
+        parseBeginString(parser, header.beginString());
         parseBodyLength(parser);
         parseMessageType(parser, header.msgType());
-        parseMsgSeqNumWithPossDup(parser, header);
+
+        int msgSeqNum = INT_NULL;
+        boolean possDup = false;
+
+        ByteSequenceWrapper senderCompId = header.senderCompId().clear();
+        ByteSequenceWrapper targetCompId = header.targetCompId().clear();
+
+        parsing:
+        while (parser.hasRemaining()) {
+            int tag = parser.parseTag();
+            switch (tag) {
+                case Tag.MsgSeqNum:
+                    msgSeqNum = checkPositive(tag, parser.parseInt());
+                    break;
+                case Tag.PossDupFlag:
+                    possDup = parser.parseBoolean();
+                    break;
+                case Tag.SenderCompID:
+                    parser.parseByteSequence(senderCompId);
+                    break;
+                case Tag.TargetCompID:
+                    parser.parseByteSequence(targetCompId);
+                    break;
+                default:
+                    if (!isHeader(tag))
+                        break parsing;
+
+                    parser.parseValue();
+            }
+        }
+
+        checkPresent(Tag.MsgSeqNum, msgSeqNum);
+        checkPresent(Tag.SenderCompID, senderCompId);
+        checkPresent(Tag.TargetCompID, targetCompId);
+
+        header.msgSeqNum(msgSeqNum);
+        header.possDup(possDup);
+
         return header;
     }
 
     public static void parseBeginString(MessageParser parser) {
-        FieldUtil.checkTag(Tag.BeginString, parser.parseTag());
+        checkTag(Tag.BeginString, parser.parseTag());
         parser.parseValue();
     }
 
+    public static void parseBeginString(MessageParser parser, ByteSequenceWrapper out) {
+        checkTag(Tag.BeginString, parser.parseTag());
+        parser.parseByteSequence(out);
+    }
+
     public static int parseBodyLength(MessageParser parser) {
-        FieldUtil.checkTag(Tag.BodyLength, parser.parseTag());
+        checkTag(Tag.BodyLength, parser.parseTag());
         return FieldUtil.checkPositive(Tag.BodyLength, parser.parseInt());
     }
 
     public static ByteSequence parseMessageType(MessageParser parser, ByteSequenceWrapper out) {
-        FieldUtil.checkTag(Tag.MsgType, parser.parseTag());
+        checkTag(Tag.MsgType, parser.parseTag());
         parser.parseByteSequence(out);
         return out;
-    }
-
-    public static void parseMsgSeqNumWithPossDup(MessageParser parser, Header header) {
-        int msgSeqNum = FieldUtil.INT_NULL;
-        boolean possDup = false;
-        boolean possDupFound = false;
-
-        while (parser.hasRemaining()) {
-            int tagNum = parser.parseTag();
-            if (tagNum == Tag.MsgSeqNum) {
-                msgSeqNum = FieldUtil.checkPositive(tagNum, parser.parseInt());
-                if (possDupFound)
-                    break;
-
-            } else if (tagNum == Tag.PossDupFlag) {
-                possDup = parser.parseBoolean();
-                if (msgSeqNum != FieldUtil.INT_NULL)
-                    break;
-
-                possDupFound = true;
-            } else {
-                if (!FieldUtil.isHeader(tagNum))
-                    break;
-
-                parser.parseValue();
-            }
-        }
-
-        FieldUtil.checkPresent(Tag.MsgSeqNum, msgSeqNum);
-
-        header.msgSeqNum(msgSeqNum);
-        header.possDup(possDup);
     }
 
 }

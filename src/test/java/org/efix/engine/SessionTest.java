@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
 public abstract class SessionTest {
 
     protected static final SessionId SESSION_ID = new SessionId("RECEIVER", "SENDER");
-    protected static final EpochClock CLOCK = new HaltedEpochClock().time(parseTimestamp("20160101-00:00:00"));
+    protected static final EpochClock CLOCK = new HaltedEpochClock(parseTimestamp("20160101-00:00:00"));
 
     protected final SessionType sessionType;
 
@@ -606,6 +606,51 @@ public abstract class SessionTest {
         assertStatuses();
     }
 
+    @Test
+    public void shouldDisconnectOnMessageWithWrongBeginString() {
+        String inHeartbeat = "8=FIX.4.2|9=57|35=D|34=3|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=136|";
+
+        exchangeLogons();
+
+        int work = process(inHeartbeat);
+
+        assertWorkDone(work);
+        assertSeqNums(3, 3);
+        assertNoOutMessages();
+        assertErrors("BeginString(8) does not match, expected FIX.4.4 but received FIX.4.2");
+        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+    }
+
+    @Test
+    public void shouldDisconnectOnMessageWithWrongSenderCompId() {
+        String inHeartbeat = "8=FIX.4.4|9=63|35=D|34=3|49=WRONG SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=136|";
+
+        exchangeLogons();
+
+        int work = process(inHeartbeat);
+
+        assertWorkDone(work);
+        assertSeqNums(3, 3);
+        assertNoOutMessages();
+        assertErrors("SenderCompID(49) does not match, expected SENDER but received WRONG SENDER");
+        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+    }
+
+    @Test
+    public void shouldDisconnectOnMessageWithWrongTargetCompId() {
+        String inHeartbeat = "8=FIX.4.4|9=63|35=D|34=3|49=SENDER|52=19700101-00:00:00.000|56=WRONG RECEIVER|10=136|";
+
+        exchangeLogons();
+
+        int work = process(inHeartbeat);
+
+        assertWorkDone(work);
+        assertSeqNums(3, 3);
+        assertNoOutMessages();
+        assertErrors("TargetCompID(46) does not match, expected RECEIVER but received WRONG RECEIVER");
+        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+    }
+
     protected void seqNums(int senderSeqNum, int targetSeqNum) {
         state.senderSeqNum(senderSeqNum);
         state.targetSeqNum(targetSeqNum);
@@ -613,7 +658,7 @@ public abstract class SessionTest {
 
     protected void exchangeLogons() {
         String inLogon = "8=FIX.4.4|9=64|35=A|34=1|49=SENDER|52=20140522-12:07:39.552|56=RECEIVER|108=30|10=020|";
-        String inHeartbeat = "8=FIX.4.2|9=77|35=0|34=2|49=SENDER|52=20140522-12:07:39.552|56=RECEIVER|112=MsgSeqNum check|10=080|";
+        String inHeartbeat = "8=FIX.4.4|9=77|35=0|34=2|49=SENDER|52=20140522-12:07:39.552|56=RECEIVER|112=MsgSeqNum check|10=082|";
 
         String outLogon = "8=FIX.4.4|9=75|35=A|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|98=0|108=30|141=N|10=021|";
         String outTestRequest = "8=FIX.4.4|9=77|35=1|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|112=MsgSeqNum check|10=061|";
