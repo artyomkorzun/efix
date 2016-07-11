@@ -33,9 +33,11 @@ import org.efix.util.concurrent.strategy.BackoffIdleStrategy;
 import org.efix.util.concurrent.strategy.IdleStrategy;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
 
 import static java.util.Objects.requireNonNull;
+
 
 public class SessionContext {
 
@@ -60,7 +62,7 @@ public class SessionContext {
     protected MessageBuilder builder;
 
     protected Connector connector;
-    protected InetSocketAddress address;
+    protected SocketAddress address;
     protected int connectInterval = Configuration.CONNECT_INTERVAL_MS;
     protected int socketReceiveBufferSize = Configuration.SOCKET_RECEIVE_BUFFER_SIZE;
     protected int socketSendBufferSize = Configuration.SOCKET_SEND_BUFFER_SIZE;
@@ -80,7 +82,11 @@ public class SessionContext {
     protected boolean resetSeqNumsOnLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
-    public SessionContext(InetSocketAddress address, SessionType sessionType, FixVersion fixVersion, SessionId sessionId) {
+    public SessionContext(String host, int port, SessionType sessionType, FixVersion fixVersion, SessionId sessionId) {
+        this(new InetSocketAddress(host, port), sessionType, fixVersion, sessionId);
+    }
+
+    public SessionContext(SocketAddress address, SessionType sessionType, FixVersion fixVersion, SessionId sessionId) {
         this.address = address;
         this.sessionType = sessionType;
         this.fixVersion = fixVersion;
@@ -204,11 +210,15 @@ public class SessionContext {
         return this;
     }
 
-    public InetSocketAddress address() {
+    public SocketAddress address() {
         return address;
     }
 
-    public SessionContext address(InetSocketAddress address) {
+    public SessionContext address(String host, int port) {
+        return address(new InetSocketAddress(host, port));
+    }
+
+    public SessionContext address(SocketAddress address) {
         this.address = address;
         return this;
     }
