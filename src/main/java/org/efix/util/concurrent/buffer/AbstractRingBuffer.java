@@ -6,6 +6,7 @@ import org.efix.util.buffer.AtomicBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
 import org.efix.util.concurrent.AtomicLong;
 
+
 public abstract class AbstractRingBuffer implements RingBuffer {
 
     protected static final int MESSAGE_TYPE_PADDING = -1;
@@ -16,9 +17,9 @@ public abstract class AbstractRingBuffer implements RingBuffer {
 
     protected static final int HEADER_LENGTH = 2 * BitUtil.SIZE_OF_INT;
 
-    protected final AtomicLong headSequence = new AtomicLong();
     protected final AtomicLong tailSequence = new AtomicLong();
-    protected final AtomicLong tailCacheSequence = new AtomicLong();
+    protected final AtomicLong headSequence = new AtomicLong();
+    protected final AtomicLong headCacheSequence = new AtomicLong();
 
     protected final AtomicBuffer buffer;
     protected final int capacity;
@@ -45,15 +46,15 @@ public abstract class AbstractRingBuffer implements RingBuffer {
 
     @Override
     public int size() {
-        long tail = tailSequence.getVolatile();
         long head = headSequence.getVolatile();
-        return (int) (head - tail);
+        long tail = tailSequence.getVolatile();
+        return (int) (tail - head);
     }
 
     @Override
     public boolean isEmpty() {
-        long tail = tailSequence.getVolatile();
         long head = headSequence.getVolatile();
+        long tail = tailSequence.getVolatile();
         return head == tail;
     }
 
@@ -78,7 +79,7 @@ public abstract class AbstractRingBuffer implements RingBuffer {
     }
 
     protected static int freeSpace(long head, long tail, int capacity) {
-        return capacity - (int) (head - tail);
+        return capacity - (int) (tail - head);
     }
 
     protected int mask(long index) {
