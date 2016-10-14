@@ -35,6 +35,7 @@ import org.efix.util.concurrent.strategy.IdleStrategy;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
+import java.util.concurrent.ThreadFactory;
 
 import static java.util.Objects.requireNonNull;
 
@@ -44,7 +45,7 @@ public class SessionContext {
     protected static final int BACKOFF_IDLE_STRATEGY_MAX_SPINS = 20;
     protected static final int BACKOFF_IDLE_STRATEGY_MAX_YIELDS = 50;
     protected static final int BACKOFF_IDLE_STRATEGY_MIN_PARK_PERIOD_NS = 1;
-    protected static final int BACKOFF_IDLE_STRATEGY_MAX_PARK_PERIOD_NS = 10000;
+    protected static final int BACKOFF_IDLE_STRATEGY_MAX_PARK_PERIOD_NS = 100000;
 
     protected EpochClock clock;
     protected SessionSchedule schedule;
@@ -57,6 +58,7 @@ public class SessionContext {
     protected ProducerType producerType = ProducerType.MULTI;
     protected int messageQueueSize = Configuration.MESSAGE_QUEUE_SIZE;
     protected IdleStrategy idleStrategy;
+    protected ThreadFactory threadFactory;
 
     protected MessageParser parser;
     protected MessageBuilder builder;
@@ -403,6 +405,17 @@ public class SessionContext {
                     BACKOFF_IDLE_STRATEGY_MIN_PARK_PERIOD_NS,
                     BACKOFF_IDLE_STRATEGY_MAX_PARK_PERIOD_NS
             );
+        }
+
+        if (threadFactory == null) {
+            String threadName = String.format(
+                    "Session %s %s -> %s",
+                    fixVersion.beginString(),
+                    sessionId.senderCompId(),
+                    sessionId.targetCompId()
+            );
+
+            threadFactory = r -> new Thread(r, threadName);
         }
 
         if (parser == null)

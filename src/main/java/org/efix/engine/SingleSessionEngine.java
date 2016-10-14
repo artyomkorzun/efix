@@ -22,7 +22,7 @@ public class SingleSessionEngine implements Disposable {
         this.messageQueue = context.messageQueue();
         this.processor = processor;
         this.runner = new WorkerRunner(processor, context.idleStrategy());
-        this.thread = new Thread(runner, threadName(context));
+        this.thread = context.threadFactory.newThread(runner);
     }
 
     @Override
@@ -46,15 +46,6 @@ public class SingleSessionEngine implements Disposable {
         Queue<Command<SessionProcessor>> queue = this.commandQueue;
         while (!queue.offer(command))
             Thread.yield();
-    }
-
-    protected static String threadName(SessionContext context) {
-        return String.format(
-                "Session %s %s -> %s",
-                context.fixVersion().beginString(),
-                context.sessionId().senderCompId(),
-                context.sessionId().targetCompId()
-        );
     }
 
 }
