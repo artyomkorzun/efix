@@ -185,6 +185,15 @@ public class SessionContext {
         return this;
     }
 
+    public ThreadFactory threadFactory() {
+        return threadFactory;
+    }
+
+    public SessionContext threadFactory(ThreadFactory threadFactory) {
+        this.threadFactory = threadFactory;
+        return this;
+    }
+
     public MessageParser parser() {
         return parser;
     }
