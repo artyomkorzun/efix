@@ -5,7 +5,6 @@ import org.efix.SessionId;
 import org.efix.message.*;
 import org.efix.message.builder.MessageBuilder;
 import org.efix.message.field.EncryptMethod;
-import org.efix.message.field.MsgType;
 import org.efix.message.field.Tag;
 import org.efix.message.parser.MessageParser;
 import org.efix.state.SessionStatus;
@@ -85,38 +84,32 @@ public class SessionUtil {
     }
 
     public static void makeLogon(boolean resetSeqNum, int heartBtInt, MessageBuilder builder) {
-        builder.addByteSequence(Tag.MsgType, MsgType.LOGON);
         builder.addInt(Tag.EncryptMethod, EncryptMethod.NONE_OTHER);
         builder.addInt(Tag.HeartBtInt, heartBtInt);
         builder.addBoolean(Tag.ResetSeqNumFlag, resetSeqNum);
     }
 
     public static void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {
-        builder.addByteSequence(Tag.MsgType, MsgType.HEARTBEAT);
         if (testReqID != null)
             builder.addCharSequence(Tag.TestReqID, testReqID);
     }
 
     public static void makeTestRequest(CharSequence testReqID, MessageBuilder builder) {
-        builder.addByteSequence(Tag.MsgType, MsgType.TEST_REQUEST);
         builder.addCharSequence(Tag.TestReqID, testReqID);
     }
 
     public static void makeResendRequest(int beginSeqNo, int endSeqNo, MessageBuilder builder) {
-        builder.addByteSequence(Tag.MsgType, MsgType.RESEND_REQUEST);
         builder.addInt(Tag.BeginSeqNo, beginSeqNo);
         builder.addInt(Tag.EndSeqNo, endSeqNo);
     }
 
     public static void makeSequenceReset(boolean gapFill, int newSeqNo, MessageBuilder builder) {
-        builder.addByteSequence(Tag.MsgType, MsgType.SEQUENCE_RESET);
         builder.addBoolean(Tag.PossDupFlag, true);
         builder.addInt(Tag.NewSeqNo, newSeqNo);
         builder.addBoolean(Tag.GapFillFlag, gapFill);
     }
 
     public static void makeLogout(CharSequence text, MessageBuilder builder) {
-        builder.addByteSequence(Tag.MsgType, MsgType.LOGOUT);
         if (text != null)
             builder.addCharSequence(Tag.Text, text);
     }

@@ -8,7 +8,6 @@ import org.efix.util.InsufficientSpaceException;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
-import org.efix.util.concurrent.buffer.MessageHandler;
 
 import static org.efix.engine.SessionUtil.parseBeginString;
 import static org.efix.engine.SessionUtil.parseBodyLength;
@@ -45,7 +44,7 @@ public class Receiver {
                     break;
                 }
 
-                handler.onMessage(EventType.INBOUND_MESSAGE, buffer, offset, length);
+                handler.onMessage(buffer, offset, length);
 
                 remaining -= length;
                 offset += length;

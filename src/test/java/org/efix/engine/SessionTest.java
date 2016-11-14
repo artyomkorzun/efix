@@ -5,11 +5,14 @@ import org.efix.SessionId;
 import org.efix.SessionType;
 import org.efix.connector.channel.TestConnector;
 import org.efix.connector.channel.TextChannel;
+import org.efix.message.Header;
+import org.efix.message.parser.MessageParser;
 import org.efix.state.MemorySessionState;
 import org.efix.state.SessionState;
 import org.efix.state.SessionStatus;
 import org.efix.store.MemoryMessageStore;
 import org.efix.store.MessageStore;
+import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.EpochClock;
 import org.efix.util.HaltedEpochClock;
 import org.efix.util.buffer.Buffer;
@@ -26,7 +29,6 @@ import java.util.Queue;
 import static org.efix.state.SessionStatus.*;
 import static org.efix.util.TestUtil.*;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertArrayEquals;
 
 
 public abstract class SessionTest {
@@ -41,7 +43,7 @@ public abstract class SessionTest {
 
     protected final TextChannel channel = new TextChannel();
 
-    protected SessionProcessor processor;
+    protected Session session;
 
     protected SessionState state;
     protected MessageStore store;
@@ -58,7 +60,19 @@ public abstract class SessionTest {
         SessionContext context = new SessionContext(new InetSocketAddress(1234), sessionType, FixVersion.FIX44, SESSION_ID);
         context.clock(CLOCK).state(state).store(store).connector(new TestConnector(channel));
 
-        processor = new SessionProcessor(context) {
+        session = new Session(context) {
+            @Override
+            protected int doSendOutboundMessages() {
+                return 0;
+            }
+
+            @Override
+            protected void onAdminMessage(Header header, MessageParser parser) {
+            }
+
+            @Override
+            protected void onAppMessage(Header header, MessageParser parser) {
+            }
 
             @Override
             protected void onError(Exception e) {
@@ -105,7 +119,7 @@ public abstract class SessionTest {
 
         exchangeLogons();
 
-        processor.sendLogout("Session end");
+        session.sendLogout("Session end");
         int work = process(inLogout);
 
         assertNoErrors();
@@ -154,7 +168,7 @@ public abstract class SessionTest {
         String outGapFill = "8=FIX.4.4|9=73|35=4|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|43=Y|36=4|123=Y|10=209|";
 
         exchangeLogons();
-        processor.sendLogout("Session end");
+        session.sendLogout("Session end");
 
         int work = process(inResendRequest, inLogout);
 
@@ -440,7 +454,7 @@ public abstract class SessionTest {
         String outResendOrderSingle = "8=FIX.4.4|9=98|35=D|34=3|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|122=20160101-00:00:00.000|43=Y|1=ACCOUNT|10=059|";
 
         exchangeLogons();
-        sendAppMessage("35=D|1=ACCOUNT|");
+        sendAppMessage("D", "1=ACCOUNT|");
 
         int work = process(inResendRequest);
 
@@ -467,10 +481,10 @@ public abstract class SessionTest {
         String thirdGapFill = "8=FIX.4.4|9=73|35=4|34=6|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|43=Y|36=7|123=Y|10=217|";
 
         exchangeLogons();
-        sendAppMessage("35=D|1=ACCOUNT|");
-        processor.sendHeartbeat(null);
-        sendAppMessage("35=8|100=EXCHANGE|");
-        processor.sendHeartbeat(null);
+        sendAppMessage("D", "1=ACCOUNT|");
+        session.sendHeartbeat(null);
+        sendAppMessage("8", "100=EXCHANGE|");
+        session.sendHeartbeat(null);
 
         int work = process(inResendRequest);
 
@@ -679,14 +693,14 @@ public abstract class SessionTest {
         channel.clear();
     }
 
-    protected void sendAppMessage(String message) {
+    protected void sendAppMessage(String msgType, String message) {
         Buffer buffer = byteMessage(message);
-        processor.sendAppMessage(buffer, 0, buffer.capacity());
+        session.sendMessage(ByteSequenceWrapper.of(msgType), buffer, 0, buffer.capacity());
     }
 
     protected int process(String... inMessages) {
         channel.inQueue().add(concatenate(inMessages));
-        return processor.work();
+        return session.work();
     }
 
     protected void assertWorkDone(int work) {
@@ -719,7 +733,7 @@ public abstract class SessionTest {
     }
 
     protected void assertNoErrors() {
-       assertErrors();
+        assertErrors();
     }
 
     protected void assertStatuses(SessionStatus... expected) {

@@ -19,46 +19,23 @@ import org.efix.state.MemorySessionState;
 import org.efix.state.SessionState;
 import org.efix.store.MemoryMessageStore;
 import org.efix.store.MessageStore;
-import org.efix.util.Command;
 import org.efix.util.EpochClock;
 import org.efix.util.SystemEpochClock;
-import org.efix.util.concurrent.ProducerType;
-import org.efix.util.concurrent.buffer.MPSCRingBuffer;
-import org.efix.util.concurrent.buffer.RingBuffer;
-import org.efix.util.concurrent.buffer.SPSCRingBuffer;
-import org.efix.util.concurrent.queue.MPSCQueue;
-import org.efix.util.concurrent.queue.Queue;
-import org.efix.util.concurrent.queue.SPSCQueue;
-import org.efix.util.concurrent.strategy.BackoffIdleStrategy;
-import org.efix.util.concurrent.strategy.IdleStrategy;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
-import java.util.concurrent.ThreadFactory;
 
 import static java.util.Objects.requireNonNull;
 
 
 public class SessionContext {
 
-    protected static final int BACKOFF_IDLE_STRATEGY_MAX_SPINS = 20;
-    protected static final int BACKOFF_IDLE_STRATEGY_MAX_YIELDS = 50;
-    protected static final int BACKOFF_IDLE_STRATEGY_MIN_PARK_PERIOD_NS = 1;
-    protected static final int BACKOFF_IDLE_STRATEGY_MAX_PARK_PERIOD_NS = 100000;
-
     protected EpochClock clock;
     protected SessionSchedule schedule;
     protected SessionState state;
     protected MessageStore store;
     protected MessageLog log;
-
-    protected Queue<Command<SessionProcessor>> commandQueue;
-    protected RingBuffer messageQueue;
-    protected ProducerType producerType = ProducerType.MULTI;
-    protected int messageQueueSize = Configuration.MESSAGE_QUEUE_SIZE;
-    protected IdleStrategy idleStrategy;
-    protected ThreadFactory threadFactory;
 
     protected MessageParser parser;
     protected MessageBuilder builder;
@@ -137,60 +114,6 @@ public class SessionContext {
 
     public SessionContext log(MessageLog log) {
         this.log = log;
-        return this;
-    }
-
-    public Queue<Command<SessionProcessor>> commandQueue() {
-        return commandQueue;
-    }
-
-    public SessionContext commandQueue(Queue<Command<SessionProcessor>> commandQueue) {
-        this.commandQueue = commandQueue;
-        return this;
-    }
-
-    public RingBuffer messageQueue() {
-        return messageQueue;
-    }
-
-    public SessionContext messageQueue(RingBuffer messageQueue) {
-        this.messageQueue = messageQueue;
-        return this;
-    }
-
-    public ProducerType producerType() {
-        return producerType;
-    }
-
-    public SessionContext producerType(ProducerType producerType) {
-        this.producerType = producerType;
-        return this;
-    }
-
-    public int messageQueueSize() {
-        return messageQueueSize;
-    }
-
-    public SessionContext messageQueueSize(int messageQueueSize) {
-        this.messageQueueSize = messageQueueSize;
-        return this;
-    }
-
-    public IdleStrategy idleStrategy() {
-        return idleStrategy;
-    }
-
-    public SessionContext idleStrategy(IdleStrategy idleStrategy) {
-        this.idleStrategy = idleStrategy;
-        return this;
-    }
-
-    public ThreadFactory threadFactory() {
-        return threadFactory;
-    }
-
-    public SessionContext threadFactory(ThreadFactory threadFactory) {
-        this.threadFactory = threadFactory;
         return this;
     }
 
@@ -399,33 +322,6 @@ public class SessionContext {
 
         if (log == null)
             log = EmptyMessageLog.INSTANCE;
-
-        if (commandQueue == null)
-            commandQueue = (producerType == ProducerType.SINGLE) ? new SPSCQueue<>(64) : new MPSCQueue<>(64);
-
-        if (messageQueue == null)
-            messageQueue = (producerType == ProducerType.SINGLE) ? new SPSCRingBuffer(messageQueueSize) : new MPSCRingBuffer(messageQueueSize);
-
-
-        if (idleStrategy == null) {
-            idleStrategy = new BackoffIdleStrategy(
-                    BACKOFF_IDLE_STRATEGY_MAX_SPINS,
-                    BACKOFF_IDLE_STRATEGY_MAX_YIELDS,
-                    BACKOFF_IDLE_STRATEGY_MIN_PARK_PERIOD_NS,
-                    BACKOFF_IDLE_STRATEGY_MAX_PARK_PERIOD_NS
-            );
-        }
-
-        if (threadFactory == null) {
-            String threadName = String.format(
-                    "Session %s %s -> %s",
-                    fixVersion.beginString(),
-                    sessionId.senderCompId(),
-                    sessionId.targetCompId()
-            );
-
-            threadFactory = r -> new Thread(r, threadName);
-        }
 
         if (parser == null)
             parser = new FastMessageParser();

@@ -4,7 +4,6 @@ import org.efix.connector.channel.TextChannel;
 import org.efix.message.FieldException;
 import org.efix.util.InsufficientSpaceException;
 import org.efix.util.buffer.BufferUtil;
-import org.efix.util.concurrent.buffer.MessageHandler;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -61,7 +60,7 @@ public class ReceiverTest {
         receiver.channel(channel);
 
         ArrayList<String> messages = new ArrayList<>();
-        MessageHandler verifier = (messageType, buffer, offset, length) -> messages.add(BufferUtil.toString(buffer, offset, length));
+        MessageHandler verifier = (buffer, offset, length) -> messages.add(BufferUtil.toString(buffer, offset, length));
         while (!channel.inQueue().isEmpty())
             receiver.receive(verifier);
 
@@ -71,7 +70,7 @@ public class ReceiverTest {
     protected void shouldThrowException(String... chunks) {
         Receiver receiver = new Receiver(BUFFER_SIZE);
         receiver.channel(new TextChannel(chunks));
-        MessageHandler handler = (messageType, buffer, offset, length) -> {
+        MessageHandler handler = (buffer, offset, length) -> {
         };
 
         while (receiver.receive(handler) > 0) ;
