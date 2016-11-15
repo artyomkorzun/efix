@@ -619,6 +619,15 @@ public abstract class Session implements Worker {
         sendRawMessage(time, sendBuffer, 0, messageLength);
     }
 
+    protected void sendAppMessage(ByteSequence msgType, Buffer buffer, int offset, int length) {
+        try {
+            sendMessage(msgType, buffer, offset, length);
+        } catch (Exception e) {
+            processError(e);
+            throw e;
+        }
+    }
+
     protected void resendMessages(int beginSeqNo, int endSeqNo) {
         resender.resendMessages(beginSeqNo, endSeqNo, store);
     }
