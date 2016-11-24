@@ -244,7 +244,7 @@ public abstract class Session implements Worker {
     protected int checkSessionStart(long now) {
         int work = 0;
         long start = schedule.getStartTime(now);
-        if (now >= start && !closing) {
+        if (canStartSession(now) && now >= start && !closing) {
             boolean connected = connect();
             if (connected) {
                 if (state.sessionStartTime() < start) {
@@ -273,7 +273,7 @@ public abstract class Session implements Worker {
         int work = 0;
 
         long end = schedule.getEndTime(state.sessionStartTime());
-        if (now >= end || closing) {
+        if (canEndSession(now) || now >= end || closing) {
             SessionStatus status = state.status();
             if (status == SOCKET_CONNECTED || status == LOGON_SENT) {
                 sendLogout("Session end");
@@ -696,6 +696,14 @@ public abstract class Session implements Worker {
             disconnect(e.getMessage());
 
         onError(e);
+    }
+
+    protected boolean canStartSession(long now) {
+        return true;
+    }
+
+    protected boolean canEndSession(long now) {
+        return false;
     }
 
     protected abstract void onStatusUpdate(SessionStatus previous, SessionStatus current);
