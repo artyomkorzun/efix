@@ -1,56 +1,41 @@
 package org.efix.connector;
 
-import org.efix.connector.channel.Channel;
-import org.efix.connector.channel.NioSocketChannel;
 import org.efix.connector.channel.SocketOptions;
-import org.efix.util.CloseHelper;
+import org.efix.util.EpochClock;
 
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
+
 
 public abstract class SocketChannelConnector implements Connector {
 
     protected final SocketAddress address;
     protected final SocketOptions options;
 
-    protected SocketChannel channel;
-    protected NioSocketChannel nioChannel;
+    protected final EpochClock clock;
+    protected final int connectInterval;
 
-    public SocketChannelConnector(SocketAddress address, SocketOptions options) {
+    protected SocketChannel channel;
+    protected long lastConnectTime = Long.MIN_VALUE;
+
+    public SocketChannelConnector(SocketAddress address, SocketOptions options, EpochClock clock,  int connectInterval) {
         this.address = address;
         this.options = options;
+        this.clock = clock;
+        this.connectInterval = connectInterval;
     }
 
     @Override
-    public Channel connect() throws ConnectionException {
-        if (!isConnected())
-            nioChannel = doConnect();
-
-        return nioChannel;
-    }
-
-    @Override
-    public void disconnect() {
-        try {
-            CloseHelper.close(channel);
-        } finally {
-            channel = null;
-            nioChannel = null;
+    public void initiateConnect() throws ConnectionException {
+        long now = clock.time();
+        if (canConnect(now)) {
+            lastConnectTime = now;
+            doInitiateConnect();
         }
     }
 
-    @Override
-    public boolean isConnectionPending() {
-        return channel != null && nioChannel == null;
-    }
-
-    @Override
-    public boolean isConnected() {
-        return nioChannel != null;
-    }
-
-    protected abstract NioSocketChannel doConnect();
+    protected abstract void doInitiateConnect();
 
     protected void configure(SocketChannel channel) throws IOException {
         channel.configureBlocking(false);
@@ -60,6 +45,10 @@ public abstract class SocketChannelConnector implements Connector {
 
     protected static <T> void setOption(SocketOptions.Entry<T> entry, SocketChannel channel) throws IOException {
         channel.setOption(entry.option(), entry.value());
+    }
+
+    protected boolean canConnect(long now) {
+        return now - connectInterval >= lastConnectTime;
     }
 
 }

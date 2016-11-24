@@ -149,7 +149,7 @@ public abstract class Session implements Worker {
     }
 
     protected void open() {
-        Disposable[] resources = {state, store, log, connector};
+        Disposable[] resources = {state, store, log};
         for (Disposable resource : resources) {
             resource.open();
             openResources.add(resource);
@@ -247,7 +247,8 @@ public abstract class Session implements Worker {
         if (canStartSession(now) && now >= start && !closing) {
             boolean connected = connect();
             if (connected) {
-                if (state.sessionStartTime() < start) {
+                boolean newSession = (state.sessionStartTime() < start);
+                if (newSession) {
                     state.targetSeqNum(1);
                     state.senderSeqNum(1);
                     store.clear();
@@ -336,8 +337,16 @@ public abstract class Session implements Worker {
     }
 
     protected boolean connect() {
-        Channel channel = connector.connect();
-        boolean connected = channel != null;
+        Channel channel = null;
+        if (!connector.isConnectionInitiated()) {
+            connector.initiateConnect();
+        }
+
+        if (connector.isConnectionPending()) {
+            channel = connector.finishConnect();
+        }
+
+        boolean connected = (channel != null);
         if (connected) {
             receiver.channel(channel);
             sender.channel(channel);

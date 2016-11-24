@@ -1,17 +1,17 @@
 package org.efix.connector;
 
 import org.efix.connector.channel.Channel;
-import org.efix.util.Disposable;
 
-public interface Connector extends Disposable {
 
-    void open() throws ConnectionException;
+public interface Connector {
 
-    void close();
+    void initiateConnect() throws ConnectionException;
 
-    Channel connect() throws ConnectionException;
+    Channel finishConnect() throws ConnectionException;
 
     void disconnect() throws ConnectionException;
+
+    boolean isConnectionInitiated();
 
     boolean isConnectionPending();
 

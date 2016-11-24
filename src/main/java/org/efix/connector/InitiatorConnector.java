@@ -1,49 +1,54 @@
 package org.efix.connector;
 
+import org.efix.connector.channel.Channel;
 import org.efix.connector.channel.NioSocketChannel;
 import org.efix.connector.channel.SocketOptions;
+import org.efix.util.CloseHelper;
 import org.efix.util.EpochClock;
 
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
 
+
 public class InitiatorConnector extends SocketChannelConnector {
 
-    protected final EpochClock clock;
-    protected final int connectInterval;
-
-    protected long connectTime = Long.MIN_VALUE;
+    protected NioSocketChannel nioChannel;
 
     public InitiatorConnector(SocketAddress address, SocketOptions options, EpochClock clock, int connectInterval) {
-        super(address, options);
-        this.clock = clock;
-        this.connectInterval = connectInterval;
+        super(address, options, clock, connectInterval);
     }
 
     @Override
-    public void open() {
-    }
-
-    @Override
-    protected NioSocketChannel doConnect() {
-        NioSocketChannel nioChannel = null;
+    public void doInitiateConnect() throws ConnectionException {
+        if (channel != null) {
+            throw new ConnectionException("Connection is already initiated");
+        }
 
         try {
-            if (channel == null) {
-                long now = clock.time();
+            channel = SocketChannel.open();
+            configure(channel);
+            channel.connect(address);
+        } catch (IOException e) {
+            disconnect();
+            throw new ConnectionException(e);
+        }
+    }
 
-                if (canConnect(now)) {
-                    connectTime = now;
+    @Override
+    public Channel finishConnect() throws ConnectionException {
+        if (channel == null) {
+            throw new ConnectionException("Connection is not initiated");
+        }
 
-                    channel = SocketChannel.open();
-                    configure(channel);
-                    if (channel.connect(address))
-                        nioChannel = new NioSocketChannel(channel);
-                }
-            } else {
-                if (channel.finishConnect())
-                    nioChannel = new NioSocketChannel(channel);
+        if (nioChannel != null) {
+            throw new ConnectionException("Already connected");
+        }
+
+        try {
+            boolean finished = channel.finishConnect();
+            if (finished) {
+                nioChannel = new NioSocketChannel(channel);
             }
         } catch (IOException e) {
             disconnect();
@@ -54,12 +59,28 @@ public class InitiatorConnector extends SocketChannelConnector {
     }
 
     @Override
-    public void close() {
-        disconnect();
+    public void disconnect() throws ConnectionException {
+        try {
+            CloseHelper.close(channel);
+        } finally {
+            channel = null;
+            nioChannel = null;
+        }
     }
 
-    protected boolean canConnect(long now) {
-        return now >= connectTime + connectInterval;
+    @Override
+    public boolean isConnectionInitiated() {
+        return channel != null;
+    }
+
+    @Override
+    public boolean isConnectionPending() {
+        return channel != null && nioChannel == null;
+    }
+
+    @Override
+    public boolean isConnected() {
+        return nioChannel != null;
     }
 
 }

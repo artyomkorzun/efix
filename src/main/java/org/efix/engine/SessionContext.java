@@ -337,7 +337,7 @@ public class SessionContext {
 
             connector = sessionType.initiator() ?
                     new InitiatorConnector(address, options, clock, connectInterval) :
-                    new AcceptorConnector(address, options);
+                    new AcceptorConnector(address, options, clock, connectInterval);
         }
 
         return this;
