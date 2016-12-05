@@ -18,46 +18,29 @@ import static org.efix.message.FieldUtil.*;
 public class SessionUtil {
 
     public static void validateHeader(FixVersion fixVersion, SessionId sessionId, Header header) {
-        ByteSequence actual = header.beginString();
-        ByteSequence expected = fixVersion.beginString();
-        if (!actual.equals(expected)) {
-            throw new FieldException(Tag.BeginString, String.format("BeginString(8) does not match, expected %s but received %s",
-                    expected, actual));
+        checkPresent(Tag.MsgSeqNum, header.msgSeqNum());
+        checkPresent(Tag.SenderCompID, header.senderCompId());
+        checkPresent(Tag.TargetCompID, header.targetCompId());
+        checkPresent(Tag.SendingTime, header.sendingTime());
+
+        if (header.possDup()) {
+            checkPresent(Tag.OrigSendingTime, header.originalSendingTime());
         }
 
-        actual = header.senderCompId();
-        expected = sessionId.targetCompId();
-        if (!actual.equals(expected)) {
-            throw new FieldException(Tag.SenderCompID, String.format("SenderCompID(49) does not match, expected %s but received %s",
-                    expected, actual));
-        }
-
-        actual = header.targetCompId();
-        expected = sessionId.senderCompId();
-        if (!actual.equals(expected)) {
-            throw new FieldException(Tag.TargetCompID, String.format("TargetCompID(46) does not match, expected %s but received %s",
-                    expected, actual));
-        }
+        checkPositive(Tag.MsgSeqNum, header.msgSeqNum());
+        checkEqual(Tag.BeginString, header.beginString(), fixVersion.beginString());
+        checkEqual(Tag.SenderCompID, header.senderCompId(), sessionId.targetCompId());
+        checkEqual(Tag.TargetCompID, header.targetCompId(), sessionId.senderCompId());
     }
 
     public static void validateCheckSum(int checkSum, Buffer buffer, int offset, int length) {
-        int expected = 0;
-        for (int end = offset + length - CHECK_SUM_FIELD_LENGTH; offset < end; offset++)
-            expected += buffer.getByte(offset);
-
-        expected &= 0xFF;
-        if (checkSum != expected) {
-            throw new FieldException(Tag.CheckSum, String.format("CheckSum(10) does not match, expected %s but received %s",
-                    expected, checkSum));
-        }
+        int expected = computeCheckSum(buffer, offset, length - CHECK_SUM_FIELD_LENGTH);
+        checkEqual(Tag.CheckSum, checkSum, expected);
     }
 
     public static void validateLogon(int heartBtInt, Logon logon) {
-        int actual = checkPresent(Tag.HeartBtInt, logon.heartBtInt());
-        if (actual != heartBtInt) {
-            throw new FieldException(Tag.HeartBtInt, String.format("HeartBtInt(108) does not match, expected %s but received %s",
-                    heartBtInt, actual));
-        }
+        checkPresent(Tag.HeartBtInt, logon.heartBtInt());
+        checkEqual(Tag.HeartBtInt, logon.heartBtInt(), heartBtInt);
     }
 
     public static void validateTestRequest(TestRequest request) {
@@ -67,11 +50,11 @@ public class SessionUtil {
     public static void validateResendRequest(ResendRequest request) {
         int beginSeqNo = request.beginSeqNo();
         checkPresent(Tag.BeginSeqNo, beginSeqNo);
-        FieldUtil.checkPositive(Tag.BeginSeqNo, beginSeqNo);
+        checkPositive(Tag.BeginSeqNo, beginSeqNo);
 
         int endSeqNo = request.endSeqNo();
         checkPresent(Tag.EndSeqNo, endSeqNo);
-        FieldUtil.checkNonNegative(Tag.EndSeqNo, endSeqNo);
+        checkNonNegative(Tag.EndSeqNo, endSeqNo);
 
         if (endSeqNo != 0 && beginSeqNo > endSeqNo)
             throw new FieldException(Tag.EndSeqNo, String.format("BeginSeqNo(7) %s more EndSeqNo(16) %s", beginSeqNo, endSeqNo));
@@ -174,8 +157,6 @@ public class SessionUtil {
                 parser.parseValue();
         }
 
-        checkPresent(Tag.TestReqID, testReqID);
-
         return request;
     }
 
@@ -231,6 +212,8 @@ public class SessionUtil {
         parseBodyLength(parser);
         parseMessageType(parser, header.msgType());
 
+        long sendingTime = LONG_NULL;
+        long originalSendingTime = LONG_NULL;
         int msgSeqNum = INT_NULL;
         boolean possDup = false;
 
@@ -242,7 +225,7 @@ public class SessionUtil {
             int tag = parser.parseTag();
             switch (tag) {
                 case Tag.MsgSeqNum:
-                    msgSeqNum = checkPositive(tag, parser.parseInt());
+                    msgSeqNum = parser.parseInt();
                     break;
                 case Tag.PossDupFlag:
                     possDup = parser.parseBoolean();
@@ -253,6 +236,12 @@ public class SessionUtil {
                 case Tag.TargetCompID:
                     parser.parseByteSequence(targetCompId);
                     break;
+                case Tag.SendingTime:
+                    sendingTime = parser.parseTimestamp();
+                    break;
+                case Tag.OrigSendingTime:
+                    originalSendingTime = parser.parseTimestamp();
+                    break;
                 default:
                     if (!isHeader(tag))
                         break parsing;
@@ -261,10 +250,8 @@ public class SessionUtil {
             }
         }
 
-        checkPresent(Tag.MsgSeqNum, msgSeqNum);
-        checkPresent(Tag.SenderCompID, senderCompId);
-        checkPresent(Tag.TargetCompID, targetCompId);
-
+        header.sendingTime(sendingTime);
+        header.originalSendingTime(originalSendingTime);
         header.msgSeqNum(msgSeqNum);
         header.possDup(possDup);
 
@@ -283,7 +270,7 @@ public class SessionUtil {
 
     public static int parseBodyLength(MessageParser parser) {
         checkTag(Tag.BodyLength, parser.parseTag());
-        return FieldUtil.checkPositive(Tag.BodyLength, parser.parseInt());
+        return checkPositive(Tag.BodyLength, parser.parseInt());
     }
 
     public static ByteSequence parseMessageType(MessageParser parser, ByteSequenceWrapper out) {

@@ -19,7 +19,7 @@ public class SessionAcceptorTest extends SessionTest {
 
         int work = process(logon);
 
-        assertErrors("Missing field 108");
+        assertErrors("Missing field #108");
         assertWorkDone(work);
         assertNoOutMessages();
         assertSeqNums(2, 1);
@@ -32,7 +32,7 @@ public class SessionAcceptorTest extends SessionTest {
 
         int work = process(logon);
 
-        assertErrors("HeartBtInt(108) does not match, expected 30 but received 11");
+        assertErrors("Field #108 does not match, expected 30 but received 11");
         assertWorkDone(work);
         assertNoOutMessages();
         assertSeqNums(2, 1);
@@ -60,7 +60,7 @@ public class SessionAcceptorTest extends SessionTest {
         seqNums(101, 102);
         int work = process(logon);
 
-        assertErrors("Missing field 108");
+        assertErrors("Missing field #108");
         assertWorkDone(work);
         assertNoOutMessages();
         assertSeqNums(102, 101);

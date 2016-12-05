@@ -2,6 +2,8 @@ package org.efix.message;
 
 import org.efix.message.field.Tag;
 import org.efix.util.ByteSequence;
+import org.efix.util.ByteSequenceWrapper;
+import org.efix.util.buffer.Buffer;
 
 
 public class FieldUtil {
@@ -19,84 +21,91 @@ public class FieldUtil {
 
     public static int checkTag(int expected, int tag) {
         if (tag != expected)
-            throw new FieldException(tag, String.format("Unexpected field %s, expected %s", tag, expected));
+            throw new FieldException(tag, String.format("Expected field #%s but received %s", expected, tag));
 
         return tag;
     }
 
     public static long checkEqual(int tag, long value, long expected) {
         if (value != expected)
-            throw new FieldException(tag, String.format("Field %s with value %s not equal %s", tag, value, expected));
+            throw new FieldException(tag, String.format("Field #%s does not match, expected %s but received %s", tag, expected, value));
 
         return value;
     }
 
     public static int checkEqual(int tag, int value, int expected) {
         if (value != expected)
-            throw new FieldException(tag, String.format("Field %s with value %s not equal %s", tag, value, expected));
+            throw new FieldException(tag, String.format("Field #%s does not match, expected %s but received %s", tag, expected, value));
 
         return value;
     }
 
     public static byte checkEqual(int tag, byte value, byte expected) {
         if (value != expected)
-            throw new FieldException(tag, String.format("Field %s with value %s not equal %s", tag, value, expected));
+            throw new FieldException(tag, String.format("Field #%s does not match, expected %s but received %s", tag, expected, value));
+
+        return value;
+    }
+
+    public static ByteSequenceWrapper checkEqual(int tag, ByteSequenceWrapper value, ByteSequence expected){
+        if(!value.equals(expected))
+           throw new FieldException(tag, String.format("Field #%s does not match, expected %s but received %s", tag, expected, value));
 
         return value;
     }
 
     public static long checkPositive(int tag, long value) {
         if (value <= 0)
-            throw new FieldException(tag, String.format("Field %s with non positive value %s", tag, value));
+            throw new FieldException(tag, String.format("Field #%s with non positive value %s", tag, value));
 
         return value;
     }
 
     public static double checkPositive(int tag, double value) {
         if (value <= 0)
-            throw new FieldException(tag, String.format("Field %s with non positive value %s", tag, value));
+            throw new FieldException(tag, String.format("Field #%s with non positive value %s", tag, value));
 
         return value;
     }
 
     public static int checkPositive(int tag, int value) {
         if (value <= 0)
-            throw new FieldException(tag, String.format("Field %s with non positive value %s", tag, value));
+            throw new FieldException(tag, String.format("Field #%s with non positive value %s", tag, value));
 
         return value;
     }
 
     public static byte checkPositive(int tag, byte value) {
         if (value <= 0)
-            throw new FieldException(tag, String.format("Field %s with non positive value %s", tag, value));
+            throw new FieldException(tag, String.format("Field #%s with non positive value %s", tag, value));
 
         return value;
     }
 
     public static long checkNonNegative(int tag, long value) {
         if (value < 0)
-            throw new FieldException(tag, String.format("Field %s with negative value %s", tag, value));
+            throw new FieldException(tag, String.format("Field #%s with negative value %s", tag, value));
 
         return value;
     }
 
     public static double checkNonNegative(int tag, double value) {
         if (value < 0)
-            throw new FieldException(tag, String.format("Field %s with negative value %s", tag, value));
+            throw new FieldException(tag, String.format("Field #%s with negative value %s", tag, value));
 
         return value;
     }
 
     public static int checkNonNegative(int tag, int value) {
         if (value < 0)
-            throw new FieldException(tag, String.format("Field %s with negative value %s", tag, value));
+            throw new FieldException(tag, String.format("Field #%s with negative value %s", tag, value));
 
         return value;
     }
 
     public static byte checkNonNegative(int tag, byte value) {
         if (value < 0)
-            throw new FieldException(tag, String.format("Field %s with negative value %s", tag, value));
+            throw new FieldException(tag, String.format("Field #%s with negative value %s", tag, value));
 
         return value;
     }
@@ -107,7 +116,7 @@ public class FieldUtil {
 
     public static double checkPresent(int tag, double value) {
         if (Double.isNaN(value))
-            throw new FieldException(tag, String.format("Missing field %s", tag));
+            throw new FieldException(tag, String.format("Missing field #%s", tag));
 
         return value;
     }
@@ -122,30 +131,38 @@ public class FieldUtil {
 
     public static long checkPresent(int tag, long value, long nullValue) {
         if (value == nullValue)
-            throw new FieldException(tag, String.format("Missing field %s", tag));
+            throw new FieldException(tag, String.format("Missing field #%s", tag));
 
         return value;
     }
 
     public static int checkPresent(int tag, int value, int nullValue) {
         if (value == nullValue)
-            throw new FieldException(tag, String.format("Missing field %s", tag));
+            throw new FieldException(tag, String.format("Missing field #%s", tag));
 
         return value;
     }
 
     public static byte checkPresent(int tag, byte value, byte nullValue) {
         if (value == nullValue)
-            throw new FieldException(tag, String.format("Missing field %s", tag));
+            throw new FieldException(tag, String.format("Missing field #%s", tag));
 
         return value;
     }
 
     public static <T extends ByteSequence> T checkPresent(int tag, T value) {
         if (value.length() == 0)
-            throw new FieldException(tag, String.format("Missing field %s", tag));
+            throw new FieldException(tag, String.format("Missing field #%s", tag));
 
         return value;
+    }
+
+    public static int computeCheckSum(Buffer buffer, int offset, int length) {
+        int checkSum = 0;
+        for (int end = offset + length; offset < end; offset++)
+            checkSum += buffer.getByte(offset);
+
+        return checkSum & 0xFF;
     }
 
     public static boolean isHeader(int tag) {

@@ -283,7 +283,7 @@ public abstract class SessionTest {
 
         int work = process(inTestRequest);
 
-        assertErrors("Missing field 112");
+        assertErrors("Missing field #112");
         assertWorkDone(work);
         assertSeqNums(4, 3);
         assertNoOutMessages();
@@ -330,7 +330,7 @@ public abstract class SessionTest {
 
         int work = process(inGapFill);
 
-        assertErrors("Missing field 36");
+        assertErrors("Missing field #36");
         assertWorkDone(work);
         assertSeqNums(3, 3);
         assertNoOutMessages();
@@ -538,7 +538,7 @@ public abstract class SessionTest {
 
         int work = process(inResendRequest);
 
-        assertErrors("Missing field 7");
+        assertErrors("Missing field #7");
         assertWorkDone(work);
         assertSeqNums(4, 3);
         assertNoOutMessages();
@@ -553,7 +553,7 @@ public abstract class SessionTest {
 
         int work = process(inResendRequest);
 
-        assertErrors("Missing field 16");
+        assertErrors("Missing field #16");
         assertWorkDone(work);
         assertSeqNums(4, 3);
         assertNoOutMessages();
@@ -579,11 +579,11 @@ public abstract class SessionTest {
 
     @Test
     public void shouldDisconnectOnAppMessageWithSeqNumMoreExpected() {
-        String inAppMessage = "8=FIX.4.4|9=57|35=D|34=4|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=232|";
+        String appMessage = "8=FIX.4.4|9=57|35=D|34=4|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=232|";
 
         exchangeLogons();
 
-        int work = process(inAppMessage);
+        int work = process(appMessage);
 
         assertErrors("MsgSeqNum too high, expecting 3 but received 4");
         assertWorkDone(work);
@@ -594,11 +594,11 @@ public abstract class SessionTest {
 
     @Test
     public void shouldDisconnectOnAppMessageWithSeqNumLessExpected() {
-        String inHeartbeat = "8=FIX.4.4|9=57|35=D|34=2|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=230|";
+        String appMessage = "8=FIX.4.4|9=57|35=D|34=2|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=230|";
 
         exchangeLogons();
 
-        int work = process(inHeartbeat);
+        int work = process(appMessage);
 
         assertErrors("MsgSeqNum too low, expecting 3 but received 2");
         assertWorkDone(work);
@@ -609,11 +609,11 @@ public abstract class SessionTest {
 
     @Test
     public void shouldProcessAppMessage() {
-        String inHeartbeat = "8=FIX.4.4|9=57|35=D|34=3|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=231|";
+        String appMessage = "8=FIX.4.4|9=57|35=D|34=3|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=231|";
 
         exchangeLogons();
 
-        int work = process(inHeartbeat);
+        int work = process(appMessage);
 
         assertNoErrors();
         assertWorkDone(work);
@@ -624,13 +624,13 @@ public abstract class SessionTest {
 
     @Test
     public void shouldDisconnectOnMessageWithWrongBeginString() {
-        String inHeartbeat = "8=FIX.4.2|9=57|35=D|34=3|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=136|";
+        String appMessage = "8=FIX.4.2|9=57|35=D|34=3|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=136|";
 
         exchangeLogons();
 
-        int work = process(inHeartbeat);
+        int work = process(appMessage);
 
-        assertErrors("BeginString(8) does not match, expected FIX.4.4 but received FIX.4.2");
+        assertErrors("Field #8 does not match, expected FIX.4.4 but received FIX.4.2");
         assertWorkDone(work);
         assertSeqNums(3, 3);
         assertNoOutMessages();
@@ -639,13 +639,13 @@ public abstract class SessionTest {
 
     @Test
     public void shouldDisconnectOnMessageWithWrongSenderCompId() {
-        String inHeartbeat = "8=FIX.4.4|9=63|35=D|34=3|49=WRONG SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=136|";
+        String appMessage = "8=FIX.4.4|9=63|35=D|34=3|49=WRONG SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=136|";
 
         exchangeLogons();
 
-        int work = process(inHeartbeat);
+        int work = process(appMessage);
 
-        assertErrors("SenderCompID(49) does not match, expected SENDER but received WRONG SENDER");
+        assertErrors("Field #49 does not match, expected SENDER but received WRONG SENDER");
         assertWorkDone(work);
         assertSeqNums(3, 3);
         assertNoOutMessages();
@@ -654,13 +654,43 @@ public abstract class SessionTest {
 
     @Test
     public void shouldDisconnectOnMessageWithWrongTargetCompId() {
-        String inHeartbeat = "8=FIX.4.4|9=63|35=D|34=3|49=SENDER|52=19700101-00:00:00.000|56=WRONG RECEIVER|10=136|";
+        String appMessage = "8=FIX.4.4|9=63|35=D|34=3|49=SENDER|52=19700101-00:00:00.000|56=WRONG RECEIVER|10=136|";
 
         exchangeLogons();
 
-        int work = process(inHeartbeat);
+        int work = process(appMessage);
 
-        assertErrors("TargetCompID(46) does not match, expected RECEIVER but received WRONG RECEIVER");
+        assertErrors("Field #56 does not match, expected RECEIVER but received WRONG RECEIVER");
+        assertWorkDone(work);
+        assertSeqNums(3, 3);
+        assertNoOutMessages();
+        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+    }
+
+    @Test
+    public void shouldDisconnectOnAppMessageWithoutSendingTime() {
+        String appMessage = "8=FIX.4.4|9=63|35=D|34=3|49=SENDER|56=WRONG RECEIVER|1=AAAAAAAAAAAAAAAAAAAAAA|10=136|";
+
+        exchangeLogons();
+
+        int work = process(appMessage);
+
+        assertErrors("Missing field #52");
+        assertWorkDone(work);
+        assertSeqNums(3, 3);
+        assertNoOutMessages();
+        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+    }
+
+    @Test
+    public void shouldDisconnectOnDuplicatedAppMessageWithoutOriginalSendingTime() {
+        String appMessage = "8=FIX.4.4|9=93|35=D|34=3|49=SENDER|56=WRONG RECEIVER|52=19700101-00:00:00.000|43=Y|1=AAAAAAAAAAAAAAAAAAAAAA|10=136|";
+
+        exchangeLogons();
+
+        int work = process(appMessage);
+
+        assertErrors("Missing field #122");
         assertWorkDone(work);
         assertSeqNums(3, 3);
         assertNoOutMessages();
