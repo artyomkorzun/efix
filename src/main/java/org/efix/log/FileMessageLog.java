@@ -1,5 +1,7 @@
 package org.efix.log;
 
+import org.efix.log.filter.Filter;
+import org.efix.log.filter.HeartbeatFilter;
 import org.efix.log.layout.Layout;
 import org.efix.log.layout.TimeLayout;
 import org.efix.util.CloseHelper;
@@ -20,6 +22,7 @@ import static java.util.Objects.requireNonNull;
 
 public class FileMessageLog implements MessageLog {
 
+    protected final Filter filter;
     protected final Layout layout;
     protected final Path path;
     protected final int bufferSize;
@@ -29,17 +32,27 @@ public class FileMessageLog implements MessageLog {
     protected MutableBuffer buffer;
 
     public FileMessageLog(int bufferSize, Path path) {
-        this(bufferSize, path, new TimeLayout());
+        this(bufferSize, path, new HeartbeatFilter());
     }
 
-    public FileMessageLog(int bufferSize, Path path, Layout layout) {
+    public FileMessageLog(int bufferSize, Path path, Filter filter) {
+        this(bufferSize, path, filter, new TimeLayout());
+    }
+
+    public FileMessageLog(int bufferSize, Path path, Filter filter, Layout layout) {
         this.bufferSize = bufferSize;
         this.path = requireNonNull(path);
+        this.filter = requireNonNull(filter);
         this.layout = requireNonNull(layout);
     }
 
     @Override
     public void log(boolean inbound, long time, Buffer message, int offset, int length) {
+        boolean filtered = filter.filter(inbound, time, message, offset, length);
+        if (filtered) {
+            return;
+        }
+
         int size = layout.size(inbound, time, message, offset, length);
         if (byteBuffer.remaining() < size) {
             flush();
