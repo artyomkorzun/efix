@@ -257,6 +257,10 @@ public abstract class Session implements Worker {
                 state.sessionStartTime(now);
 
                 if (sessionType.initiator()) {
+                    if (resetSeqNumsOnLogon) {
+                        state.targetSeqNum(1);
+                    }
+
                     sendLogon(resetSeqNumsOnLogon);
                 }
 
