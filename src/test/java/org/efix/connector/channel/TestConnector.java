@@ -13,8 +13,8 @@ public class TestConnector implements Connector {
     }
 
     @Override
-    public void initiateConnect() throws ConnectionException {
-
+    public boolean initiateConnect() throws ConnectionException {
+        return true;
     }
 
     @Override

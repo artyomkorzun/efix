@@ -27,12 +27,15 @@ public abstract class SocketChannelConnector implements Connector {
     }
 
     @Override
-    public void initiateConnect() throws ConnectionException {
+    public boolean initiateConnect() throws ConnectionException {
         long now = clock.time();
-        if (canConnect(now)) {
+        boolean canConnect = canConnect(now);
+        if (canConnect) {
             lastConnectTime = now;
             doInitiateConnect();
         }
+
+        return canConnect;
     }
 
     protected abstract void doInitiateConnect();
