@@ -341,16 +341,13 @@ public abstract class Session implements Worker {
     }
 
     protected boolean connect() {
-        Channel channel = null;
         if (!connector.isConnectionInitiated()) {
             connector.initiateConnect();
         }
 
-        if (connector.isConnectionPending()) {
-            channel = connector.finishConnect();
-        }
-
+        Channel channel = connector.finishConnect();
         boolean connected = (channel != null);
+
         if (connected) {
             receiver.channel(channel);
             sender.channel(channel);

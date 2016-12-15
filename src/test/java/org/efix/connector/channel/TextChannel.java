@@ -23,7 +23,7 @@ public class TextChannel implements Channel {
     @Override
     public int read(MutableBuffer buffer, int offset, int length) {
         if (inQueue.isEmpty())
-            throw new ConnectionException("No more data");
+            throw new ConnectionException("No more data", null, null);
 
         Buffer chunk = byteMessage(inQueue.remove());
         buffer.putBytes(offset, chunk, 0, chunk.capacity());

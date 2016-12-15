@@ -1,21 +1,27 @@
 package org.efix.connector.channel;
 
 import org.efix.connector.ConnectionException;
+import org.efix.util.SocketUtil;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 /**
- * Works only with buffers that are wrapped over ByteBuffer with offset 0
+ * Works only with buffers that are wrapped over ByteBuffer with offset 0.
  */
 public class NioSocketChannel implements Channel {
 
+    protected final SocketAddress localAddress;
+    protected final SocketAddress remoteAddress;
     protected final SocketChannel channel;
 
     public NioSocketChannel(SocketChannel channel) {
+        this.localAddress = SocketUtil.getLocalAddress(channel);
+        this.remoteAddress = SocketUtil.getRemoteAddress(channel);
         this.channel = channel;
     }
 
@@ -25,11 +31,11 @@ public class NioSocketChannel implements Channel {
         try {
             int bytesRead = channel.read(byteBuffer);
             if (bytesRead == -1)
-                throw new ConnectionException("An existing connection was forcibly closed by the remote host");
+                throw new ConnectionException("An existing connection was forcibly closed by the remote host", localAddress, remoteAddress);
 
             return bytesRead;
         } catch (IOException e) {
-            throw new ConnectionException(e);
+            throw new ConnectionException(localAddress, remoteAddress, e);
         }
     }
 
@@ -39,7 +45,7 @@ public class NioSocketChannel implements Channel {
         try {
             return channel.write(byteBuffer);
         } catch (IOException e) {
-            throw new ConnectionException(e);
+            throw new ConnectionException(localAddress, remoteAddress, e);
         }
     }
 

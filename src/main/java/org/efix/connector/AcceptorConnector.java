@@ -24,7 +24,7 @@ public class AcceptorConnector extends SocketChannelConnector {
     @Override
     public void doInitiateConnect() throws ConnectionException {
         if (acceptor != null) {
-            throw new ConnectionException("Connection is already initiated");
+            throw new ConnectionException("Connection is already initiated", address, null);
         }
 
         try {
@@ -33,33 +33,39 @@ public class AcceptorConnector extends SocketChannelConnector {
             acceptor.configureBlocking(false);
         } catch (IOException e) {
             disconnect();
-            throw new ConnectionException(e);
+            throw new ConnectionException(address, null, e);
         }
     }
 
     @Override
     public Channel finishConnect() throws ConnectionException {
         if (acceptor == null) {
-            throw new ConnectionException("Connection is not initiated");
+            throw new ConnectionException("Connection is not initiated", address, null);
         }
 
         if (channel != null) {
-            throw new ConnectionException("Already connected");
+            throw new ConnectionException("Already connected", channel);
         }
 
-        NioSocketChannel nioChannel = null;
         try {
             channel = acceptor.accept();
-            if (channel != null) {
-                configure(channel);
-                nioChannel = new NioSocketChannel(channel);
-            }
         } catch (IOException e) {
             disconnect();
-            throw new ConnectionException(e);
+            throw new ConnectionException(address, null, e);
         }
 
-        return nioChannel;
+        if (channel != null) {
+            try {
+                configure(channel);
+                return new NioSocketChannel(channel);
+            } catch (IOException e) {
+                disconnect();
+                throw new ConnectionException(channel, e);
+            }
+        }
+
+
+        return null;
     }
 
     @Override
