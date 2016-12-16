@@ -22,34 +22,27 @@ public class InitiatorConnector extends SocketChannelConnector {
     @Override
     public void doInitiateConnect() throws ConnectionException {
         if (channel != null) {
-            throw new ConnectionException("Connection is already initiated", channel);
+            throw new IllegalStateException("Connection is already initiated");
         }
 
         try {
             channel = SocketChannel.open();
-        } catch (IOException e) {
-            disconnect();
-            throw new ConnectionException(null, address, e);
-        }
-
-        try {
             configure(channel);
             channel.connect(address);
         } catch (IOException e) {
-            ConnectionException exception = new ConnectionException(channel, e);
             disconnect();
-            throw exception;
+            throw  new ConnectionException(null, address, e);
         }
     }
 
     @Override
     public Channel finishConnect() throws ConnectionException {
         if (channel == null) {
-            throw new ConnectionException("Connection is not initiated", null, address);
+            throw new IllegalStateException("Connection is not initiated");
         }
 
         if (nioChannel != null) {
-            throw new ConnectionException("Already connected", channel);
+            throw new IllegalStateException("Already connected");
         }
 
         try {
@@ -58,9 +51,8 @@ public class InitiatorConnector extends SocketChannelConnector {
                 nioChannel = new NioSocketChannel(channel);
             }
         } catch (IOException e) {
-            ConnectionException exception = new ConnectionException(channel, e);
             disconnect();
-            throw exception;
+            throw new ConnectionException(null, address, e);
         }
 
         return nioChannel;
