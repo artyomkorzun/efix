@@ -59,8 +59,9 @@ public class AcceptorConnector extends SocketChannelConnector {
                 configure(channel);
                 return new NioSocketChannel(channel);
             } catch (IOException e) {
+                ConnectionException exception = new ConnectionException(channel, e);
                 disconnect();
-                throw new ConnectionException(channel, e);
+                throw exception;
             }
         }
 
