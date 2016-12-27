@@ -59,15 +59,17 @@ public class MemoryMessageStore implements MessageStore {
     }
 
     @Override
-    public void read(int seqNum, Visitor visitor) {
-        read(seqNum, seqNum, visitor);
+    public boolean read(int seqNum, Visitor visitor) {
+        return read(seqNum, seqNum, visitor) > 0;
     }
 
     @Override
-    public void read(int fromSeqNum, int toSeqNum, Visitor visitor) {
+    public int read(int fromSeqNum, int toSeqNum, Visitor visitor) {
+        int messages = 0;
+
         long tail = lowerBound(fromSeqNum);
         if (tail == NOT_FOUND)
-            return;
+            return messages;
 
         long head = this.head;
 
@@ -85,6 +87,7 @@ public class MemoryMessageStore implements MessageStore {
             if (seqNum <= toSeqNum) {
                 index += BitUtil.SIZE_OF_INT;
                 read(index, entrySize, seqNum, visitor);
+                messages++;
             }
 
             if (seqNum >= toSeqNum)
@@ -93,6 +96,8 @@ public class MemoryMessageStore implements MessageStore {
             tail += align(entrySize);
 
         } while (tail < head);
+
+        return messages;
     }
 
     @Override

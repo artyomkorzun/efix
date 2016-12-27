@@ -15,11 +15,13 @@ public final class EmptyMessageStore implements MessageStore {
     }
 
     @Override
-    public void read(int seqNum, Visitor visitor) {
+    public boolean read(int seqNum, Visitor visitor) {
+        return false;
     }
 
     @Override
-    public void read(int fromSeqNum, int toSeqNum, Visitor visitor) {
+    public int read(int fromSeqNum, int toSeqNum, Visitor visitor) {
+        return 0;
     }
 
     @Override

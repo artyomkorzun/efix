@@ -130,8 +130,9 @@ public class MemoryMessageStoreTest {
             this.seqNum = seqNum;
             this.messageCount = 0;
 
-            store.read(fromSeqNum, toSeqNum, this);
+            int readMessages = store.read(fromSeqNum, toSeqNum, this);
 
+            assertEquals(messageCount, readMessages);
             assertEquals(messageCount, this.messageCount);
         }
 
