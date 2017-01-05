@@ -15,10 +15,18 @@ public class AcceptorConnector extends SocketChannelConnector {
 
     protected static final int MAX_PENDING_CONNECTIONS = 1;
 
+    protected final SocketOptions acceptorOptions;
+
     protected ServerSocketChannel acceptor;
 
-    public AcceptorConnector(SocketAddress address, SocketOptions options, EpochClock clock, int connectInterval) {
-        super(address, options, clock, connectInterval);
+    public AcceptorConnector(SocketAddress address,
+                             SocketOptions acceptorOptions,
+                             SocketOptions channelOptions,
+                             EpochClock clock,
+                             int connectInterval) {
+        super(address, channelOptions, clock, connectInterval);
+
+        this.acceptorOptions = acceptorOptions;
     }
 
     @Override
@@ -29,8 +37,8 @@ public class AcceptorConnector extends SocketChannelConnector {
 
         try {
             acceptor = ServerSocketChannel.open();
+            configure(acceptor);
             acceptor.bind(address, MAX_PENDING_CONNECTIONS);
-            acceptor.configureBlocking(false);
         } catch (IOException e) {
             disconnect();
             throw new ConnectionException(address, null, e);
@@ -85,6 +93,11 @@ public class AcceptorConnector extends SocketChannelConnector {
     @Override
     public boolean isConnected() {
         return channel != null;
+    }
+
+    protected void configure(ServerSocketChannel acceptor) throws IOException {
+        acceptor.configureBlocking(false);
+        setOptions(acceptorOptions, acceptor);
     }
 
 }

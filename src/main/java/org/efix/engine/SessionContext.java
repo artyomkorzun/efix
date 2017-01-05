@@ -46,6 +46,8 @@ public class SessionContext {
     protected int socketReceiveBufferSize = Configuration.SOCKET_RECEIVE_BUFFER_SIZE;
     protected int socketSendBufferSize = Configuration.SOCKET_SEND_BUFFER_SIZE;
     protected boolean socketTcpNoDelay = Configuration.SOCKET_TCP_NO_DELAY;
+    protected boolean socketKeepAlive = Configuration.SOCKET_KEEP_ALIVE;
+    protected boolean socketReuseAddress = Configuration.SOCKET_REUSE_ADDRESS;
 
     protected int messageBufferSize = Configuration.MESSAGE_BUFFER_SIZE;
     protected int receiveBufferSize = Configuration.RECEIVE_BUFFER_SIZE;
@@ -193,6 +195,22 @@ public class SessionContext {
         return this;
     }
 
+    public boolean socketReuseAddress() {
+        return socketReuseAddress;
+    }
+
+    public void socketReuseAddress(boolean socketReuseAddress) {
+        this.socketReuseAddress = socketReuseAddress;
+    }
+
+    public boolean socketKeepAlive() {
+        return socketKeepAlive;
+    }
+
+    public void socketKeepAlive(boolean socketKeepAlive) {
+        this.socketKeepAlive = socketKeepAlive;
+    }
+
     public int messageBufferSize() {
         return messageBufferSize;
     }
@@ -330,14 +348,18 @@ public class SessionContext {
             builder = new FastMessageBuilder();
 
         if (connector == null) {
-            SocketOptions options = new SocketOptions();
-            options.add(StandardSocketOptions.TCP_NODELAY, socketTcpNoDelay);
-            options.add(StandardSocketOptions.SO_RCVBUF, socketReceiveBufferSize);
-            options.add(StandardSocketOptions.SO_SNDBUF, socketSendBufferSize);
+            SocketOptions acceptorOptions = new SocketOptions();
+            acceptorOptions.add(StandardSocketOptions.SO_REUSEADDR, socketReuseAddress);
+
+            SocketOptions channelOptions = new SocketOptions();
+            channelOptions.add(StandardSocketOptions.TCP_NODELAY, socketTcpNoDelay);
+            channelOptions.add(StandardSocketOptions.SO_RCVBUF, socketReceiveBufferSize);
+            channelOptions.add(StandardSocketOptions.SO_SNDBUF, socketSendBufferSize);
+            channelOptions.add(StandardSocketOptions.SO_KEEPALIVE, socketKeepAlive);
 
             connector = sessionType.initiator() ?
-                    new InitiatorConnector(address, options, clock, connectInterval) :
-                    new AcceptorConnector(address, options, clock, connectInterval);
+                    new InitiatorConnector(address, channelOptions, clock, connectInterval) :
+                    new AcceptorConnector(address, acceptorOptions, channelOptions, clock, connectInterval);
         }
 
         return this;

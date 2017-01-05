@@ -17,6 +17,8 @@ public class Configuration {
     public static final String SOCKET_RECEIVE_BUFFER_SIZE_PROP_NAME = "efix.socket.receive.buffer.size";
     public static final String SOCKET_SEND_BUFFER_SIZE_PROP_NAME = "efix.socket.send.buffer.size";
     public static final String SOCKET_TCP_NO_DELAY_PROP_NAME = "efix.socket.tcp.no.delay";
+    public static final String SOCKET_KEEP_ALIVE_PROP_NAME = "efix.socket.keep.alive";
+    public static final String SOCKET_REUSE_ADDRESS_PROP_NAME = "efix.socket.reuse.address";
 
     public static final String HEARTBEAT_INTERVAL_PROP_NAME = "efix.heartbeat.interval";
     public static final String MAX_HEARTBEAT_DELAY_PROP_NAME = "efix.max.heartbeat.delay";
@@ -36,6 +38,8 @@ public class Configuration {
     protected static final int SOCKET_RECEIVE_BUFFER_SIZE = getInteger(SOCKET_RECEIVE_BUFFER_SIZE_PROP_NAME, 1 << 16);
     protected static final int SOCKET_SEND_BUFFER_SIZE = getInteger(SOCKET_SEND_BUFFER_SIZE_PROP_NAME, 1 << 16);
     protected static final boolean SOCKET_TCP_NO_DELAY = getBoolean(SOCKET_TCP_NO_DELAY_PROP_NAME, true);
+    protected static final boolean SOCKET_KEEP_ALIVE = getBoolean(SOCKET_KEEP_ALIVE_PROP_NAME, false);
+    protected static final boolean SOCKET_REUSE_ADDRESS = getBoolean(SOCKET_REUSE_ADDRESS_PROP_NAME, true);
 
     protected static final int HEARTBEAT_INTERVAL_S = getInteger(HEARTBEAT_INTERVAL_PROP_NAME, 30);
     protected static final int MAX_HEARTBEAT_DELAY_MS = getInteger(MAX_HEARTBEAT_DELAY_PROP_NAME, 1000);
