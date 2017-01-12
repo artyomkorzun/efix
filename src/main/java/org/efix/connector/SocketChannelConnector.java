@@ -28,6 +28,15 @@ public abstract class SocketChannelConnector implements Connector {
     }
 
     @Override
+    public void open() {
+    }
+
+    @Override
+    public void close() {
+        disconnect();
+    }
+
+    @Override
     public boolean initiateConnect() throws ConnectionException {
         long now = clock.time();
         boolean canConnect = canConnect(now);

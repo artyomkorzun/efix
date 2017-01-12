@@ -1,9 +1,10 @@
 package org.efix.connector;
 
 import org.efix.connector.channel.Channel;
+import org.efix.util.Disposable;
 
 
-public interface Connector {
+public interface Connector extends Disposable {
 
     /**
      * In some case connector can't initiate connect at once.

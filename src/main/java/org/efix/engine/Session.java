@@ -149,7 +149,7 @@ public abstract class Session implements Worker {
     }
 
     protected void open() {
-        Disposable[] resources = {state, store, log};
+        Disposable[] resources = {state, store, log, connector};
         for (Disposable resource : resources) {
             resource.open();
             openResources.add(resource);

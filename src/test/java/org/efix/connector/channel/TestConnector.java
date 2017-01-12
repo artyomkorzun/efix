@@ -42,4 +42,13 @@ public class TestConnector implements Connector {
         return false;
     }
 
+    @Override
+    public void open() {
+    }
+
+    @Override
+    public void close() {
+        disconnect();
+    }
+
 }
