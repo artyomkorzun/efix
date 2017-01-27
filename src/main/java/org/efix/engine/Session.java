@@ -92,7 +92,7 @@ public abstract class Session implements Worker {
 
         this.connector = context.connector();
         this.receiver = new Receiver(context.receiveBufferSize());
-        this.sender = new Sender();
+        this.sender = new Sender(context.clock(), context.sendTimeout());
         this.resender = new Resender(this);
         this.packer = new MessagePacker(context.fixVersion(), context.sessionId(), sendBuffer);
 

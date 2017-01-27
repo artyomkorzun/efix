@@ -60,6 +60,7 @@ public class SessionContext {
     protected int maxHeartbeatDelay = Configuration.MAX_HEARTBEAT_DELAY_MS;
     protected int logonTimeout = Configuration.LOGON_TIMEOUT_MS;
     protected int logoutTimeout = Configuration.LOGOUT_TIMEOUT_MS;
+    protected int sendTimeout = Configuration.SEND_TIMEOUT_MS;
     protected boolean resetSeqNumsOnLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
@@ -298,6 +299,15 @@ public class SessionContext {
 
     public SessionContext logoutTimeout(int logoutTimeout) {
         this.logoutTimeout = logoutTimeout;
+        return this;
+    }
+
+    public int sendTimeout() {
+        return sendTimeout;
+    }
+
+    public SessionContext sendTimeout(int sendTimeout) {
+        this.sendTimeout = sendTimeout;
         return this;
     }
 
