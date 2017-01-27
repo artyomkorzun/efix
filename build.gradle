@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'idea'
     id 'me.champeau.gradle.jmh' version '0.2.0'
+    id "maven"
+    id 'maven-publish'
 }
 
 group = 'org.efix'
@@ -11,8 +13,14 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    deployerJars
+}
+
 dependencies {
     testCompile 'junit:junit:4.12'
+
+    deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
 }
 
 compileJava {
@@ -37,7 +45,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 
 artifacts {
     archives sourcesJar
-    archives javadocJar
+    //archives javadocJar
 }
 
 jmhJar {
@@ -56,4 +64,26 @@ jmh {
     threads = 1
     fork = 1
     jvmArgsAppend = '-Defix.disable.bounds.check=true'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+        }
+    }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            configuration = configurations.deployerJars
+            repository(url: publishRepositoryUrl) {
+                authentication(userName: publisherUsername, password: publisherPassword) {
+                    preemptive = true
+                }
+            }
+        }
+    }
 }
