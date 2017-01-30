@@ -14,6 +14,7 @@ import static org.junit.Assert.assertArrayEquals;
 public class ReceiverTest {
 
     protected static final int BUFFER_SIZE = 1024;
+    protected static final int MTU_SIZE = BUFFER_SIZE;
 
     @Test
     public void shouldReceiveBrokenMessages() {
@@ -55,7 +56,7 @@ public class ReceiverTest {
     }
 
     protected void shouldReceiveMessages(String[] expected, String[] chunks) {
-        Receiver receiver = new Receiver(BUFFER_SIZE);
+        Receiver receiver = new Receiver(BUFFER_SIZE, MTU_SIZE);
         TextChannel channel = new TextChannel(chunks);
         receiver.channel(channel);
 
@@ -68,7 +69,7 @@ public class ReceiverTest {
     }
 
     protected void shouldThrowException(String... chunks) {
-        Receiver receiver = new Receiver(BUFFER_SIZE);
+        Receiver receiver = new Receiver(BUFFER_SIZE, MTU_SIZE);
         receiver.channel(new TextChannel(chunks));
         MessageHandler handler = (buffer, offset, length) -> {
         };

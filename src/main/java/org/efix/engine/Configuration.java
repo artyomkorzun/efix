@@ -5,7 +5,6 @@ import static java.lang.Integer.getInteger;
 
 public class Configuration {
 
-    public static final String MESSAGE_QUEUE_SIZE_PROP_NAME = "efix.message.queue.size";
     public static final String CONNECT_INTERVAL_PROP_NAME = "efix.connect.interval";
 
     public static final String MESSAGE_STORE_SIZE_PROP_NAME = "efix.message.store.size";
@@ -13,6 +12,8 @@ public class Configuration {
 
     public static final String RECEIVE_BUFFER_SIZE_PROP_NAME = "efix.receive.buffer.size";
     public static final String SEND_BUFFER_SIZE_PROP_NAME = "efix.send.buffer.size";
+
+    public static final String MTU_SIZE_PROP_NAME = "efix.mtu.size";
 
     public static final String SOCKET_RECEIVE_BUFFER_SIZE_PROP_NAME = "efix.socket.receive.buffer.size";
     public static final String SOCKET_SEND_BUFFER_SIZE_PROP_NAME = "efix.socket.send.buffer.size";
@@ -27,17 +28,18 @@ public class Configuration {
     public static final String LOGOUT_TIMEOUT_PROP_NAME = "efix.logout.timeout";
     public static final String SEND_TIMEOUT_PROP_NAME = "efix.send.timeout";
 
-    public static final int MESSAGE_QUEUE_SIZE = getInteger(MESSAGE_QUEUE_SIZE_PROP_NAME, 1 << 20);
     public static final int CONNECT_INTERVAL_MS = getInteger(CONNECT_INTERVAL_PROP_NAME, 5000);
 
-    public static final int MESSAGE_STORE_SIZE = getInteger(MESSAGE_STORE_SIZE_PROP_NAME, 1 << 20);
-    public static final int MESSAGE_BUFFER_SIZE = getInteger(MESSAGE_BUFFER_SIZE_PROP_NAME, 1 << 10);
+    public static final int MESSAGE_STORE_SIZE = getInteger(MESSAGE_STORE_SIZE_PROP_NAME, 1 << 22);
+    public static final int MESSAGE_BUFFER_SIZE = getInteger(MESSAGE_BUFFER_SIZE_PROP_NAME, 1 << 12);
 
     public static final int RECEIVE_BUFFER_SIZE = getInteger(RECEIVE_BUFFER_SIZE_PROP_NAME, 1 << 16);
     public static final int SEND_BUFFER_SIZE = getInteger(SEND_BUFFER_SIZE_PROP_NAME, 1 << 16);
 
-    public static final int SOCKET_RECEIVE_BUFFER_SIZE = getInteger(SOCKET_RECEIVE_BUFFER_SIZE_PROP_NAME, 1 << 16);
-    public static final int SOCKET_SEND_BUFFER_SIZE = getInteger(SOCKET_SEND_BUFFER_SIZE_PROP_NAME, 1 << 16);
+    public static final int MTU_SIZE = getInteger(MTU_SIZE_PROP_NAME, 1 << 12);
+
+    public static final int SOCKET_RECEIVE_BUFFER_SIZE = getInteger(SOCKET_RECEIVE_BUFFER_SIZE_PROP_NAME, 1 << 20);
+    public static final int SOCKET_SEND_BUFFER_SIZE = getInteger(SOCKET_SEND_BUFFER_SIZE_PROP_NAME, 1 << 20);
     public static final boolean SOCKET_TCP_NO_DELAY = getBoolean(SOCKET_TCP_NO_DELAY_PROP_NAME, true);
     public static final boolean SOCKET_KEEP_ALIVE = getBoolean(SOCKET_KEEP_ALIVE_PROP_NAME, false);
     public static final boolean SOCKET_REUSE_ADDRESS = getBoolean(SOCKET_REUSE_ADDRESS_PROP_NAME, true);

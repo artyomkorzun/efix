@@ -52,6 +52,7 @@ public class SessionContext {
     protected int messageBufferSize = Configuration.MESSAGE_BUFFER_SIZE;
     protected int receiveBufferSize = Configuration.RECEIVE_BUFFER_SIZE;
     protected int sendBufferSize = Configuration.SEND_BUFFER_SIZE;
+    protected int mtuSize = Configuration.MTU_SIZE;
 
     protected SessionType sessionType;
     protected FixVersion fixVersion;
@@ -236,6 +237,15 @@ public class SessionContext {
 
     public SessionContext sendBufferSize(int sendBufferSize) {
         this.sendBufferSize = sendBufferSize;
+        return this;
+    }
+
+    public int mtuSize() {
+        return mtuSize;
+    }
+
+    public SessionContext mtuSize(int mtuSize) {
+        this.mtuSize = mtuSize;
         return this;
     }
 

@@ -17,19 +17,21 @@ public class Receiver {
 
     protected final MessageParser parser;
     protected final MutableBuffer buffer;
+    protected final int mtuSize;
 
     protected Channel channel;
     protected int offset;
 
-    public Receiver(int bufferSize) {
+    public Receiver(int bufferSize, int mtuSize) {
         this.parser = new FastMessageParser();
         this.buffer = UnsafeBuffer.allocateDirect(bufferSize);
+        this.mtuSize = mtuSize;
     }
 
     public int receive(MessageHandler handler) {
         MutableBuffer buffer = this.buffer;
         int offset = this.offset;
-        int available = buffer.capacity() - offset;
+        int available = Math.min(buffer.capacity() - offset, mtuSize);
 
         int bytesReceived = channel.read(buffer, offset, available);
 
