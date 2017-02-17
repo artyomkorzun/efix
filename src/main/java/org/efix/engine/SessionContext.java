@@ -65,6 +65,9 @@ public class SessionContext {
     protected boolean resetSeqNumsOnLogon;
     protected boolean logonWithNextExpectedSeqNum;
 
+    protected Sender sender;
+    protected Receiver receiver;
+
     public SessionContext(String host, int port, SessionType sessionType, FixVersion fixVersion, SessionId sessionId) {
         this(new InetSocketAddress(host, port), sessionType, fixVersion, sessionId);
     }
@@ -339,6 +342,24 @@ public class SessionContext {
         return this;
     }
 
+    public Sender sender() {
+        return sender;
+    }
+
+    public SessionContext sender(Sender sender) {
+        this.sender = sender;
+        return this;
+    }
+
+    public Receiver receiver() {
+        return receiver;
+    }
+
+    public SessionContext receiver(Receiver receiver) {
+        this.receiver = receiver;
+        return this;
+    }
+
     public SessionContext conclude() {
         requireNonNull(sessionType);
         requireNonNull(fixVersion);
@@ -380,6 +401,14 @@ public class SessionContext {
             connector = sessionType.initiator() ?
                     new InitiatorConnector(address, channelOptions, clock, connectInterval) :
                     new AcceptorConnector(address, acceptorOptions, channelOptions, clock, connectInterval);
+        }
+
+        if (receiver == null) {
+            receiver = new Receiver(receiveBufferSize, mtuSize);
+        }
+
+        if (sender == null) {
+            sender = new Sender(clock, sendTimeout);
         }
 
         return this;

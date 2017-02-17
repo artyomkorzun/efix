@@ -91,8 +91,8 @@ public abstract class Session implements Worker {
         this.sendBuffer = UnsafeBuffer.allocateDirect(context.sendBufferSize());
 
         this.connector = context.connector();
-        this.receiver = new Receiver(context.receiveBufferSize(), context.mtuSize());
-        this.sender = new Sender(context.clock(), context.sendTimeout());
+        this.receiver = context.receiver();
+        this.sender = context.sender();
         this.resender = new Resender(this);
         this.packer = new MessagePacker(context.fixVersion(), context.sessionId(), sendBuffer);
 
