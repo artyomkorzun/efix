@@ -66,9 +66,9 @@ public class SessionProcessor implements Worker {
     protected final SequenceReset sequenceReset = new SequenceReset();
     protected final ByteSequenceWrapper outMsgType = new ByteSequenceWrapper();
 
-    protected SessionType sessionType;
-    protected FixVersion fixVersion;
-    protected SessionId sessionId;
+    protected final SessionType sessionType;
+    protected final FixVersion fixVersion;
+    protected final SessionId sessionId;
     protected final int heartbeatInterval;
     protected final int inHeartbeatTimeout;
     protected final int outHeartbeatTimeout;

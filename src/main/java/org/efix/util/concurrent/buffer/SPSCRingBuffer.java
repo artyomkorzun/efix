@@ -3,6 +3,7 @@ package org.efix.util.concurrent.buffer;
 import org.efix.util.buffer.AtomicBuffer;
 import org.efix.util.buffer.Buffer;
 
+
 public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
 
     public SPSCRingBuffer(int capacity) {
@@ -16,15 +17,15 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
 
         int recordLength = recordLength(length);
         int alignedRecordLength = align(recordLength);
-        long head = claim(alignedRecordLength);
+        long tail = claim(alignedRecordLength);
 
-        if (head == INSUFFICIENT_SPACE)
+        if (tail == INSUFFICIENT_SPACE)
             return false;
 
-        int recordOffset = mask(head);
+        int recordOffset = mask(tail);
         putHeader(recordOffset, recordLength, messageType, buffer);
         buffer.putBytes(messageOffset(recordOffset), srcBuffer, srcOffset, length);
-        headSequence.setOrdered(head + alignedRecordLength);
+        tailSequence.setOrdered(tail + alignedRecordLength);
 
         return true;
     }
@@ -34,15 +35,15 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
         int messagesRead = 0;
 
         AtomicBuffer buffer = this.buffer;
-        long tail = tailSequence.get();
-        long head = headSequence.getVolatile();
+        long head = headSequence.get();
+        long tail = tailSequence.getVolatile();
 
-        int available = (int) (head - tail);
+        int available = (int) (tail - head);
         int bytesRead = 0;
 
         try {
             while (bytesRead < available) {
-                int recordOffset = mask(tail + bytesRead);
+                int recordOffset = mask(head + bytesRead);
                 int recordLength = buffer.getInt(recordLengthOffset(recordOffset));
                 int messageType = buffer.getInt(messageTypeOffset(recordOffset));
 
@@ -55,42 +56,42 @@ public class SPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
                 messagesRead++;
             }
         } finally {
-            tailSequence.setOrdered(tail + bytesRead);
+            headSequence.setOrdered(head + bytesRead);
         }
 
         return messagesRead;
     }
 
     private long claim(int required) {
-        long head = headSequence.get();
-        long tail = tailCacheSequence.get();
+        long tail = tailSequence.get();
+        long head = headCacheSequence.get();
 
         if (required > freeSpace(head, tail, capacity)) {
-            tail = tailSequence.getVolatile();
+            head = headSequence.getVolatile();
             if (required > freeSpace(head, tail, capacity))
                 return INSUFFICIENT_SPACE;
 
-            tailCacheSequence.set(tail);
+            headCacheSequence.set(head);
         }
 
         int padding = 0;
-        int headIndex = mask(head);
-        int continuous = capacity - headIndex;
+        int tailIndex = mask(tail);
+        int continuous = capacity - tailIndex;
 
         if (required > continuous) {
-            if (required > mask(tail)) {
-                tail = tailSequence.getVolatile();
-                if (required > mask(tail))
+            if (required > mask(head)) {
+                head = headSequence.getVolatile();
+                if (required > mask(head))
                     return INSUFFICIENT_SPACE;
 
-                tailCacheSequence.set(tail);
+                headCacheSequence.set(head);
             }
 
             padding = continuous;
-            putHeader(headIndex, padding, MESSAGE_TYPE_PADDING, buffer);
+            putHeader(tailIndex, padding, MESSAGE_TYPE_PADDING, buffer);
         }
 
-        return head + padding;
+        return tail + padding;
     }
 
     private static void putHeader(int recordOffset, int recordLength, int messageType, AtomicBuffer buffer) {

@@ -35,13 +35,13 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
 
         AtomicBuffer buffer = this.buffer;
         int capacity = this.capacity;
-        long tail = tailSequence.get();
+        long head = headSequence.get();
 
         int bytesRead = 0;
 
         try {
             while (bytesRead < capacity) {
-                int recordOffset = mask(tail + bytesRead);
+                int recordOffset = mask(head + bytesRead);
                 int recordLength = buffer.getIntVolatile(recordLengthOffset(recordOffset));
                 if (recordLength == 0)
                     break;
@@ -57,17 +57,17 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
             }
         } finally {
             if (bytesRead > 0) {
-                int tailIndex = mask(tail);
-                int continuous = capacity - tailIndex;
+                int headIndex = mask(head);
+                int continuous = capacity - headIndex;
 
                 if (continuous >= bytesRead) {
-                    buffer.setMemory(tailIndex, bytesRead, (byte) 0);
+                    buffer.setMemory(headIndex, bytesRead, (byte) 0);
                 } else {
-                    buffer.setMemory(tailIndex, continuous, (byte) 0);
+                    buffer.setMemory(headIndex, continuous, (byte) 0);
                     buffer.setMemory(0, bytesRead - continuous, (byte) 0);
                 }
 
-                tailSequence.setOrdered(tail + bytesRead);
+                headSequence.setOrdered(head + bytesRead);
             }
         }
 
@@ -75,46 +75,46 @@ public class MPSCRingBuffer extends AbstractRingBuffer implements RingBuffer {
     }
 
     private int claim(int required) {
-        long tail = tailCacheSequence.getVolatile();
-        long head;
-        int headIndex;
+        long head = headCacheSequence.getVolatile();
+        long tail;
+        int tailIndex;
         int padding;
 
         do {
-            head = headSequence.getVolatile();
+            tail = tailSequence.getVolatile();
 
             if (required > freeSpace(head, tail, capacity)) {
-                tail = tailSequence.getVolatile();
+                head = headSequence.getVolatile();
                 if (required > freeSpace(head, tail, capacity))
                     return INSUFFICIENT_SPACE;
 
-                tailCacheSequence.setOrdered(tail);
+                headCacheSequence.setOrdered(head);
             }
 
             padding = 0;
-            headIndex = mask(head);
-            int continuous = capacity - headIndex;
+            tailIndex = mask(tail);
+            int continuous = capacity - tailIndex;
 
             if (required > continuous) {
-                if (required > mask(tail)) {
-                    tail = tailSequence.getVolatile();
-                    if (required > mask(tail))
+                if (required > mask(head)) {
+                    head = headSequence.getVolatile();
+                    if (required > mask(head))
                         return INSUFFICIENT_SPACE;
 
-                    tailCacheSequence.setOrdered(tail);
+                    headCacheSequence.setOrdered(head);
                 }
 
                 padding = continuous;
             }
-        } while (!headSequence.compareAndSet(head, head + required + padding));
+        } while (!tailSequence.compareAndSet(tail, tail + required + padding));
 
         if (padding != 0) {
-            buffer.putInt(messageTypeOffset(headIndex), MESSAGE_TYPE_PADDING);
-            buffer.putIntOrdered(recordLengthOffset(headIndex), padding);
-            headIndex = 0;
+            buffer.putInt(messageTypeOffset(tailIndex), MESSAGE_TYPE_PADDING);
+            buffer.putIntOrdered(recordLengthOffset(tailIndex), padding);
+            tailIndex = 0;
         }
 
-        return headIndex;
+        return tailIndex;
     }
 
 }

@@ -32,9 +32,9 @@ public class RingBufferTest {
 
     @Before
     public void setUp() {
-        buffer.headSequence.set(0);
         buffer.tailSequence.set(0);
-        buffer.tailCacheSequence.set(0);
+        buffer.headSequence.set(0);
+        buffer.headCacheSequence.set(0);
     }
 
     @Test
@@ -54,8 +54,8 @@ public class RingBufferTest {
     @Test
     public void shouldInsertPaddingAndWriteMessage() {
         int padding = 256;
-        buffer.tailSequence.set(CAPACITY - padding);
         buffer.headSequence.set(CAPACITY - padding);
+        buffer.tailSequence.set(CAPACITY - padding);
 
         int messageLength = 512;
         MutableBuffer message = UnsafeBuffer.allocateHeap(messageLength);
@@ -67,7 +67,7 @@ public class RingBufferTest {
 
     @Test
     public void shouldNotWriteMessageToFullBuffer() {
-        buffer.headSequence.set(CAPACITY);
+        buffer.tailSequence.set(CAPACITY);
 
         int messageLength = 16;
         MutableBuffer message = UnsafeBuffer.allocateHeap(messageLength);
@@ -80,8 +80,8 @@ public class RingBufferTest {
     public void shouldNotWriteMessageToBufferWithInsufficientContinuousSpace() {
         int continuous = 256;
         int messageLength = continuous;
-        buffer.headSequence.set(2 * CAPACITY - continuous);
-        buffer.tailSequence.set(CAPACITY + continuous);
+        buffer.tailSequence.set(2 * CAPACITY - continuous);
+        buffer.headSequence.set(CAPACITY + continuous);
 
         MutableBuffer message = UnsafeBuffer.allocateHeap(messageLength);
         assertFalse(buffer.write(MSG_TYPE, message, 0, messageLength));
