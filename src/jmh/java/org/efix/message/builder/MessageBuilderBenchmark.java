@@ -9,6 +9,8 @@ import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
 import org.openjdk.jmh.annotations.*;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.efix.util.BenchmarkUtil.makeMessage;
 
 
@@ -39,6 +41,8 @@ public class MessageBuilderBenchmark {
     }
 
     @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void encodeNewOrderSingle() {
         builder.wrap(BUFFER)
                 .addCharSequence(Tag.Account, "ACCOUNT")

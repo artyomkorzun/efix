@@ -3,9 +3,9 @@ package org.efix.message.parser;
 import org.efix.message.field.Tag;
 import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.buffer.Buffer;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.*;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.efix.util.BenchmarkUtil.makeMessage;
 
@@ -20,6 +20,8 @@ public class MessageParserBenchmark {
 
 
     @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void decodeNewOrderSingle() {
         MessageParser parser = this.parser.wrap(NEW_ORDER_SINGLE);
         NewOrder newOrder = this.newOrder;
