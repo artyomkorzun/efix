@@ -57,3 +57,8 @@ jmh {
     fork = 1
     jvmArgsAppend = '-Defix.disable.bounds.check=true'
 }
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.2.1'
+    distributionType = 'ALL'
+}
