@@ -3,14 +3,19 @@ package org.efix.message.parser;
 import org.efix.message.field.Tag;
 import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.buffer.Buffer;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.*;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.efix.util.BenchmarkUtil.makeMessage;
 
 
 @State(Scope.Benchmark)
+@BenchmarkMode(Mode.AverageTime)
+@Fork(1)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@Warmup(iterations = 2, time = 5)
+@Measurement(iterations = 5, time = 5)
 public class MessageParserBenchmark {
 
     private static final Buffer NEW_ORDER_SINGLE = makeMessage("1=ACCOUNT|11=4|38=5000|40=2|44=400.5|54=1|55=ESH6|58=TEXT|59=0|60=20140603-11:53:03.922|167=FUT|");

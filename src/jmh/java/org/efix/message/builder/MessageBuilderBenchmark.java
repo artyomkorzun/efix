@@ -9,10 +9,17 @@ import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
 import org.openjdk.jmh.annotations.*;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.efix.util.BenchmarkUtil.makeMessage;
 
 
 @State(Scope.Benchmark)
+@BenchmarkMode(Mode.AverageTime)
+@Fork(1)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@Warmup(iterations = 2, time = 5)
+@Measurement(iterations = 5, time = 5)
 public class MessageBuilderBenchmark {
 
     private static final long TRANSACT_TIME = System.currentTimeMillis();
