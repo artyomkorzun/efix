@@ -31,7 +31,7 @@ import static java.util.Objects.requireNonNull;
 
 public class SessionContext {
 
-    protected EpochClock clock;
+    protected EpochClock clock = SystemEpochClock.INSTANCE;
     protected SessionSchedule schedule;
     protected SessionState state;
     protected MessageStore store;
@@ -366,9 +366,6 @@ public class SessionContext {
         requireNonNull(sessionId);
         requireNonNull(sessionId.senderCompId());
         requireNonNull(sessionId.targetCompId());
-
-        if (clock == null)
-            clock = SystemEpochClock.INSTANCE;
 
         if (state == null)
             state = new MemorySessionState();
