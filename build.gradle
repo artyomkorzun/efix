@@ -1,9 +1,7 @@
 plugins {
     id 'java'
-    id 'idea'
-    id 'me.champeau.gradle.jmh' version '0.2.0'
-    id "maven"
     id 'maven-publish'
+    id 'me.champeau.gradle.jmh' version '0.2.0'
 }
 
 group = 'org.efix'
@@ -48,6 +46,25 @@ artifacts {
     //archives javadocJar
 }
 
+publishing {
+    repositories {
+        maven {
+            url publishRepositoryUrl
+            credentials {
+                username publisherUsername
+                password publisherPassword
+            }
+        }
+    }
+
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+        }
+    }
+}
+
 jmhJar {
     outputs.upToDateWhen { false }
 }
@@ -64,26 +81,4 @@ jmh {
     threads = 1
     fork = 1
     jvmArgsAppend = '-Defix.disable.bounds.check=true'
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourcesJar
-        }
-    }
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            configuration = configurations.deployerJars
-            repository(url: publishRepositoryUrl) {
-                authentication(userName: publisherUsername, password: publisherPassword) {
-                    preemptive = true
-                }
-            }
-        }
-    }
 }
