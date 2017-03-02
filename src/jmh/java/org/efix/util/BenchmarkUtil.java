@@ -1,6 +1,7 @@
 package org.efix.util;
 
 import org.efix.util.buffer.Buffer;
+import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -27,7 +28,7 @@ public class BenchmarkUtil {
         return ThreadLocalRandom.current().nextDouble(from, Math.nextUp(to));
     }
 
-    public static Buffer makeMessage(String message) {
+    public static MutableBuffer makeMessage(String message) {
         message = message.replace('|', '\u0001');
         return new UnsafeBuffer(StringUtil.asciiBytes(message));
     }

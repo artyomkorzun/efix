@@ -6,12 +6,15 @@ import org.efix.SessionType;
 import org.efix.connector.ConnectionException;
 import org.efix.connector.channel.Channel;
 import org.efix.message.Header;
+import org.efix.message.field.*;
 import org.efix.message.parser.MessageParser;
 import org.efix.state.SessionStatus;
-import org.efix.util.BenchmarkUtil;
+import org.efix.store.EmptyMessageStore;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
+import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -25,34 +28,53 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Warmup(iterations = 2, time = 5)
 @Measurement(iterations = 5, time = 5)
-public class ReceiveMessageBenchmark {
+public class SendMessageBenchmark {
 
-    private static final String MESSAGE = "8=FIX.4.4|9=177|35=D|34=1000|49=Sender|56=Receiver|52=20170220-09:15:33.705|1=account|11=1|38=1000|40=2|44=1.2345|54=1|55=EUR/USD|59=0|60=20170220-09:15:33.704|76=cfh|100=#INSTANT-FILL|167=FOR|10=188|";
-
-    private ReceivingSession session;
+    private SendSession session;
 
     @Setup
     public void init() {
-        SessionId sessionId = new SessionId("Receiver", "Sender");
+        SessionId sessionId = new SessionId("Sender", "Receiver");
         SessionContext context = new SessionContext("localhost", 10000, SessionType.INITIATOR, FixVersion.FIX44, sessionId);
-        PredefinedChannel channel = new PredefinedChannel(MESSAGE);
-        session = new ReceivingSession(context);
+        context.store(EmptyMessageStore.INSTANCE);
+        DiscardingChannel channel = new DiscardingChannel();
+        session = new SendSession(context);
         session.state.status(SessionStatus.APPLICATION_CONNECTED);
-        session.receiver.channel(channel);
+        session.sender.channel(channel);
     }
 
     @Benchmark
-    public void receiveMessage() {
-        session.state.targetSeqNum(1000);
-        session.receiveInboundMessages();
+    public void sendMessage() {
+        session.state.senderSeqNum(1000);
+        session.sendNewOrderMessage();
     }
 
-    private static final class ReceivingSession extends Session {
+    private static final class SendSession extends Session {
 
-        private final Message message = new Message();
+        private static final long TRANSACT_TIME = System.currentTimeMillis();
+
+        private final Message message;
         private final MessageCodec codec = new MessageCodec();
 
-        public ReceivingSession(SessionContext context) {
+        {
+            Message message = new Message();
+            message.setAccount("account");
+            message.setOrderId("1");
+            message.setQuantity(1000_000000);
+            message.setOrderType(OrdType.LIMIT);
+            message.setLimitPrice(1_234500);
+            message.setSide(Side.BUY);
+            message.setSymbol("EUR/USD");
+            message.setTimeInForce(TimeInForce.DAY);
+            message.setTransactTime(TRANSACT_TIME);
+            message.setBroker("cfh");
+            message.setExchange("#INSTANT-FILL");
+            message.setSecurityType(SecurityType.FOREIGN_EXCHANGE_CONTRACT);
+
+            this.message = message;
+        }
+
+        public SendSession(SessionContext context) {
             super(context);
         }
 
@@ -71,7 +93,6 @@ public class ReceiveMessageBenchmark {
 
         @Override
         protected void onAppMessage(Header header, MessageParser parser) {
-            codec.decode(message, parser);
         }
 
         @Override
@@ -79,33 +100,32 @@ public class ReceiveMessageBenchmark {
             throw new RuntimeException(e);
         }
 
+        private void sendNewOrderMessage() {
+            builder.wrap(messageBuffer);
+            codec.encode(message, builder);
+            sendAppMessage(MsgType.ORDER_SINGLE, messageBuffer, 0, builder.length());
+        }
+
     }
 
-    private static final class PredefinedChannel implements Channel {
+    private static final class DiscardingChannel implements Channel {
 
-        private final Buffer message;
-
-        public PredefinedChannel(String message) {
-            this.message = BenchmarkUtil.makeMessage(message);
-        }
 
         @Override
         public int read(MutableBuffer buffer, int offset, int length) throws ConnectionException {
-            int capacity = message.capacity();
-            buffer.putBytes(offset, message, 0, capacity);
-            return capacity;
+            return 0;
         }
 
         @Override
         public int write(Buffer buffer, int offset, int length) throws ConnectionException {
-            return 0;
+            return length;
         }
 
     }
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
-                .include(ReceiveMessageBenchmark.class.getSimpleName())
+                .include(SendMessageBenchmark.class.getSimpleName())
                 .build();
 
         new Runner(opt).run();
