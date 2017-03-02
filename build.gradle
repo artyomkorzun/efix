@@ -16,9 +16,10 @@ configurations {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
+    jmh group: 'org.hdrhistogram', name: 'HdrHistogram', version: '2.1.9'
+    jmh group: 'net.openhft', name: 'affinity', version: '3.0.6'
 
-    deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
+    testCompile 'junit:junit:4.12'
 }
 
 compileJava {
