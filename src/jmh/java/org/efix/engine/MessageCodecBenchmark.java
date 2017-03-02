@@ -69,9 +69,15 @@ public class MessageCodecBenchmark {
     }
 
     @Benchmark
-    public void predefinedDecode() {
+    public void decodeWithTable() {
         parser.wrap(buffer);
-        codec.predefinedDecode(message, parser);
+        codec.decodeWithTable(message, parser);
+    }
+
+    @Benchmark
+    public void decodeWithUnroll() {
+        parser.wrap(buffer);
+        codec.decodeWithUnroll(message, parser);
     }
 
     public static void main(String[] args) throws RunnerException {
