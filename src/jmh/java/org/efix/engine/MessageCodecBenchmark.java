@@ -68,6 +68,12 @@ public class MessageCodecBenchmark {
         codec.decode(message, parser);
     }
 
+    @Benchmark
+    public void predefinedDecode() {
+        parser.wrap(buffer);
+        codec.predefinedDecode(message, parser);
+    }
+
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
                 .include(MessageCodecBenchmark.class.getSimpleName())

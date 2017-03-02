@@ -12,7 +12,7 @@ public class MessageCodec {
     private static final int SCALE = 6;
 
     private final ByteSequenceWrapper account = new ByteSequenceWrapper();
-    private final ByteSequenceWrapper destination = new ByteSequenceWrapper();
+    private final ByteSequenceWrapper broker = new ByteSequenceWrapper();
     private final ByteSequenceWrapper currency = new ByteSequenceWrapper();
     private final ByteSequenceWrapper exchange = new ByteSequenceWrapper();
     private final ByteSequenceWrapper orderId = new ByteSequenceWrapper();
@@ -21,7 +21,7 @@ public class MessageCodec {
 
     public void decode(Message message, MessageParser parser) {
         ByteSequenceWrapper account = null;
-        ByteSequenceWrapper destination = null;
+        ByteSequenceWrapper broker = null;
         ByteSequenceWrapper currency = null;
         ByteSequenceWrapper exchange = null;
         ByteSequenceWrapper orderId = null;
@@ -88,8 +88,8 @@ public class MessageCodec {
                     break;
 
                 case Tag.ExecBroker:
-                    destination = this.destination;
-                    parser.parseByteSequence(destination);
+                    broker = this.broker;
+                    parser.parseByteSequence(broker);
                     break;
 
                 case Tag.StopPx:
@@ -124,7 +124,7 @@ public class MessageCodec {
         }
 
         message.setAccount(account);
-        message.setBroker(destination);
+        message.setBroker(broker);
         message.setCurrency(currency);
         message.setExchange(exchange);
         message.setOrderId(orderId);
@@ -212,6 +212,75 @@ public class MessageCodec {
         if (message.hasSecurityType()) {
             builder.addCharSequence(Tag.SecurityType, message.getSecurityType());
         }
+    }
+
+    public void predefinedDecode(Message message, MessageParser parser) {
+        for (int i = 0; i < 7; i++) {
+            parser.parseTag();
+            parser.parseValue();
+        }
+
+        ByteSequenceWrapper account = this.account;
+        parser.parseTag();
+        parser.parseByteSequence(account);
+
+        ByteSequenceWrapper orderId = this.orderId;
+        parser.parseTag();
+        parser.parseByteSequence(orderId);
+
+        parser.parseTag();
+        long quantity = parser.parseDecimal(SCALE);
+
+        parser.parseTag();
+        byte orderType = parser.parseByte();
+
+        parser.parseTag();
+        long limitPrice = parser.parseDecimal(SCALE);
+
+        parser.parseTag();
+        byte side = parser.parseByte();
+
+        ByteSequenceWrapper symbol = this.symbol;
+        parser.parseTag();
+        parser.parseByteSequence(symbol);
+
+        parser.parseTag();
+        byte timeInForce = parser.parseByte();
+
+        parser.parseTag();
+        long transactTime = parser.parseTimestamp();
+
+        parser.parseTag();
+        ByteSequenceWrapper broker = this.broker;
+        parser.parseByteSequence(broker);
+
+        parser.parseTag();
+        ByteSequenceWrapper exchange = this.exchange;
+        parser.parseByteSequence(exchange);
+
+        parser.parseTag();
+        ByteSequenceWrapper securityType = this.exchange;
+        parser.parseByteSequence(securityType);
+
+        parser.parseTag();
+        parser.parseValue();
+
+        message.setAccount(account);
+        message.setBroker(broker);
+        message.setCurrency(currency);
+        message.setExchange(exchange);
+        message.setOrderId(orderId);
+        message.setSymbol(symbol);
+
+        message.setLimitPrice(limitPrice);
+        message.setQuantity(quantity);
+
+        message.setSecurityType(securityType);
+        message.setOrderType(orderType);
+        message.setSide(side);
+        message.setTimeInForce(timeInForce);
+        message.setTransactTime(transactTime);
+
     }
 
 }
