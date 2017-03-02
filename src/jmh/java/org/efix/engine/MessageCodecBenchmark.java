@@ -75,9 +75,15 @@ public class MessageCodecBenchmark {
     }
 
     @Benchmark
-    public void decodeWithUnroll() {
+    public void decodeWithPredefinedLayout() {
         parser.wrap(buffer);
-        codec.decodeWithUnroll(message, parser);
+        codec.decodeWithPredefinedLayout(message, parser);
+    }
+
+    @Benchmark
+    public void decodeWithIndexMap() {
+        parser.wrap(buffer);
+        codec.decodeWithIndexMap(message, parser);
     }
 
     public static void main(String[] args) throws RunnerException {

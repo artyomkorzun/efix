@@ -18,6 +18,7 @@ configurations {
 dependencies {
     jmh group: 'org.hdrhistogram', name: 'HdrHistogram', version: '2.1.9'
     jmh group: 'net.openhft', name: 'affinity', version: '3.0.6'
+    jmh group: 'org.agrona', name: 'Agrona', version: '0.9.1'
 
     testCompile 'junit:junit:4.12'
 }

@@ -1,15 +1,28 @@
 package org.efix.engine;
 
+import org.agrona.collections.Int2IntHashMap;
 import org.efix.message.FieldUtil;
 import org.efix.message.builder.MessageBuilder;
 import org.efix.message.field.Tag;
 import org.efix.message.parser.MessageParser;
 import org.efix.util.ByteSequenceWrapper;
+import org.efix.util.MutableInt;
+import org.efix.util.buffer.Buffer;
+import org.efix.util.parse.ByteParser;
+import org.efix.util.parse.ByteSequenceParser;
+import org.efix.util.parse.DecimalParser;
+import org.efix.util.parse.TimestampParser;
+
+import static org.efix.message.FieldUtil.FIELD_SEPARATOR;
+import static org.efix.message.FieldUtil.INT_NULL;
 
 
 public class MessageCodec {
 
     private static final int SCALE = 6;
+
+    private final Int2IntHashMap indexMap = new Int2IntHashMap(64, 0.5f, INT_NULL);
+    private final MutableInt offset = new MutableInt();
 
     private final ByteSequenceWrapper account = new ByteSequenceWrapper();
     private final ByteSequenceWrapper broker = new ByteSequenceWrapper();
@@ -17,7 +30,7 @@ public class MessageCodec {
     private final ByteSequenceWrapper exchange = new ByteSequenceWrapper();
     private final ByteSequenceWrapper orderId = new ByteSequenceWrapper();
     private final ByteSequenceWrapper symbol = new ByteSequenceWrapper();
-    private final ByteSequenceWrapper instrumentType = new ByteSequenceWrapper();
+    private final ByteSequenceWrapper securityType = new ByteSequenceWrapper();
 
     public void encode(Message message, MessageBuilder builder) {
         if (message.hasAccount()) {
@@ -123,10 +136,10 @@ public class MessageCodec {
                     parser.parseByteSequence(orderId);
                     break;
 
-                case Tag.Currency:
+          /*      case Tag.Currency:
                     currency = this.currency;
                     parser.parseByteSequence(currency);
-                    break;
+                    break;*/
 
                 case Tag.OrderQty:
                     quantity = parser.parseDecimal(SCALE);
@@ -161,26 +174,26 @@ public class MessageCodec {
                     broker = this.broker;
                     parser.parseByteSequence(broker);
                     break;
-
+/*
                 case Tag.StopPx:
                     stopPrice = parser.parseDecimal(SCALE);
-                    break;
+                    break;*/
 
                 case Tag.ExDestination:
                     exchange = this.exchange;
                     parser.parseByteSequence(exchange);
                     break;
 
-                case Tag.MinQty:
+             /*   case Tag.MinQty:
                     minQuantity = parser.parseDecimal(SCALE);
                     break;
 
                 case Tag.MaxFloor:
                     displayQuantity = parser.parseDecimal(SCALE);
-                    break;
+                    break;*/
 
                 case Tag.SecurityType:
-                    securityType = this.instrumentType;
+                    securityType = this.securityType;
                     parser.parseByteSequence(securityType);
                     break;
 
@@ -247,11 +260,11 @@ public class MessageCodec {
                     orderId = this.orderId;
                     parser.parseByteSequence(orderId);
                     break;
-
+/*
                 case Tag.Currency:
                     currency = this.currency;
                     parser.parseByteSequence(currency);
-                    break;
+                    break;*/
 
                 case Tag.OrderQty:
                     quantity = parser.parseDecimal(SCALE);
@@ -278,34 +291,34 @@ public class MessageCodec {
                     timeInForce = parser.parseByte();
                     break;
 
-                case Tag.ExpireTime:
+              /*  case Tag.ExpireTime:
                     expireTime = parser.parseTimestamp();
                     break;
-
+*/
                 case Tag.ExecBroker:
                     broker = this.broker;
                     parser.parseByteSequence(broker);
                     break;
 
-                case Tag.StopPx:
+              /*  case Tag.StopPx:
                     stopPrice = parser.parseDecimal(SCALE);
-                    break;
+                    break;*/
 
                 case Tag.ExDestination:
                     exchange = this.exchange;
                     parser.parseByteSequence(exchange);
                     break;
 
-                case Tag.MinQty:
+            /*    case Tag.MinQty:
                     minQuantity = parser.parseDecimal(SCALE);
                     break;
 
                 case Tag.MaxFloor:
                     displayQuantity = parser.parseDecimal(SCALE);
-                    break;
+                    break;*/
 
                 case Tag.SecurityType:
-                    securityType = this.instrumentType;
+                    securityType = this.securityType;
                     parser.parseByteSequence(securityType);
                     break;
 
@@ -490,7 +503,7 @@ public class MessageCodec {
         message.setTransactTime(transactTime);
     }
 
-    public void decodeWithUnroll(Message message, MessageParser parser) {
+    public void decodeWithPredefinedLayout(Message message, MessageParser parser) {
         for (int i = 0; i < 7; i++) {
             parser.parseTag();
             parser.parseValue();
@@ -530,16 +543,90 @@ public class MessageCodec {
         ByteSequenceWrapper broker = this.broker;
         parser.parseByteSequence(broker);
 
-        parser.parseTag();
         ByteSequenceWrapper exchange = this.exchange;
+        parser.parseTag();
         parser.parseByteSequence(exchange);
 
+        ByteSequenceWrapper securityType = this.securityType;
         parser.parseTag();
-        ByteSequenceWrapper securityType = this.exchange;
         parser.parseByteSequence(securityType);
 
         parser.parseTag();
         parser.parseValue();
+
+        message.setAccount(account);
+        message.setBroker(broker);
+        message.setCurrency(currency);
+        message.setExchange(exchange);
+        message.setOrderId(orderId);
+        message.setSymbol(symbol);
+
+        message.setLimitPrice(limitPrice);
+        message.setQuantity(quantity);
+
+        message.setSecurityType(securityType);
+        message.setOrderType(orderType);
+        message.setSide(side);
+        message.setTimeInForce(timeInForce);
+        message.setTransactTime(transactTime);
+    }
+
+    // TODO: null check
+    public void decodeWithIndexMap(Message message, MessageParser parser) {
+        indexMap.clear();
+
+        Buffer buffer = parser.buffer();
+        int end = parser.end();
+
+        while (parser.hasRemaining()) {
+            int tag = parser.parseTag();
+            int index = parser.offset();
+            parser.parseValue();
+
+            indexMap.put(tag, index);
+        }
+
+        ByteSequenceWrapper account = this.account;
+        offset.set(indexMap.get(Tag.Account));
+        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, account);
+
+        ByteSequenceWrapper orderId = this.orderId;
+        offset.set(indexMap.get(Tag.ClOrdID));
+        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, orderId);
+
+        offset.set(indexMap.get(Tag.OrderQty));
+        long quantity = DecimalParser.parseDecimal(SCALE, FIELD_SEPARATOR, buffer, offset, end);
+
+        offset.set(indexMap.get(Tag.OrdType));
+        byte orderType = ByteParser.parseByte(FIELD_SEPARATOR, buffer, offset, end);
+
+        offset.set(indexMap.get(Tag.Price));
+        long limitPrice = DecimalParser.parseDecimal(SCALE, FIELD_SEPARATOR, buffer, offset, end);
+
+        offset.set(indexMap.get(Tag.Side));
+        byte side = ByteParser.parseByte(FIELD_SEPARATOR, buffer, offset, end);
+
+        ByteSequenceWrapper symbol = this.symbol;
+        offset.set(indexMap.get(Tag.Symbol));
+        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, symbol);
+
+        offset.set(indexMap.get(Tag.TimeInForce));
+        byte timeInForce = ByteParser.parseByte(FIELD_SEPARATOR, buffer, offset, end);
+
+        offset.set(indexMap.get(Tag.TransactTime));
+        long transactTime = TimestampParser.parseTimestamp(FIELD_SEPARATOR, buffer, offset, end);
+
+        ByteSequenceWrapper broker = this.broker;
+        offset.set(indexMap.get(Tag.ExecBroker));
+        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, broker);
+
+        ByteSequenceWrapper exchange = this.exchange;
+        offset.set(indexMap.get(Tag.ExDestination));
+        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, exchange);
+
+        ByteSequenceWrapper securityType = this.securityType;
+        offset.set(indexMap.get(Tag.SecurityType));
+        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, securityType);
 
         message.setAccount(account);
         message.setBroker(broker);
