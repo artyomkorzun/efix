@@ -72,7 +72,7 @@ jmhJar {
 }
 
 jmh {
-    jmhVersion = '1.11.2'
+    jmhVersion = '1.18'
     include = 'MessageParser'
     benchmarkMode = 'avgt'
     timeUnit = 'ns'
