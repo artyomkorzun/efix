@@ -1,7 +1,7 @@
 package org.efix.sandbox;
 
 import org.efix.util.buffer.Buffer;
-import org.efix.util.buffer.UnsafeBuffer;
+import org.efix.util.buffer.MutableBuffer;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -18,7 +18,7 @@ import static org.efix.util.UnsafeAccess.UNSAFE;
 @Fork(1)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Warmup(iterations = 2, time = 1)
-@Measurement(iterations = 3, time = 1)
+@Measurement(iterations = 5, time = 2)
 public class IntegerFormatting {
 
     private static final byte[] FIRST_DIGIT = {
@@ -60,18 +60,9 @@ public class IntegerFormatting {
             14640, 14641, 14642, 14643, 14644, 14645, 14646, 14647, 14648, 14649
     };
 
-    private static final UnsafeBuffer fake = UnsafeBuffer.allocateDirect(200);
-    private static final long address = fake.addressOffset();
-
-    static {
-        for (int i = 0; i < TWO_DIGITS.length; i++) {
-            fake.putShort((i << 1), TWO_DIGITS[i]);
-        }
-    }
-
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
-    public int divBy10() {
+    public int divBy10WithArray() {
         byte[] array = Configuration.array;
         int offset = Configuration.offset;
         int number = Configuration.integer;
@@ -87,7 +78,7 @@ public class IntegerFormatting {
 
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
-    public int divBy100() {
+    public int divBy100WithArray() {
         byte[] array = Configuration.array;
         int offset = Configuration.offset;
         int number = Configuration.integer;
@@ -111,50 +102,73 @@ public class IntegerFormatting {
 
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
-    public int divBy100WithUnsafeAccess() {
+    public int divBy100WithUnsafeStoreToArray() {
         byte[] array = Configuration.array;
         int offset = Configuration.offset;
         int number = Configuration.integer;
 
         while (number > 99) {
             int remainder = number % 100;
-            short twoDigits = UNSAFE.getShort(TWO_DIGITS, Unsafe.ARRAY_SHORT_BASE_OFFSET + (remainder << 1));
+            short twoDigits = TWO_DIGITS[remainder];
             UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, twoDigits); // + maximum boost
             offset += 2;
             number /= 100;
         }
 
-        short twoDigits = UNSAFE.getShort(TWO_DIGITS, Unsafe.ARRAY_SHORT_BASE_OFFSET + (number << 1));
+        short twoDigits = TWO_DIGITS[number];
         if (number > 9) {
             UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset++, (byte) (twoDigits));
         }
 
         UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset++, (byte) (twoDigits >> 8));
-        //System.out.println(new String(array, offset, offset));
         return offset;
     }
 
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
-    public long divBy100WithUnsafeAccessToMemory() {
+    public long divBy100WithUnsafeStoreToMemory() {
         Buffer buffer = Configuration.buffer;
         long offset = buffer.addressOffset() + Configuration.offset;
         int number = Configuration.integer;
 
         while (number > 99) {
             int remainder = number % 100;
-            short twoDigits = UNSAFE.getShort(address + (remainder << 1));
+            short twoDigits = TWO_DIGITS[remainder];
             UNSAFE.putShort(offset, twoDigits); // + maximum boost
             offset += 2;
             number /= 100;
         }
 
-        short twoDigits = UNSAFE.getShort(address + (number << 1));
+        short twoDigits = TWO_DIGITS[number];
         if (number > 9) {
             UNSAFE.putByte(offset++, (byte) (twoDigits));
         }
 
         UNSAFE.putByte(offset++, (byte) (twoDigits >> 8));
+        return offset;
+    }
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public int divBy100WithBuffer() {
+        MutableBuffer buffer = Configuration.buffer;
+        int offset = Configuration.offset;
+        int number = Configuration.integer;
+
+        while (number > 99) {
+            int remainder = number % 100;
+            short twoDigits = TWO_DIGITS[remainder];
+            buffer.putShort(offset, twoDigits); // + maximum boost
+            offset += 2;
+            number /= 100;
+        }
+
+        short twoDigits = TWO_DIGITS[number];
+        if (number > 9) {
+            buffer.putByte(offset++, (byte) (twoDigits));
+        }
+
+        buffer.putByte(offset++, (byte) (twoDigits >> 8));
         return offset;
     }
 
