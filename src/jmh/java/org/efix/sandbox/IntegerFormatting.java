@@ -2,6 +2,8 @@ package org.efix.sandbox;
 
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
+import org.efix.util.buffer.UnsafeBuffer;
+import org.efix.util.format.IntFormatter;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -60,16 +62,34 @@ public class IntegerFormatting {
             14640, 14641, 14642, 14643, 14644, 14645, 14646, 14647, 14648, 14649
     };
 
+    private static final UnsafeBuffer TWO_DIGITS_TABLE_BUFFER = UnsafeBuffer.allocateDirect(200);
+    private static final long TWO_DIGITS_TABLE_ADDRESS;
+
+    static {
+        TWO_DIGITS_TABLE_ADDRESS = TWO_DIGITS_TABLE_BUFFER.addressOffset();
+        for (int i = 0; i < TWO_DIGITS.length; i++) {
+            TWO_DIGITS_TABLE_BUFFER.putShort(i << 1, TWO_DIGITS[i]);
+        }
+    }
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public int baseline() {
+        return Config.randomInt();
+    }
+
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public int divBy10WithArray() {
-        byte[] array = Configuration.array;
-        int offset = Configuration.offset;
-        int number = Configuration.integer;
+        byte[] array = Config.array;
+        int offset = Config.offset;
+        int number = Config.randomInt();
 
         while (number > 9) {
-            array[offset++] = (byte) ('0' + number % 10);
-            number /= 10;
+            int newNumber = (int) (number * 3435973837L >>> 35);
+            int remainder = number - (newNumber << 3) - (newNumber << 1);
+            number = newNumber;
+            array[offset++] = (byte) ('0' + remainder);
         }
 
         array[offset++] = (byte) ('0' + number);
@@ -78,17 +98,105 @@ public class IntegerFormatting {
 
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public int divBy10WithUnrolledArray() {
+        byte[] array = Config.array;
+        int offset = Config.offset;
+        int number = Config.randomInt();
+        int remainder;
+        int newNumber;
+
+        newNumber = (int) (number * 3435973837L >>> 35);
+        remainder = number - (newNumber << 3) - (newNumber << 1);
+        number = newNumber;
+        array[offset++] = (byte) ('0' + remainder);
+        if (number == 0) {
+            return offset;
+        }
+
+        newNumber = (int) (number * 3435973837L >>> 35);
+        remainder = number - (newNumber << 3) - (newNumber << 1);
+        number = newNumber;
+        array[offset++] = (byte) ('0' + remainder);
+        if (number == 0) {
+            return offset;
+        }
+
+        newNumber = (int) (number * 3435973837L >>> 35);
+        remainder = number - (newNumber << 3) - (newNumber << 1);
+        number = newNumber;
+        array[offset++] = (byte) ('0' + remainder);
+        if (number == 0) {
+            return offset;
+        }
+
+        newNumber = (int) (number * 3435973837L >>> 35);
+        remainder = number - (newNumber << 3) - (newNumber << 1);
+        number = newNumber;
+        array[offset++] = (byte) ('0' + remainder);
+        if (number == 0) {
+            return offset;
+        }
+
+        newNumber = (int) (number * 3435973837L >>> 35);
+        remainder = number - (newNumber << 3) - (newNumber << 1);
+        number = newNumber;
+        array[offset++] = (byte) ('0' + remainder);
+        if (number == 0) {
+            return offset;
+        }
+
+        newNumber = (int) (number * 3435973837L >>> 35);
+        remainder = number - (newNumber << 3) - (newNumber << 1);
+        number = newNumber;
+        array[offset++] = (byte) ('0' + remainder);
+        if (number == 0) {
+            return offset;
+        }
+
+        newNumber = number * 52429 >>> 19;
+        remainder = number - (newNumber << 3) - (newNumber << 1);
+        number = newNumber;
+        array[offset++] = (byte) ('0' + remainder);
+        if (number == 0) {
+            return offset;
+        }
+
+        newNumber = number * 52429 >>> 19;
+        remainder = number - (newNumber << 3) - (newNumber << 1);
+        number = newNumber;
+        array[offset++] = (byte) ('0' + remainder);
+        if (number == 0) {
+            return offset;
+        }
+
+        newNumber = number * 52429 >>> 19;
+        remainder = number - (newNumber << 3) - (newNumber << 1);
+        number = newNumber;
+        array[offset++] = (byte) ('0' + remainder);
+        if (number == 0) {
+            return offset;
+        }
+
+        array[offset++] = (byte) ('0' + number);
+        return offset;
+    }
+
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public int divBy100WithArray() {
-        byte[] array = Configuration.array;
-        int offset = Configuration.offset;
-        int number = Configuration.integer;
+        byte[] array = Config.array;
+        int offset = Config.offset;
+        int number = Config.randomInt();
 
         while (number > 99) {
-            int remainder = number % 100;
+            int newNumber = (int) (1374389535L * number >>> 37);
+            int remainder = number - newNumber * 100;
+            number = newNumber;
+
             short twoDigits = TWO_DIGITS[remainder];
             array[offset++] = (byte) (twoDigits);
             array[offset++] = (byte) (twoDigits >> 8);
-            number /= 100;
         }
 
         short twoDigits = TWO_DIGITS[number];
@@ -101,18 +209,21 @@ public class IntegerFormatting {
     }
 
     @Benchmark
-    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    @CompilerControl(CompilerControl.Mode.PRINT)
     public int divBy100WithUnsafeStoreToArray() {
-        byte[] array = Configuration.array;
-        int offset = Configuration.offset;
-        int number = Configuration.integer;
+        byte[] array = Config.array;
+        int offset = Config.offset;
+        int number = Config.randomInt();
 
         while (number > 99) {
-            int remainder = number % 100;
+            int newNumber = (int) (1374389535L * number >>> 37);
+            int remainder = number - newNumber * 100;
+            number = newNumber;
+
             short twoDigits = TWO_DIGITS[remainder];
+            //short twoDigits = UNSAFE.getShort(TWO_DIGITS_TABLE_ADDRESS + (remainder << 1));
             UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, twoDigits); // + maximum boost
             offset += 2;
-            number /= 100;
         }
 
         short twoDigits = TWO_DIGITS[number];
@@ -126,17 +237,49 @@ public class IntegerFormatting {
 
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
-    public long divBy100WithUnsafeStoreToMemory() {
-        Buffer buffer = Configuration.buffer;
-        long offset = buffer.addressOffset() + Configuration.offset;
-        int number = Configuration.integer;
+    public int divBy100WithUnsafeStoreToArrayDirect() {
+        byte[] array = Config.array;
+        int offset = Config.offset;
+        int number = Config.randomInt();
+
+        int length = integerLengthByCascadingIf(number);
+        int end = offset + length;
+        offset = end;
 
         while (number > 99) {
-            int remainder = number % 100;
+            int newNumber = (int) (1374389535L * number >>> 37);
+            int remainder = number - newNumber * 100;
+            number = newNumber;
+
+            short twoDigits = TWO_DIGITS[remainder];
+            offset -= 2;
+            UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, twoDigits); // + maximum boost
+        }
+
+        short twoDigits = TWO_DIGITS[number];
+        if (number > 9) {
+            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + --offset, (byte) (twoDigits));
+        }
+
+        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset - 1, (byte) (twoDigits >> 8));
+        return end;
+    }
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public long divBy100WithUnsafeStoreToMemory() {
+        Buffer buffer = Config.buffer;
+        long offset = buffer.addressOffset() + Config.offset;
+        int number = Config.randomInt();
+
+        while (number > 99) {
+            int newNumber = (int) (1374389535L * number >>> 37);
+            int remainder = number - newNumber * 100;
+            number = newNumber;
+
             short twoDigits = TWO_DIGITS[remainder];
             UNSAFE.putShort(offset, twoDigits); // + maximum boost
             offset += 2;
-            number /= 100;
         }
 
         short twoDigits = TWO_DIGITS[number];
@@ -151,16 +294,18 @@ public class IntegerFormatting {
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public int divBy100WithBuffer() {
-        MutableBuffer buffer = Configuration.buffer;
-        int offset = Configuration.offset;
-        int number = Configuration.integer;
+        MutableBuffer buffer = Config.buffer;
+        int offset = Config.offset;
+        int number = Config.randomInt();
 
         while (number > 99) {
-            int remainder = number % 100;
+            int newNumber = (int) (1374389535L * number >>> 37);
+            int remainder = number - newNumber * 100;
+            number = newNumber;
+
             short twoDigits = TWO_DIGITS[remainder];
             buffer.putShort(offset, twoDigits); // + maximum boost
             offset += 2;
-            number /= 100;
         }
 
         short twoDigits = TWO_DIGITS[number];
@@ -172,10 +317,68 @@ public class IntegerFormatting {
         return offset;
     }
 
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public int currentImplementation() {
+        MutableBuffer buffer = Config.buffer;
+        int offset = Config.offset;
+        int number = Config.randomInt();
+        return IntFormatter.formatUInt(number, buffer, offset);
+    }
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public int integerLengthWithCascadingIf() {
+        int integer = Config.randomInt();
+        return integerLengthByCascadingIf(integer);
+    }
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public int integerLengthWithLoop() {
+        int integer = Config.randomInt();
+        return integerLengthByLoop(integer);
+    }
+
+    public static int integerLengthByCascadingIf(int value) {
+        if (value < 10)
+            return 1;
+        if (value < 100)
+            return 2;
+        if (value < 1000)
+            return 3;
+        if (value < 10000)
+            return 4;
+        if (value < 100000)
+            return 5;
+        if (value < 1000000)
+            return 6;
+        if (value < 10000000)
+            return 7;
+        if (value < 100000000)
+            return 8;
+        if (value < 1000000000)
+            return 9;
+
+        return 10;
+    }
+
+    private static final int[] SIZES = {0, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
+
+    public static int integerLengthByLoop(int value) {
+        for (int i = 1; i < SIZES.length; i++) {
+            if (value < SIZES[i]) {
+                return i;
+            }
+        }
+
+        return SIZES.length;
+    }
+
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
                 .include(IntegerFormatting.class.getSimpleName())
-                .jvmArgsAppend(Configuration.JVM_ARGS)
+                .jvmArgsAppend(Config.JVM_ARGS)
                 .build();
 
         new Runner(opt).run();

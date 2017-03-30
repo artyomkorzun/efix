@@ -21,10 +21,10 @@ public class CheckSumBenchmark {
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public int array() {
-        byte[] array = Configuration.array;
+        byte[] array = Config.array;
         int checkSum = 0;
 
-        for (int i = Configuration.offset, length = Configuration.length; i < length; i++) {
+        for (int i = Config.offset, length = Config.length; i < length; i++) {
             checkSum ^= array[i];
         }
 
@@ -34,10 +34,10 @@ public class CheckSumBenchmark {
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public int buffer() {
-        UnsafeBuffer buffer = Configuration.buffer;
+        UnsafeBuffer buffer = Config.buffer;
         int checkSum = 0;
 
-        for (int i = Configuration.offset, length = Configuration.length; i < length; i++) {
+        for (int i = Config.offset, length = Config.length; i < length; i++) {
             checkSum ^= buffer.getByte(i);
         }
 
@@ -47,10 +47,10 @@ public class CheckSumBenchmark {
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public int memoryWithAddress() {
-        UnsafeBuffer buffer = Configuration.buffer;
+        UnsafeBuffer buffer = Config.buffer;
         int checkSum = 0;
 
-        for (long address = buffer.addressOffset() + Configuration.offset, limit = address + Configuration.length; address < limit; address++) {
+        for (long address = buffer.addressOffset() + Config.offset, limit = address + Config.length; address < limit; address++) {
             checkSum ^= UnsafeAccess.UNSAFE.getByte(address);
         }
 
@@ -60,11 +60,11 @@ public class CheckSumBenchmark {
     @Benchmark
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public int memoryWithIndex() {
-        UnsafeBuffer buffer = Configuration.buffer;
+        UnsafeBuffer buffer = Config.buffer;
         long address = buffer.addressOffset();
         int checkSum = 0;
 
-        for (int i = Configuration.offset, length = Configuration.length; i < length; i++) {
+        for (int i = Config.offset, length = Config.length; i < length; i++) {
             checkSum ^= UnsafeAccess.UNSAFE.getByte(address + i);
         }
 
@@ -74,7 +74,7 @@ public class CheckSumBenchmark {
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
                 .include(CheckSumBenchmark.class.getSimpleName())
-                .jvmArgsAppend(Configuration.JVM_ARGS)
+                .jvmArgsAppend(Config.JVM_ARGS)
                 .build();
 
         new Runner(opt).run();
