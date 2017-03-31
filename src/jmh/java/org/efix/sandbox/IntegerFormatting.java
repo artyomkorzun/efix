@@ -20,56 +20,38 @@ import static org.efix.util.UnsafeAccess.UNSAFE;
 @Measurement(iterations = 5, time = 2)
 public class IntegerFormatting {
 
-   /* private static final byte[] FIRST_DIGIT = {
-            '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
-            '1', '1', '1', '1', '1', '1', '1', '1', '1', '1',
-            '2', '2', '2', '2', '2', '2', '2', '2', '2', '2',
-            '3', '3', '3', '3', '3', '3', '3', '3', '3', '3',
-            '4', '4', '4', '4', '4', '4', '4', '4', '4', '4',
-            '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
-            '6', '6', '6', '6', '6', '6', '6', '6', '6', '6',
-            '7', '7', '7', '7', '7', '7', '7', '7', '7', '7',
-            '8', '8', '8', '8', '8', '8', '8', '8', '8', '8',
-            '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',
-    };
-
-    private static final byte[] SECOND_DIGIT = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    };*/
-
-    private static final short[] LITTLE_ENDIAN_TWO_DIGITS;
-    private static final short[] NATIVE_ENDIAN_TWO_DIGITS;
+    private static final short[] DIGITS;
+    private static final int HB_SHIFT;
+    private static final int LB_SHIFT;
 
     static {
-        short[] littleEndianTable = new short[100];
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
-                littleEndianTable[i * 10 + j] = (short) ((('0' + j) << 8) + ('0' + i));
-            }
-        }
+        short[] digits = new short[100];
+        int hbShift;
+        int lbShift;
 
-        short[] nativeEndianTable = littleEndianTable;
-        if (ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) {
-            nativeEndianTable = new short[100];
-
+        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
             for (int i = 0; i < 10; i++) {
                 for (int j = 0; j < 10; j++) {
-                    nativeEndianTable[i * 10 + j] = (short) ((('0' + i) << 8) + ('0' + j));
+                    digits[i * 10 + j] = (short) ((('0' + j) << 8) + ('0' + i));
                 }
             }
+
+            hbShift = 0;
+            lbShift = 8;
+        } else {
+            for (int i = 0; i < 10; i++) {
+                for (int j = 0; j < 10; j++) {
+                    digits[i * 10 + j] = (short) ((('0' + i) << 8) + ('0' + j));
+                }
+            }
+
+            hbShift = 8;
+            lbShift = 0;
         }
 
-        LITTLE_ENDIAN_TWO_DIGITS = littleEndianTable;
-        NATIVE_ENDIAN_TWO_DIGITS = nativeEndianTable;
+        DIGITS = digits;
+        HB_SHIFT = hbShift;
+        LB_SHIFT = lbShift;
     }
 
     @Benchmark
@@ -94,18 +76,18 @@ public class IntegerFormatting {
             int remainder = number - newNumber * 100;
             number = newNumber;
 
-            short digits = NATIVE_ENDIAN_TWO_DIGITS[remainder];
+            short digits = DIGITS[remainder];
             offset -= 2;
             UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, digits);
         }
 
-        short twoDigits = LITTLE_ENDIAN_TWO_DIGITS[number];
+        short digits = DIGITS[number];
         if (number > 9) {
             offset--;
-            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, (byte) (twoDigits >>> 8));
+            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, (byte) (digits >>> LB_SHIFT));
         }
 
-        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset - 1, (byte) (twoDigits));
+        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset - 1, (byte) (digits >>> HB_SHIFT));
         return end;
     }
 
@@ -133,39 +115,39 @@ public class IntegerFormatting {
             int remainder = number - newNumber * 100;
             number = newNumber;
 
-            UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 2, NATIVE_ENDIAN_TWO_DIGITS[remainder]);
+            UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 2, DIGITS[remainder]);
 
             if (number > 99) {
                 newNumber = (int) (2748779070L * number >>> 38);
                 remainder = number - newNumber * 100;
                 number = newNumber;
 
-                UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 4, NATIVE_ENDIAN_TWO_DIGITS[remainder]);
+                UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 4, DIGITS[remainder]);
 
                 if (number > 99) {
                     newNumber = (int) (2748779070L * number >>> 38);
                     remainder = number - newNumber * 100;
                     number = newNumber;
 
-                    UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 6, NATIVE_ENDIAN_TWO_DIGITS[remainder]);
+                    UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 6, DIGITS[remainder]);
 
                     if (number > 99) {
                         newNumber = (41944 * number >>> 22);
                         remainder = number - newNumber * 100;
                         number = newNumber;
 
-                        UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 8, NATIVE_ENDIAN_TWO_DIGITS[remainder]);
+                        UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 8, DIGITS[remainder]);
                     }
                 }
             }
         }
 
-        short digits = LITTLE_ENDIAN_TWO_DIGITS[number];
+        short digits = DIGITS[number];
         if (number > 9) {
-            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset + 1, (byte) (digits >>> 8));
+            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset + 1, (byte) (digits >>> LB_SHIFT));
         }
 
-        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, (byte) digits);
+        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, (byte) (digits >>> HB_SHIFT));
         return end;
     }
 
