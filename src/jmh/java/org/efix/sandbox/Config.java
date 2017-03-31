@@ -32,7 +32,7 @@ class Config {
 
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public static int randomInt() {
-        return ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
+        return /*integer;*/ ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
     }
 
 }
