@@ -5,6 +5,8 @@ import org.efix.util.buffer.BufferUtil;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.type.IntType;
 
+import java.nio.ByteOrder;
+
 import static org.efix.util.format.FormatterUtil.digit;
 
 
@@ -30,10 +32,7 @@ public class IntFormatter {
     }
 
     public static int formatUInt(int value, MutableBuffer buffer, int offset) {
-        int length = uintLength(value);
-        int index = offset + length;
-        formatUInt(value, buffer, offset, index);
-        return index;
+        return experimentalFormat(value, buffer, offset);
     }
 
     public static int format4DigitUInt(int value, MutableBuffer buffer, int offset) {
@@ -94,6 +93,87 @@ public class IntFormatter {
         if (value < 1000000000) return 9;
 
         return 10;
+    }
+
+    private static final short[] NATIVE_DIGITS;
+    private static final short[] LAST_DIGITS;
+
+    static {
+        short[] nativeDigits = new short[100];
+
+        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
+            for (int i = 0; i < 10; i++) {
+                for (int j = 0; j < 10; j++) {
+                    nativeDigits[i * 10 + j] = (short) ((('0' + j) << 8) + ('0' + i));
+                }
+            }
+        } else {
+            for (int i = 0; i < 10; i++) {
+                for (int j = 0; j < 10; j++) {
+                    nativeDigits[i * 10 + j] = (short) ((('0' + i) << 8) + ('0' + j));
+                }
+            }
+        }
+
+        short[] lastDigits = new short[100];
+
+        for (int i = 0; i < 10; i++) {
+            lastDigits[i] = (short) ((('0' + i) << 8) + ('0' + i));
+        }
+
+        for (int i = 1; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                lastDigits[i * 10 + j] = (short) ((('0' + j) << 8) + ('0' + i));
+            }
+        }
+
+        NATIVE_DIGITS = nativeDigits;
+        LAST_DIGITS = lastDigits;
+    }
+
+    private static int experimentalFormat(int number, MutableBuffer buffer, int offset) {
+        int length = uintLength(number);
+        int end = offset + length;
+
+        if (number > 99) {
+            int newNumber = (int) (2748779070L * number >>> 38);
+            int remainder = number - newNumber * 100;
+            number = newNumber;
+
+            buffer.putShort(end - 2, NATIVE_DIGITS[remainder]);
+
+            if (number > 99) {
+                newNumber = (int) (2748779070L * number >>> 38);
+                remainder = number - newNumber * 100;
+                number = newNumber;
+
+                buffer.putShort(end - 4, NATIVE_DIGITS[remainder]);
+
+                if (number > 99) {
+                    newNumber = (int) (2748779070L * number >>> 38);
+                    remainder = number - newNumber * 100;
+                    number = newNumber;
+
+                    buffer.putShort(end - 6, NATIVE_DIGITS[remainder]);
+
+                    if (number > 99) {
+                        newNumber = (41944 * number >>> 22);
+                        remainder = number - newNumber * 100;
+                        number = newNumber;
+
+                        buffer.putShort(end - 8, NATIVE_DIGITS[remainder]);
+                    }
+                }
+            }
+        }
+
+        short digits = LAST_DIGITS[number];
+        if (number > 9) {
+            buffer.putByte(offset + 1, (byte) (digits >> 8));
+        }
+
+        buffer.putByte(offset, (byte) (digits));
+        return end;
     }
 
 }

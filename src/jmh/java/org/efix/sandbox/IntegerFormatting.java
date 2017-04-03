@@ -20,38 +20,40 @@ import static org.efix.util.UnsafeAccess.UNSAFE;
 @Measurement(iterations = 5, time = 2)
 public class IntegerFormatting {
 
-    private static final short[] DIGITS;
-    private static final int HB_SHIFT;
-    private static final int LB_SHIFT;
+    private static final short[] NATIVE_DIGITS;
+    private static final short[] LAST_DIGITS;
 
     static {
-        short[] digits = new short[100];
-        int hbShift;
-        int lbShift;
+        short[] nativeDigits = new short[100];
 
         if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
             for (int i = 0; i < 10; i++) {
                 for (int j = 0; j < 10; j++) {
-                    digits[i * 10 + j] = (short) ((('0' + j) << 8) + ('0' + i));
+                    nativeDigits[i * 10 + j] = (short) ((('0' + j) << 8) + ('0' + i));
                 }
             }
-
-            hbShift = 0;
-            lbShift = 8;
         } else {
             for (int i = 0; i < 10; i++) {
                 for (int j = 0; j < 10; j++) {
-                    digits[i * 10 + j] = (short) ((('0' + i) << 8) + ('0' + j));
+                    nativeDigits[i * 10 + j] = (short) ((('0' + i) << 8) + ('0' + j));
                 }
             }
-
-            hbShift = 8;
-            lbShift = 0;
         }
 
-        DIGITS = digits;
-        HB_SHIFT = hbShift;
-        LB_SHIFT = lbShift;
+        short[] lastDigits = new short[100];
+
+        for (int i = 0; i < 10; i++) {
+            lastDigits[i] = (short) ((('0' + i) << 8) + ('0' + i));
+        }
+
+        for (int i = 1; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                lastDigits[i * 10 + j] = (short) ((('0' + j) << 8) + ('0' + i));
+            }
+        }
+
+        NATIVE_DIGITS = nativeDigits;
+        LAST_DIGITS = lastDigits;
     }
 
     @Benchmark
@@ -76,23 +78,23 @@ public class IntegerFormatting {
             int remainder = number - newNumber * 100;
             number = newNumber;
 
-            short digits = DIGITS[remainder];
+            short digits = NATIVE_DIGITS[remainder];
             offset -= 2;
             UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, digits);
         }
 
-        short digits = DIGITS[number];
+        short digits = LAST_DIGITS[number];
         if (number > 9) {
             offset--;
-            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, (byte) (digits >>> LB_SHIFT));
+            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, (byte) (digits));
         }
 
-        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset - 1, (byte) (digits >>> HB_SHIFT));
+        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset - 1, (byte) (digits >>> 8));
         return end;
     }
 
     @Benchmark
-    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    @CompilerControl(CompilerControl.Mode.PRINT)
     public int divBy100WithUnsafeStoreToArrayWithNestedIfs() {
         /**
          * Implementation details:
@@ -115,39 +117,39 @@ public class IntegerFormatting {
             int remainder = number - newNumber * 100;
             number = newNumber;
 
-            UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 2, DIGITS[remainder]);
+            UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 2, NATIVE_DIGITS[remainder]);
 
             if (number > 99) {
                 newNumber = (int) (2748779070L * number >>> 38);
                 remainder = number - newNumber * 100;
                 number = newNumber;
 
-                UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 4, DIGITS[remainder]);
+                UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 4, NATIVE_DIGITS[remainder]);
 
                 if (number > 99) {
                     newNumber = (int) (2748779070L * number >>> 38);
                     remainder = number - newNumber * 100;
                     number = newNumber;
 
-                    UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 6, DIGITS[remainder]);
+                    UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 6, NATIVE_DIGITS[remainder]);
 
                     if (number > 99) {
                         newNumber = (41944 * number >>> 22);
                         remainder = number - newNumber * 100;
                         number = newNumber;
 
-                        UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 8, DIGITS[remainder]);
+                        UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + end - 8, NATIVE_DIGITS[remainder]);
                     }
                 }
             }
         }
 
-        short digits = DIGITS[number];
+        short digits = LAST_DIGITS[number];
         if (number > 9) {
-            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset + 1, (byte) (digits >>> LB_SHIFT));
+            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset + 1, (byte) (digits >>> 8));
         }
 
-        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, (byte) (digits >>> HB_SHIFT));
+        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, (byte) (digits));
         return end;
     }
 

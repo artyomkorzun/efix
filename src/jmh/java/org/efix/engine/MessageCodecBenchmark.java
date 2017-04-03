@@ -62,7 +62,7 @@ public class MessageCodecBenchmark {
         codec.encode(message, builder);
     }
 
-    @Benchmark
+   /* @Benchmark
     public void decode() {
         parser.wrap(buffer);
         codec.decode(message, parser);
@@ -84,7 +84,7 @@ public class MessageCodecBenchmark {
     public void decodeWithIndexMap() {
         parser.wrap(buffer);
         codec.decodeWithIndexMap(message, parser);
-    }
+    }*/
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
