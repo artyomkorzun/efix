@@ -1,6 +1,7 @@
 package org.efix.state;
 
 import org.efix.util.BitUtil;
+import org.efix.util.IoUtil;
 import org.efix.util.LangUtil;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
@@ -63,7 +64,9 @@ public class MappedSessionState extends AbstractSessionState {
 
     @Override
     public void open() {
+        IoUtil.createParentDirectoies(path);
         boolean justCreated = !Files.exists(path);
+
         try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
             byteBuffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, LENGTH).load();
             buffer = new UnsafeBuffer(byteBuffer);

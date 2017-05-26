@@ -6,6 +6,7 @@ import org.efix.log.layout.Layout;
 import org.efix.log.layout.TimeLayout;
 import org.efix.util.CloseHelper;
 import org.efix.util.InsufficientSpaceException;
+import org.efix.util.IoUtil;
 import org.efix.util.LangUtil;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
@@ -67,6 +68,7 @@ public class FileMessageLog implements MessageLog {
     @Override
     public void open() {
         try {
+            IoUtil.createParentDirectoies(path);
             channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
             byteBuffer = ByteBuffer.allocateDirect(bufferSize);
             buffer = new UnsafeBuffer(byteBuffer);
