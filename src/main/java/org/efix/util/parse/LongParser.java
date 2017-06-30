@@ -1,5 +1,6 @@
 package org.efix.util.parse;
 
+import org.efix.message.FieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.LongType;
@@ -10,6 +11,43 @@ import static org.efix.util.parse.ParserUtil.*;
 public class LongParser {
 
     protected static final int MAX_DIGITS = LongType.MAX_ULONG_LENGTH - 1;
+
+    public static long parseLong(int tag, Buffer buffer, int offset, int end) {
+        long value = 0;
+        boolean sign = true;
+
+        byte b = buffer.getByte(offset);
+        if (b == '-') {
+            offset++;
+            sign = false;
+        }
+
+        while (offset < end) {
+            b = buffer.getByte(offset++);
+            if (!ParserUtil.isDigit(b)) {
+                throw new FieldException(tag, "Not integer field");
+            }
+
+            value = 10 * value - (b - '0');
+        }
+
+        return sign ? -value : value;
+    }
+
+    public static long parseULong(int tag, Buffer buffer, int offset, int end) {
+        long value = 0;
+
+        do {
+            byte b = buffer.getByte(offset++);
+            if (!ParserUtil.isDigit(b)) {
+                throw new FieldException(tag, "Not integer field");
+            }
+
+            value = 10 * value + (b - '0');
+        } while (offset < end);
+
+        return value;
+    }
 
     public static long parseLong(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();

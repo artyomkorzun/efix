@@ -2,7 +2,7 @@ package org.efix.util.parse;
 
 import org.junit.Test;
 
-public class BooleanParserTest extends AbstractParserTest {
+public class BoolParserTest extends AbstractParserTest {
 
     protected static final Verifier<Boolean> VERIFIER = string -> {
         if (string.length() == 1) {
@@ -15,7 +15,7 @@ public class BooleanParserTest extends AbstractParserTest {
 
         throw new IllegalArgumentException(string);
     };
-    protected static final Parser<Boolean> PARSER = BooleanParser::parseBoolean;
+    protected static final Parser<Boolean> PARSER = BoolParser::parseBool;
 
     @Test
     public void shouldParseBooleans() {

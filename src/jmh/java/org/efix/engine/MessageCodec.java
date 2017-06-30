@@ -1,6 +1,5 @@
 package org.efix.engine;
 
-import org.agrona.collections.Int2IntHashMap;
 import org.efix.message.FieldUtil;
 import org.efix.message.builder.MessageBuilder;
 import org.efix.message.field.Tag;
@@ -8,20 +7,13 @@ import org.efix.message.parser.MessageParser;
 import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
-import org.efix.util.parse.ByteParser;
-import org.efix.util.parse.ByteSequenceParser;
-import org.efix.util.parse.DecimalParser;
-import org.efix.util.parse.TimestampParser;
-
-import static org.efix.message.FieldUtil.FIELD_SEPARATOR;
-import static org.efix.message.FieldUtil.INT_NULL;
 
 
 public class MessageCodec {
 
     private static final int SCALE = 6;
 
-    private final Int2IntHashMap indexMap = new Int2IntHashMap(64, 0.5f, INT_NULL);
+    private final org.efix.message.Message map = new org.efix.message.Message();
     private final MutableInt offset = new MutableInt();
 
     private final ByteSequenceWrapper account = new ByteSequenceWrapper();
@@ -573,60 +565,28 @@ public class MessageCodec {
 
     // TODO: null check
     public void decodeWithIndexMap(Message message, MessageParser parser) {
-        indexMap.clear();
+        org.efix.message.Message map = this.map;
 
         Buffer buffer = parser.buffer();
-        int end = parser.end();
+        int offset = parser.offset();
+        int length = parser.remaining();
+        map.parse(buffer, offset, length);
 
-        while (parser.hasRemaining()) {
-            int tag = parser.parseTag();
-            int index = parser.offset();
-            parser.parseValue();
+        CharSequence account = map.getString(Tag.Account, this.account, null);
+        CharSequence orderId = map.getString(Tag.ClOrdID, this.orderId, null);
+        CharSequence symbol = map.getString(Tag.Symbol, this.symbol, null);
+        CharSequence exchange = map.getString(Tag.ExDestination, this.exchange, null);
+        CharSequence broker = map.getString(Tag.ExecBroker, this.broker, null);
+        CharSequence securityType = map.getString(Tag.SecurityType, this.securityType, null);
 
-            indexMap.put(tag, index);
-        }
+        byte orderType = map.getByte(Tag.OrdType, (byte) 0);
+        byte side = map.getByte(Tag.Side, (byte) 0);
 
-        ByteSequenceWrapper account = this.account;
-        offset.set(indexMap.get(Tag.Account));
-        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, account);
+        long quantity = map.getDecimal(Tag.OrderQty, SCALE, 0);
+        long limitPrice = map.getDecimal(Tag.Price, SCALE, 0);
 
-        ByteSequenceWrapper orderId = this.orderId;
-        offset.set(indexMap.get(Tag.ClOrdID));
-        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, orderId);
-
-        offset.set(indexMap.get(Tag.OrderQty));
-        long quantity = DecimalParser.parseDecimal(SCALE, FIELD_SEPARATOR, buffer, offset, end);
-
-        offset.set(indexMap.get(Tag.OrdType));
-        byte orderType = ByteParser.parseByte(FIELD_SEPARATOR, buffer, offset, end);
-
-        offset.set(indexMap.get(Tag.Price));
-        long limitPrice = DecimalParser.parseDecimal(SCALE, FIELD_SEPARATOR, buffer, offset, end);
-
-        offset.set(indexMap.get(Tag.Side));
-        byte side = ByteParser.parseByte(FIELD_SEPARATOR, buffer, offset, end);
-
-        ByteSequenceWrapper symbol = this.symbol;
-        offset.set(indexMap.get(Tag.Symbol));
-        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, symbol);
-
-        offset.set(indexMap.get(Tag.TimeInForce));
-        byte timeInForce = ByteParser.parseByte(FIELD_SEPARATOR, buffer, offset, end);
-
-        offset.set(indexMap.get(Tag.TransactTime));
-        long transactTime = TimestampParser.parseTimestamp(FIELD_SEPARATOR, buffer, offset, end);
-
-        ByteSequenceWrapper broker = this.broker;
-        offset.set(indexMap.get(Tag.ExecBroker));
-        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, broker);
-
-        ByteSequenceWrapper exchange = this.exchange;
-        offset.set(indexMap.get(Tag.ExDestination));
-        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, exchange);
-
-        ByteSequenceWrapper securityType = this.securityType;
-        offset.set(indexMap.get(Tag.SecurityType));
-        ByteSequenceParser.parseByteSequence(FIELD_SEPARATOR, buffer, offset, end, securityType);
+        byte timeInForce = map.getByte(Tag.TimeInForce, (byte) 0);
+        long transactTime = map.getTimestamp(Tag.TransactTime, 0);
 
         message.setAccount(account);
         message.setBroker(broker);

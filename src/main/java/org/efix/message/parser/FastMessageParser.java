@@ -61,7 +61,7 @@ public class FastMessageParser implements MessageParser {
 
     @Override
     public boolean parseBoolean() {
-        return BooleanParser.parseBoolean(FIELD_SEPARATOR, buffer, offset, end);
+        return BoolParser.parseBool(FIELD_SEPARATOR, buffer, offset, end);
     }
 
     @Override

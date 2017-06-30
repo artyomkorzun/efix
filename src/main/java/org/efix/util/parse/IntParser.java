@@ -1,5 +1,6 @@
 package org.efix.util.parse;
 
+import org.efix.message.FieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.IntType;
@@ -8,6 +9,43 @@ import static org.efix.util.parse.ParserUtil.*;
 
 
 public class IntParser {
+
+    public static int parseInt(int tag, Buffer buffer, int offset, int end) {
+        int value = 0;
+        boolean sign = true;
+
+        byte b = buffer.getByte(offset);
+        if (b == '-') {
+            offset++;
+            sign = false;
+        }
+
+        while (offset < end) {
+            b = buffer.getByte(offset++);
+            if (!ParserUtil.isDigit(b)) {
+                throw new FieldException(tag, "Not valid integer field");
+            }
+
+            value = 10 * value - (b - '0');
+        }
+
+        return sign ? -value : value;
+    }
+
+    public static int parseUInt(int tag, Buffer buffer, int offset, int end) {
+        int value = 0;
+
+        do {
+            byte b = buffer.getByte(offset++);
+            if (!ParserUtil.isDigit(b)) {
+                throw new FieldException(tag, "Not valid integer field");
+            }
+
+            value = 10 * value + (b - '0');
+        } while (offset < end);
+
+        return value;
+    }
 
     public static int parseInt(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();

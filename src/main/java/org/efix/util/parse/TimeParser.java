@@ -11,6 +11,13 @@ import static org.efix.util.parse.ParserUtil.*;
 
 public class TimeParser {
 
+    protected static int parseTime(int tag, Buffer buffer, int offset, int end) {
+        int time = parseSecondTime(buffer, offset);
+        time += parse3DigitUInt(buffer, offset + TimeType.MILLISECOND_OFFSET);
+        return time;
+    }
+
+
     /**
      * Parses time in format HH:MM:SS or HH:MM:SS.sss without leap seconds
      */

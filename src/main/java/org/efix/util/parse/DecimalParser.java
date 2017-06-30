@@ -1,5 +1,6 @@
 package org.efix.util.parse;
 
+import org.efix.message.FieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.DecimalType;
@@ -8,6 +9,78 @@ import static org.efix.util.parse.ParserUtil.*;
 
 
 public class DecimalParser {
+
+    public static long parseDecimal(int tag, int scale, Buffer buffer, int offset, int end) {
+        long value = 0;
+        boolean sign = true;
+
+        if (buffer.getByte(offset) == '-') {
+            offset++;
+            sign = false;
+        }
+
+        if (offset < end) {
+            do {
+                byte b = buffer.getByte(offset++);
+                if (ParserUtil.isDigit(b)) {
+                    value = 10 * value - (b - '0');
+                } else if (b == '.') {
+                    break;
+                } else {
+                    throw new FieldException(tag, "Not valid decimal");
+                }
+            } while (offset < end);
+
+            if (offset < end) {
+                do {
+                    byte b = buffer.getByte(offset++);
+                    if (!ParserUtil.isDigit(b)) {
+                        throw new FieldException(tag, "Not valid decimal");
+                    }
+
+                    value = 10 * value - (b - '0');
+                } while (offset < end);
+
+                scale -= end - offset;
+            }
+
+            value *= DecimalType.multiplier(scale);
+            value = sign ? -value : value;
+        }
+
+        return value;
+    }
+
+    public static long parseUDecimal(int tag, int scale, Buffer buffer, int offset, int end) {
+        long value = 0;
+
+        do {
+            byte b = buffer.getByte(offset++);
+            if (ParserUtil.isDigit(b)) {
+                value = 10 * value + (b - '0');
+            } else if (b == '.') {
+                break;
+            } else {
+                throw new FieldException(tag, "Not valid decimal");
+            }
+        } while (offset < end);
+
+        if (offset < end) {
+            do {
+                byte b = buffer.getByte(offset++);
+                if (!ParserUtil.isDigit(b)) {
+                    throw new FieldException(tag, "Not valid decimal");
+                }
+
+                value = 10 * value + (b - '0');
+            } while (offset < end);
+
+            scale -= end - offset;
+        }
+
+        value *= DecimalType.multiplier(scale);
+        return value;
+    }
 
     public static long parseDecimal(int scale, byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();
