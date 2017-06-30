@@ -29,7 +29,7 @@ public final class Message {
 
     public Message(int initialCapacity, float loadFactor) {
         this.loadFactor = loadFactor;
-        capacity(initialCapacity);
+        resize(initialCapacity);
     }
 
     public void parse(Buffer buffer, int offset, int length) {
@@ -57,6 +57,20 @@ public final class Message {
         } while (offset < end);
     }
 
+    public boolean getBool(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return BoolParser.parseBool(tag, buffer, offset, end);
+    }
+
     public boolean getBool(int tag, boolean noValue) {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
@@ -69,6 +83,20 @@ public final class Message {
         int end = entries[index + 2];
 
         return BoolParser.parseBool(tag, buffer, offset, end);
+    }
+
+    public byte getByte(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return ByteParser.parseByte(tag, buffer, offset, end);
     }
 
     public byte getByte(int tag, byte noValue) {
@@ -85,6 +113,20 @@ public final class Message {
         return ByteParser.parseByte(tag, buffer, offset, end);
     }
 
+    public int getInt(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return IntParser.parseInt(tag, buffer, offset, end);
+    }
+
     public int getInt(int tag, int noValue) {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
@@ -97,6 +139,20 @@ public final class Message {
         int end = entries[index + 2];
 
         return IntParser.parseInt(tag, buffer, offset, end);
+    }
+
+    public int getUInt(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return IntParser.parseUInt(tag, buffer, offset, end);
     }
 
     public int getUInt(int tag, int noValue) {
@@ -113,6 +169,20 @@ public final class Message {
         return IntParser.parseUInt(tag, buffer, offset, end);
     }
 
+    public long getLong(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return LongParser.parseLong(tag, buffer, offset, end);
+    }
+
     public long getLong(int tag, long noValue) {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
@@ -125,6 +195,20 @@ public final class Message {
         int end = entries[index + 2];
 
         return LongParser.parseLong(tag, buffer, offset, end);
+    }
+
+    public long getULong(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return LongParser.parseULong(tag, buffer, offset, end);
     }
 
     public long getULong(int tag, long noValue) {
@@ -141,6 +225,20 @@ public final class Message {
         return LongParser.parseULong(tag, buffer, offset, end);
     }
 
+    public long getDecimal(int tag, int scale) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DecimalParser.parseDecimal(tag, scale, buffer, offset, end);
+    }
+
     public long getDecimal(int tag, int scale, long noValue) {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
@@ -155,6 +253,20 @@ public final class Message {
         return DecimalParser.parseDecimal(tag, scale, buffer, offset, end);
     }
 
+    public long getUDecimal(int tag, int scale) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DecimalParser.parseUDecimal(tag, scale, buffer, offset, end);
+    }
+
     public long getUDecimal(int tag, int scale, long noValue) {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
@@ -167,6 +279,20 @@ public final class Message {
         int end = entries[index + 2];
 
         return DecimalParser.parseUDecimal(tag, scale, buffer, offset, end);
+    }
+
+    public long getTimestamp(int tag/*, TimeUnit units*/) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return TimestampParser.parseTimestamp(tag, buffer, offset, end);
     }
 
     public long getTimestamp(int tag/*, TimeUnit units*/, long noValue) {
@@ -191,6 +317,21 @@ public final class Message {
         return noValue; // TODO
     }*/
 
+    public CharSequence getString(int tag, ByteSequenceWrapper wrapper) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        wrapper.wrap(buffer, offset, end - offset);
+        return wrapper;
+    }
+
     public CharSequence getString(int tag, ByteSequenceWrapper wrapper, CharSequence noValue) {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
@@ -206,7 +347,7 @@ public final class Message {
         return wrapper;
     }
 
-    public boolean contains(int tag) {
+    public boolean has(int tag) {
         final int[] entries = this.entries;
         return getIndex(tag, entries) != NOT_FOUND;
     }
@@ -228,7 +369,7 @@ public final class Message {
         final int[] entries = this.entries;
         final int length = this.entries.length;
 
-        capacity(newCapacity);
+        resize(newCapacity);
 
         for (int index = 0; index < length; index += 4) {
             if (entries[index] != NOT_FOUND) {
@@ -237,7 +378,7 @@ public final class Message {
         }
     }
 
-    private void capacity(final int newCapacity) {
+    private void resize(final int newCapacity) {
         final int newLength = newCapacity * 4;
         resizeThreshold = (int) (newCapacity * loadFactor);
         entries = new int[newLength];
