@@ -1,4 +1,4 @@
-package org.efix.engine;
+package org.efix.session;
 
 import org.efix.message.builder.FastMessageBuilder;
 import org.efix.message.builder.MessageBuilder;

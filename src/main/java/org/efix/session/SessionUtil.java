@@ -1,7 +1,5 @@
-package org.efix.engine;
+package org.efix.session;
 
-import org.efix.FixVersion;
-import org.efix.SessionId;
 import org.efix.message.*;
 import org.efix.message.builder.MessageBuilder;
 import org.efix.message.field.EncryptMethod;
@@ -10,61 +8,11 @@ import org.efix.message.parser.MessageParser;
 import org.efix.state.SessionStatus;
 import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
-import org.efix.util.buffer.Buffer;
 
 import static org.efix.message.FieldUtil.*;
 
 
 public class SessionUtil {
-
-    public static void validateHeader(FixVersion fixVersion, SessionId sessionId, Header header) {
-        checkPresent(Tag.MsgSeqNum, header.msgSeqNum());
-        checkPresent(Tag.SenderCompID, header.senderCompId());
-        checkPresent(Tag.TargetCompID, header.targetCompId());
-        checkPresent(Tag.SendingTime, header.sendingTime());
-
-        if (header.possDup()) {
-            checkPresent(Tag.OrigSendingTime, header.originalSendingTime());
-        }
-
-        checkPositive(Tag.MsgSeqNum, header.msgSeqNum());
-        checkEqual(Tag.BeginString, header.beginString(), fixVersion.beginString());
-        checkEqual(Tag.SenderCompID, header.senderCompId(), sessionId.targetCompId());
-        checkEqual(Tag.TargetCompID, header.targetCompId(), sessionId.senderCompId());
-    }
-
-    public static void validateCheckSum(int checkSum, Buffer buffer, int offset, int length) {
-        int expected = computeCheckSum(buffer, offset, length - CHECK_SUM_FIELD_LENGTH);
-        checkEqual(Tag.CheckSum, checkSum, expected);
-    }
-
-    public static void validateLogon(int heartBtInt, Logon logon) {
-        checkPresent(Tag.HeartBtInt, logon.heartBtInt());
-        checkEqual(Tag.HeartBtInt, logon.heartBtInt(), heartBtInt);
-    }
-
-    public static void validateTestRequest(TestRequest request) {
-        checkPresent(Tag.TestReqID, request.testReqID());
-    }
-
-    public static void validateResendRequest(ResendRequest request) {
-        int beginSeqNo = request.beginSeqNo();
-        checkPresent(Tag.BeginSeqNo, beginSeqNo);
-        checkPositive(Tag.BeginSeqNo, beginSeqNo);
-
-        int endSeqNo = request.endSeqNo();
-        checkPresent(Tag.EndSeqNo, endSeqNo);
-        checkNonNegative(Tag.EndSeqNo, endSeqNo);
-
-        if (endSeqNo != 0 && beginSeqNo > endSeqNo)
-            throw new FieldException(Tag.EndSeqNo, String.format("BeginSeqNo(7) %s more EndSeqNo(16) %s", beginSeqNo, endSeqNo));
-    }
-
-    public static void validateSequenceReset(int targetSeqNum, SequenceReset reset) {
-        int newSeqNo = checkPresent(Tag.NewSeqNo, reset.newSeqNo());
-        if (newSeqNo <= targetSeqNum)
-            throw new FieldException(Tag.NewSeqNo, String.format("NewSeqNo(36) %s should be more expected target MsgSeqNum %s", newSeqNo, targetSeqNum));
-    }
 
     public static void makeLogon(boolean resetSeqNum, int heartBtInt, MessageBuilder builder) {
         builder.addInt(Tag.EncryptMethod, EncryptMethod.NONE_OTHER);
@@ -207,55 +155,13 @@ public class SessionUtil {
         return reset;
     }
 
-    public static Header parseHeader(MessageParser parser, Header header) {
-        parseBeginString(parser, header.beginString());
-        parseBodyLength(parser);
-        parseMessageType(parser, header.msgType());
+    public static void parseHeader(Message message, Header header) {
+        message.getString(Tag.MsgType, header.msgType());
+        int msgSeqNum = message.getUInt(Tag.MsgSeqNum);
+        boolean possDup = message.getBool(Tag.PossDupFlag, false);
 
-        long sendingTime = LONG_NULL;
-        long originalSendingTime = LONG_NULL;
-        int msgSeqNum = INT_NULL;
-        boolean possDup = false;
-
-        ByteSequenceWrapper senderCompId = header.senderCompId().clear();
-        ByteSequenceWrapper targetCompId = header.targetCompId().clear();
-
-        parsing:
-        while (parser.hasRemaining()) {
-            int tag = parser.parseTag();
-            switch (tag) {
-                case Tag.MsgSeqNum:
-                    msgSeqNum = parser.parseInt();
-                    break;
-                case Tag.PossDupFlag:
-                    possDup = parser.parseBoolean();
-                    break;
-                case Tag.SenderCompID:
-                    parser.parseByteSequence(senderCompId);
-                    break;
-                case Tag.TargetCompID:
-                    parser.parseByteSequence(targetCompId);
-                    break;
-                case Tag.SendingTime:
-                    sendingTime = parser.parseTimestamp();
-                    break;
-                case Tag.OrigSendingTime:
-                    originalSendingTime = parser.parseTimestamp();
-                    break;
-                default:
-                    if (!isHeader(tag))
-                        break parsing;
-
-                    parser.parseValue();
-            }
-        }
-
-        header.sendingTime(sendingTime);
-        header.originalSendingTime(originalSendingTime);
         header.msgSeqNum(msgSeqNum);
         header.possDup(possDup);
-
-        return header;
     }
 
     public static void parseBeginString(MessageParser parser) {

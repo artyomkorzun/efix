@@ -1,4 +1,4 @@
-package org.efix.engine;
+package org.efix.session;
 
 import org.efix.FixVersion;
 import org.efix.SessionId;
@@ -7,7 +7,6 @@ import org.efix.connector.ConnectionException;
 import org.efix.connector.channel.Channel;
 import org.efix.message.Header;
 import org.efix.message.field.*;
-import org.efix.message.parser.MessageParser;
 import org.efix.state.SessionStatus;
 import org.efix.store.EmptyMessageStore;
 import org.efix.util.buffer.Buffer;
@@ -88,11 +87,11 @@ public class SendMessageBenchmark {
         }
 
         @Override
-        protected void onAdminMessage(Header header, MessageParser parser) {
+        protected void onAdminMessage(Header header, org.efix.message.Message message) {
         }
 
         @Override
-        protected void onAppMessage(Header header, MessageParser parser) {
+        protected void onAppMessage(Header header, org.efix.message.Message message) {
         }
 
         @Override

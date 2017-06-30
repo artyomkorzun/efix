@@ -1,4 +1,4 @@
-package org.efix.engine;
+package org.efix.session;
 
 import org.efix.message.FieldUtil;
 import org.efix.message.builder.MessageBuilder;
@@ -572,6 +572,10 @@ public class MessageCodec {
         int length = parser.remaining();
         map.parse(buffer, offset, length);
 
+        decodeWithIndexMap(message, map);
+    }
+
+    public void decodeWithIndexMap(Message message, org.efix.message.Message map) {
         CharSequence account = map.getString(Tag.Account, this.account, null);
         CharSequence orderId = map.getString(Tag.ClOrdID, this.orderId, null);
         CharSequence symbol = map.getString(Tag.Symbol, this.symbol, null);

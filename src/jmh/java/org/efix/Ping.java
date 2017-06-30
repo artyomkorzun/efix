@@ -1,12 +1,12 @@
 package org.efix;
 
 import org.HdrHistogram.Histogram;
-import org.efix.engine.Session;
-import org.efix.engine.SessionContext;
 import org.efix.message.Header;
+import org.efix.message.Message;
 import org.efix.message.builder.MessageBuilder;
 import org.efix.message.field.*;
-import org.efix.message.parser.MessageParser;
+import org.efix.session.Session;
+import org.efix.session.SessionContext;
 import org.efix.state.SessionStatus;
 import org.efix.util.ByteSequence;
 import org.efix.util.concurrent.WorkerRunner;
@@ -68,18 +68,13 @@ public class Ping {
         }
 
         @Override
-        protected void onAdminMessage(Header header, MessageParser parser) {
+        protected void onAdminMessage(Header header, Message message) {
         }
 
         @Override
-        protected void onAppMessage(Header header, MessageParser parser) {
+        protected void onAppMessage(Header header, Message message) {
             ByteSequence msgType = header.msgType();
             if (MsgType.EXECUTION_REPORT.equals(msgType)) {
-                while (parser.hasRemaining()) {
-                    parser.parseTag();
-                    parser.parseValue();
-                }
-
                 receiveNs = System.nanoTime();
             }
         }

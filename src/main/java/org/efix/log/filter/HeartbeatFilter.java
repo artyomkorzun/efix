@@ -1,9 +1,9 @@
 package org.efix.log.filter;
 
-import org.efix.engine.SessionUtil;
 import org.efix.message.field.MsgType;
 import org.efix.message.parser.FastMessageParser;
 import org.efix.message.parser.MessageParser;
+import org.efix.session.SessionUtil;
 import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.buffer.Buffer;
 

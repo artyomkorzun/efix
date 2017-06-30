@@ -1,11 +1,12 @@
 package org.efix;
 
-import org.efix.engine.Session;
-import org.efix.engine.SessionContext;
 import org.efix.message.FieldUtil;
 import org.efix.message.Header;
+import org.efix.message.Message;
 import org.efix.message.field.MsgType;
 import org.efix.message.parser.MessageParser;
+import org.efix.session.Session;
+import org.efix.session.SessionContext;
 import org.efix.state.SessionStatus;
 import org.efix.util.ByteSequence;
 import org.efix.util.concurrent.WorkerRunner;
@@ -43,18 +44,18 @@ public class Pong {
         }
 
         @Override
-        protected void onAdminMessage(Header header, MessageParser parser) {
+        protected void onAdminMessage(Header header, Message message) {
         }
 
         @Override
-        protected void onAppMessage(Header header, MessageParser parser) {
+        protected void onAppMessage(Header header, Message message) {
             ByteSequence msgType = header.msgType();
             if (MsgType.ORDER_SINGLE.equals(msgType)) {
-                int bodyStart = findBodyStart(parser);
-                int bodyEnd = parser.end() - FieldUtil.CHECK_SUM_FIELD_LENGTH;
+                /*int bodyStart = findBodyStart(message);
+                int bodyEnd = message.end() - FieldUtil.CHECK_SUM_FIELD_LENGTH;
                 int bodyLength = bodyEnd - bodyStart;
 
-                sendAppMessage(MsgType.EXECUTION_REPORT, parser.buffer(), bodyStart, bodyLength);
+                sendAppMessage(MsgType.EXECUTION_REPORT, message.buffer(), bodyStart, bodyLength);*/
             }
         }
 

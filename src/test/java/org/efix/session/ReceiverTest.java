@@ -1,4 +1,4 @@
-package org.efix.engine;
+package org.efix.session;
 
 import org.efix.connector.channel.TextChannel;
 import org.efix.message.FieldException;

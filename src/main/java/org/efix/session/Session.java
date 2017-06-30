@@ -1,4 +1,4 @@
-package org.efix.engine;
+package org.efix.session;
 
 import org.efix.FixVersion;
 import org.efix.SessionComponent;
@@ -7,7 +7,9 @@ import org.efix.SessionType;
 import org.efix.connector.Connector;
 import org.efix.connector.channel.Channel;
 import org.efix.log.MessageLog;
-import org.efix.message.*;
+import org.efix.message.AdminMsgType;
+import org.efix.message.Header;
+import org.efix.message.Message;
 import org.efix.message.builder.MessageBuilder;
 import org.efix.message.field.MsgType;
 import org.efix.message.field.Tag;
@@ -16,10 +18,7 @@ import org.efix.schedule.SessionSchedule;
 import org.efix.state.SessionState;
 import org.efix.state.SessionStatus;
 import org.efix.store.MessageStore;
-import org.efix.util.ByteSequence;
-import org.efix.util.CloseHelper;
-import org.efix.util.Disposable;
-import org.efix.util.EpochClock;
+import org.efix.util.*;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
@@ -27,8 +26,8 @@ import org.efix.util.concurrent.Worker;
 
 import java.util.ArrayList;
 
-import static org.efix.engine.SessionUtil.*;
-import static org.efix.message.FieldUtil.CHECK_SUM_FIELD_LENGTH;
+import static org.efix.session.SessionUtil.assertNotDuplicate;
+import static org.efix.session.SessionUtil.parseHeader;
 import static org.efix.state.SessionStatus.*;
 
 
@@ -42,6 +41,7 @@ public abstract class Session implements Worker {
     protected final MessageLog log;
     protected final SessionSchedule schedule;
 
+    protected final Message message = new Message(128);
     protected final MessageParser parser;
     protected final MessageBuilder builder;
 
@@ -55,10 +55,7 @@ public abstract class Session implements Worker {
     protected final Resender resender;
 
     protected final Header header = new Header();
-    protected final Logon logon = new Logon();
-    protected final TestRequest testRequest = new TestRequest();
-    protected final ResendRequest resendRequest = new ResendRequest();
-    protected final SequenceReset sequenceReset = new SequenceReset();
+    protected final ByteSequenceWrapper testReqId = new ByteSequenceWrapper();
 
     protected final SessionType sessionType;
     protected final FixVersion fixVersion;
@@ -70,6 +67,7 @@ public abstract class Session implements Worker {
     protected final int logoutTimeout;
     protected final boolean resetSeqNumsOnLogon;
     protected final boolean logonWithNextExpectedSeqNum;
+
 
     protected final ArrayList<Disposable> openResources = new ArrayList<>();
 
@@ -193,10 +191,11 @@ public abstract class Session implements Worker {
         int work = 0;
 
         try {
-            if (state.status() == DISCONNECTED)
+            if (state.status() == DISCONNECTED) {
                 work += checkSessionStart(now);
-            else
+            } else {
                 work += checkSessionEnd(now);
+            }
         } catch (Exception e) {
             work += 1;
             processError(e);
@@ -378,81 +377,77 @@ public abstract class Session implements Worker {
         state.lastReceivedTime(time);
         log.log(true, time, buffer, offset, length);
 
-        MessageParser parser = this.parser;
-        parser.wrap(buffer, offset, length);
+        Message message = this.message;
+        message.parse(buffer, offset, length);
 
-        Header header = parseHeader(parser, this.header);
-        validateHeader(header);
+        Header header = this.header;
+        parseHeader(message, header);
 
-        parser.offset(parser.end() - CHECK_SUM_FIELD_LENGTH);
-        int checkSum = parseCheckSum(parser);
-        validateCheckSum(checkSum, buffer, offset, length);
-
-        parser.reset();
-
-        if (AdminMsgType.isAdmin(header.msgType()))
-            processAdminMessage(header, parser);
-        else
-            processAppMessage(header, parser);
+        if (AdminMsgType.isAdmin(header.msgType())) {
+            processAdminMessage(header, message);
+        } else {
+            processAppMessage(header, message);
+        }
     }
 
-    protected void processAdminMessage(Header header, MessageParser parser) {
+    protected void processAdminMessage(Header header, Message message) {
         switch (header.msgType().charAt(0)) {
             case AdminMsgType.LOGON:
-                processLogon(header, parser);
+                processLogon(header, message);
                 break;
             case AdminMsgType.HEARTBEAT:
-                processHeartbeat(header, parser);
+                processHeartbeat(header, message);
                 break;
             case AdminMsgType.TEST:
-                processTestRequest(header, parser);
+                processTestRequest(header, message);
                 break;
             case AdminMsgType.RESEND:
-                processResendRequest(header, parser);
+                processResendRequest(header, message);
                 break;
             case AdminMsgType.REJECT:
-                processReject(header, parser);
+                processReject(header, message);
                 break;
             case AdminMsgType.RESET:
-                processSequenceReset(header, parser);
+                processSequenceReset(header, message);
                 break;
             case AdminMsgType.LOGOUT:
-                processLogout(header, parser);
+                processLogout(header, message);
                 break;
         }
     }
 
-    protected void processLogon(Header header, MessageParser parser) {
+    protected void processLogon(Header header, Message message) {
         assertStatus(SOCKET_CONNECTED, LOGON_SENT);
         assertNotDuplicate(header.possDup(), "Logon with PossDup(44)=Y");
 
-        Logon logon = parseLogon(parser, this.logon);
-
-        boolean resetSeqNums = logon.resetSeqNums();
-        int msgSeqNum = header.msgSeqNum();
+        final boolean resetSeqNums = message.getBool(Tag.ResetSeqNumFlag, false);
+        final int msgSeqNum = header.msgSeqNum();
 
         boolean expectedSeqNum = checkTargetSeqNum(resetSeqNums ? 1 : state.targetSeqNum(), msgSeqNum, resetSeqNums);
-        if (!resetSeqNums && expectedSeqNum)
+        if (!resetSeqNums && expectedSeqNum) {
             state.targetSeqNum(msgSeqNum + 1);
+        }
 
-        validateLogon(logon);
-        onAdminMessage(header, parser.reset());
+        onAdminMessage(header, message);
 
         state.targetSeqNumSynced(false);
-        if (resetSeqNums)
+        if (resetSeqNums) {
             state.targetSeqNum(msgSeqNum + 1);
+        }
 
-        if (updateStatus(LOGON_RECEIVED) == SOCKET_CONNECTED)
+        if (updateStatus(LOGON_RECEIVED) == SOCKET_CONNECTED) {
             sendLogon(resetSeqNums);
+        }
 
-        if (!expectedSeqNum)
+        if (!expectedSeqNum) {
             sendResendRequest(state.targetSeqNum(), 0);
+        }
 
         sendTestRequest("MsgSeqNum check");
         updateStatus(APPLICATION_CONNECTED);
     }
 
-    protected void processHeartbeat(Header header, MessageParser parser) {
+    protected void processHeartbeat(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
         assertNotDuplicate(header.possDup(), "Heartbeat with PossDup(44)=Y");
 
@@ -463,109 +458,90 @@ public abstract class Session implements Worker {
         state.testRequestSent(false);
         state.targetSeqNumSynced(true);
 
-        onAdminMessage(header, parser);
+        onAdminMessage(header, message);
     }
 
-    protected void processTestRequest(Header header, MessageParser parser) {
+    protected void processTestRequest(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
         assertNotDuplicate(header.possDup(), "TestRequest with PossDup(44)=Y");
 
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced()))
+        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced())) {
             state.targetSeqNum(msgSeqNum + 1);
+        }
 
-        TestRequest request = parseTestRequest(parser, testRequest);
-        validateTestRequest(request);
-
-        onAdminMessage(header, parser.reset());
-        if (state.status() == APPLICATION_CONNECTED)
-            sendHeartbeat(request.testReqID());
+        onAdminMessage(header, message);
+        if (state.status() == APPLICATION_CONNECTED) {
+            CharSequence reqId = message.getString(Tag.TestReqID, testReqId);
+            sendHeartbeat(reqId);
+        }
     }
 
-    protected void processResendRequest(Header header, MessageParser parser) {
+    protected void processResendRequest(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
         assertNotDuplicate(header.possDup(), "ResendRequest with PossDup(44)=Y");
 
         int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced()))
+        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced())) {
             state.targetSeqNum(msgSeqNum + 1);
+        }
 
-        ResendRequest request = parseResendRequest(parser, resendRequest);
-        validateResendRequest(request);
+        int beginSeqNo = message.getUInt(Tag.BeginSeqNo);
+        int endSeqNo = message.getUInt(Tag.EndSeqNo);
 
-        onAdminMessage(header, parser.reset());
-        resendMessages(request.beginSeqNo(), request.endSeqNo() == 0 ? (state.senderSeqNum() - 1) : request.endSeqNo());
+        onAdminMessage(header, message);
+        resendMessages(beginSeqNo, endSeqNo == 0 ? (state.senderSeqNum() - 1) : endSeqNo);
     }
 
-    protected void processReject(Header header, MessageParser parser) {
+    protected void processReject(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
         int msgSeqNum = header.msgSeqNum();
         if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced())) {
             state.targetSeqNum(msgSeqNum + 1);
-            onAdminMessage(header, parser);
+            onAdminMessage(header, message);
         }
     }
 
-    protected void processSequenceReset(Header header, MessageParser parser) {
+    protected void processSequenceReset(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        SequenceReset reset = parseSequenceReset(parser, sequenceReset);
-        if (reset.isGapFill())
+        boolean gapFill = message.getBool(Tag.GapFillFlag, true);
+        if (gapFill) {
             checkTargetSeqNum(header.msgSeqNum(), true);
+        }
 
-        validateSequenceReset(reset);
-        onAdminMessage(header, parser.reset());
-        state.targetSeqNum(reset.newSeqNo());
+        onAdminMessage(header, message);
+
+        int newSeqNo = message.getUInt(Tag.NewSeqNo);
+        state.targetSeqNum(newSeqNo);
     }
 
-    protected void processLogout(Header header, MessageParser parser) {
+    protected void processLogout(Header header, Message message) {
         assertStatus(LOGON_SENT, APPLICATION_CONNECTED, LOGOUT_SENT);
         assertNotDuplicate(header.possDup(), "Logout with PossDup(44)=Y");
 
         boolean expectedSeqNum = checkTargetSeqNum(header.msgSeqNum(), state.targetSeqNumSynced());
-        if (expectedSeqNum)
+        if (expectedSeqNum) {
             state.targetSeqNum(header.msgSeqNum() + 1);
+        }
 
-        onAdminMessage(header, parser);
+        onAdminMessage(header, message);
 
-        if (updateStatus(LOGOUT_RECEIVED) == APPLICATION_CONNECTED)
+        if (updateStatus(LOGOUT_RECEIVED) == APPLICATION_CONNECTED) {
             sendLogout("Logout response");
+        }
 
         disconnect("Logout");
     }
 
-    protected void processAppMessage(Header header, MessageParser parser) {
+    protected void processAppMessage(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
         if (checkTargetSeqNum(header.msgSeqNum(), state.targetSeqNumSynced())) {
             state.targetSeqNum(header.msgSeqNum() + 1);
-            onAppMessage(header, parser);
+            onAppMessage(header, message);
         }
-    }
-
-    protected void validateHeader(Header header) {
-        SessionUtil.validateHeader(fixVersion, sessionId, header);
-    }
-
-    protected void validateCheckSum(int checkSum, Buffer buffer, int offset, int length) {
-        SessionUtil.validateCheckSum(checkSum, buffer, offset, length);
-    }
-
-    protected void validateLogon(Logon logon) {
-        SessionUtil.validateLogon(heartbeatInterval, logon);
-    }
-
-    protected void validateTestRequest(TestRequest request) {
-        SessionUtil.validateTestRequest(request);
-    }
-
-    protected void validateResendRequest(ResendRequest request) {
-        SessionUtil.validateResendRequest(request);
-    }
-
-    protected void validateSequenceReset(SequenceReset reset) {
-        SessionUtil.validateSequenceReset(state.targetSeqNum(), reset);
     }
 
     protected int sendOutboundMessages() {
@@ -706,8 +682,9 @@ public abstract class Session implements Worker {
     }
 
     protected void processError(Exception e) {
-        if (state.status() != DISCONNECTED)
+        if (state.status() != DISCONNECTED) {
             disconnect(e.getMessage());
+        }
 
         onError(e);
     }
@@ -724,9 +701,9 @@ public abstract class Session implements Worker {
 
     protected abstract int doSendOutboundMessages();
 
-    protected abstract void onAdminMessage(Header header, MessageParser parser);
+    protected abstract void onAdminMessage(Header header, Message message);
 
-    protected abstract void onAppMessage(Header header, MessageParser parser);
+    protected abstract void onAppMessage(Header header, Message message);
 
     protected boolean onStoreMessage(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
         return !AdminMsgType.isAdmin(msgType) || MsgType.REJECT.equals(msgType);

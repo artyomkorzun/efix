@@ -1,4 +1,4 @@
-package org.efix.engine;
+package org.efix.session;
 
 import org.efix.store.MessageStore;
 import org.efix.util.ByteSequence;

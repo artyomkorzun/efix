@@ -1,4 +1,4 @@
-package org.efix.engine;
+package org.efix.session;
 
 import org.efix.FixVersion;
 import org.efix.SessionId;
@@ -6,7 +6,7 @@ import org.efix.SessionType;
 import org.efix.connector.channel.TestConnector;
 import org.efix.connector.channel.TextChannel;
 import org.efix.message.Header;
-import org.efix.message.parser.MessageParser;
+import org.efix.message.Message;
 import org.efix.state.MemorySessionState;
 import org.efix.state.SessionState;
 import org.efix.state.SessionStatus;
@@ -67,11 +67,11 @@ public abstract class SessionTest {
             }
 
             @Override
-            protected void onAdminMessage(Header header, MessageParser parser) {
+            protected void onAdminMessage(Header header, Message message) {
             }
 
             @Override
-            protected void onAppMessage(Header header, MessageParser parser) {
+            protected void onAppMessage(Header header, Message message) {
             }
 
             @Override
@@ -330,7 +330,7 @@ public abstract class SessionTest {
 
         int work = process(inGapFill);
 
-        assertErrors("Missing field #36");
+        assertErrors("Field #36 not found");
         assertWorkDone(work);
         assertSeqNums(3, 3);
         assertNoOutMessages();

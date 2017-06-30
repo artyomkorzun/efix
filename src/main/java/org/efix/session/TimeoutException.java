@@ -1,4 +1,4 @@
-package org.efix.engine;
+package org.efix.session;
 
 public class TimeoutException extends RuntimeException {
 

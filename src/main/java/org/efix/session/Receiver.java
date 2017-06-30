@@ -1,4 +1,4 @@
-package org.efix.engine;
+package org.efix.session;
 
 import org.efix.connector.channel.Channel;
 import org.efix.message.FieldUtil;
@@ -9,8 +9,8 @@ import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
 
-import static org.efix.engine.SessionUtil.parseBeginString;
-import static org.efix.engine.SessionUtil.parseBodyLength;
+import static org.efix.session.SessionUtil.parseBeginString;
+import static org.efix.session.SessionUtil.parseBodyLength;
 
 
 public class Receiver {
