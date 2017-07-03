@@ -1,0 +1,13 @@
+plugins {
+    id 'application'
+}
+
+mainClassName = 'org.adoptopenjdk.jitwatch.launch.LaunchUI'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    runtime 'com.chrisnewland:jitwatch:1.0.0'
+}

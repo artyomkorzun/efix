@@ -1,7 +1,9 @@
 package org.efix.message;
 
+import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.buffer.Buffer;
+import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.parse.*;
 
 import java.util.Arrays;
@@ -317,7 +319,7 @@ public final class Message {
         return noValue; // TODO
     }*/
 
-    public CharSequence getString(int tag, ByteSequenceWrapper wrapper) throws NoFieldException {
+    public ByteSequence getString(int tag, ByteSequenceWrapper wrapper) throws NoFieldException {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
 
@@ -345,6 +347,60 @@ public final class Message {
 
         wrapper.wrap(buffer, offset, end - offset);
         return wrapper;
+    }
+/*
+    public ByteSequence getString(int tag, ByteSequenceWrapper wrapper, ByteSequence noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        wrapper.wrap(buffer, offset, end - offset);
+        return wrapper;
+    }*/
+
+    public Buffer getRaw(int tag, MutableBuffer wrapper) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        wrapper.wrap(buffer, offset, end - offset);
+        return wrapper;
+    }
+
+    public Buffer getRaw(int tag, MutableBuffer wrapper, Buffer noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        wrapper.wrap(buffer, offset, end - offset);
+        return wrapper;
+    }
+
+    public void getAny(int tag){
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
     }
 
     public boolean has(int tag) {

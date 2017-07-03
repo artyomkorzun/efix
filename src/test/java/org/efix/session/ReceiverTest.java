@@ -1,5 +1,6 @@
 package org.efix.session;
 
+import org.efix.FixVersion;
 import org.efix.connector.channel.TextChannel;
 import org.efix.message.FieldException;
 import org.efix.util.InsufficientSpaceException;
@@ -56,7 +57,7 @@ public class ReceiverTest {
     }
 
     protected void shouldReceiveMessages(String[] expected, String[] chunks) {
-        Receiver receiver = new Receiver(BUFFER_SIZE, MTU_SIZE);
+        Receiver receiver = new Receiver(FixVersion.FIX42, BUFFER_SIZE, MTU_SIZE);
         TextChannel channel = new TextChannel(chunks);
         receiver.channel(channel);
 
@@ -69,7 +70,7 @@ public class ReceiverTest {
     }
 
     protected void shouldThrowException(String... chunks) {
-        Receiver receiver = new Receiver(BUFFER_SIZE, MTU_SIZE);
+        Receiver receiver = new Receiver(FixVersion.FIX42, BUFFER_SIZE, MTU_SIZE);
         receiver.channel(new TextChannel(chunks));
         MessageHandler handler = (buffer, offset, length) -> {
         };

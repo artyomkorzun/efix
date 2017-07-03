@@ -401,7 +401,7 @@ public class SessionContext {
         }
 
         if (receiver == null) {
-            receiver = new Receiver(receiveBufferSize, mtuSize);
+            receiver = new Receiver(fixVersion, receiveBufferSize, mtuSize);
         }
 
         if (sender == null) {

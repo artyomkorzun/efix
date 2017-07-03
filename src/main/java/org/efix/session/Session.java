@@ -8,6 +8,7 @@ import org.efix.connector.Connector;
 import org.efix.connector.channel.Channel;
 import org.efix.log.MessageLog;
 import org.efix.message.AdminMsgType;
+import org.efix.message.FieldException;
 import org.efix.message.Header;
 import org.efix.message.Message;
 import org.efix.message.builder.MessageBuilder;
@@ -362,8 +363,9 @@ public abstract class Session implements Worker {
 
     protected void disconnect(CharSequence cause) {
         SessionStatus status = state.status();
-        if (status != SOCKET_CONNECTED)
+        if (status != SOCKET_CONNECTED) {
             updateStatus(SOCKET_CONNECTED);
+        }
 
         connector.disconnect();
         receiver.channel(null);
@@ -395,21 +397,27 @@ public abstract class Session implements Worker {
             case AdminMsgType.LOGON:
                 processLogon(header, message);
                 break;
+
             case AdminMsgType.HEARTBEAT:
                 processHeartbeat(header, message);
                 break;
+
             case AdminMsgType.TEST:
                 processTestRequest(header, message);
                 break;
+
             case AdminMsgType.RESEND:
                 processResendRequest(header, message);
                 break;
+
             case AdminMsgType.REJECT:
                 processReject(header, message);
                 break;
+
             case AdminMsgType.RESET:
                 processSequenceReset(header, message);
                 break;
+
             case AdminMsgType.LOGOUT:
                 processLogout(header, message);
                 break;
@@ -428,6 +436,7 @@ public abstract class Session implements Worker {
             state.targetSeqNum(msgSeqNum + 1);
         }
 
+        validateLogon(message);
         onAdminMessage(header, message);
 
         state.targetSeqNumSynced(false);
@@ -486,10 +495,12 @@ public abstract class Session implements Worker {
             state.targetSeqNum(msgSeqNum + 1);
         }
 
+        validateResendRequest(message);
+        onAdminMessage(header, message);
+
         int beginSeqNo = message.getUInt(Tag.BeginSeqNo);
         int endSeqNo = message.getUInt(Tag.EndSeqNo);
 
-        onAdminMessage(header, message);
         resendMessages(beginSeqNo, endSeqNo == 0 ? (state.senderSeqNum() - 1) : endSeqNo);
     }
 
@@ -506,11 +517,12 @@ public abstract class Session implements Worker {
     protected void processSequenceReset(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        boolean gapFill = message.getBool(Tag.GapFillFlag, true);
+        boolean gapFill = message.getBool(Tag.GapFillFlag, false);
         if (gapFill) {
             checkTargetSeqNum(header.msgSeqNum(), true);
         }
 
+        validateSequenceReset(message);
         onAdminMessage(header, message);
 
         int newSeqNo = message.getUInt(Tag.NewSeqNo);
@@ -648,10 +660,36 @@ public abstract class Session implements Worker {
         log.log(false, time, message, offset, length);
     }
 
+    protected void validateLogon(Message message) {
+        int heartBtInt = message.getUInt(Tag.HeartBtInt);
+        if (heartBtInt != heartbeatInterval) {
+            throw new FieldException(Tag.HeartBtInt, "HeartBtInt(108) does not match. Expected " + heartbeatInterval + " but received " + heartBtInt);
+        }
+    }
+
+    protected void validateResendRequest(Message message) {
+        int beginSeqNo = message.getUInt(Tag.BeginSeqNo);
+        int endSeqNo = message.getUInt(Tag.EndSeqNo);
+
+        if (endSeqNo != 0 && beginSeqNo > endSeqNo) {
+            throw new FieldException(Tag.EndSeqNo, "BeginSeqNo(7) " + beginSeqNo + " more EndSeqNo(16) " + endSeqNo);
+        }
+    }
+
+    protected void validateSequenceReset(Message message) {
+        int newSeqNo = message.getUInt(Tag.NewSeqNo);
+        int targetSeqNum = state.targetSeqNum();
+
+        if (newSeqNo <= targetSeqNum) {
+            throw new FieldException(Tag.NewSeqNo, "NewSeqNo(36) " + newSeqNo + " should be more expected target MsgSeqNum " + targetSeqNum);
+        }
+    }
+
     protected void makeLogon(boolean resetSeqNum, MessageBuilder builder) {
         SessionUtil.makeLogon(resetSeqNum, heartbeatInterval, builder);
-        if (logonWithNextExpectedSeqNum)
+        if (logonWithNextExpectedSeqNum) {
             builder.addInt(Tag.NextExpectedMsgSeqNum, state.targetSeqNum());
+        }
     }
 
     protected void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {

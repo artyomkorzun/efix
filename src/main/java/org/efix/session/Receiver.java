@@ -1,29 +1,27 @@
 package org.efix.session;
 
+import org.efix.FixVersion;
 import org.efix.connector.channel.Channel;
+import org.efix.message.FieldException;
 import org.efix.message.FieldUtil;
-import org.efix.message.parser.FastMessageParser;
-import org.efix.message.parser.MessageParser;
+import org.efix.message.field.Tag;
 import org.efix.util.InsufficientSpaceException;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
 
-import static org.efix.session.SessionUtil.parseBeginString;
-import static org.efix.session.SessionUtil.parseBodyLength;
-
 
 public class Receiver {
 
-    protected final MessageParser parser;
     protected final MutableBuffer buffer;
     protected final int mtuSize;
+    protected final int bodyLengthStart;
 
     protected Channel channel;
     protected int offset;
 
-    public Receiver(int bufferSize, int mtuSize) {
-        this.parser = new FastMessageParser();
+    public Receiver(FixVersion fixVersion, int bufferSize, int mtuSize) {
+        this.bodyLengthStart = 5 + fixVersion.beginString().length();
         this.buffer = UnsafeBuffer.allocateDirect(bufferSize);
         this.mtuSize = mtuSize;
     }
@@ -52,8 +50,9 @@ public class Receiver {
                 offset += length;
             }
 
-            if (remaining > 0)
+            if (remaining > 0) {
                 buffer.putBytes(0, buffer, offset, remaining);
+            }
 
             this.offset = remaining;
         }
@@ -67,17 +66,31 @@ public class Receiver {
     }
 
     protected int parseMessageLength(Buffer buffer, int offset, int length) {
-        parser.wrap(buffer, offset, length);
-        parseBeginString(parser);
-        int bodyLength = parseBodyLength(parser);
-        int headerLength = parser.offset() - offset;
+        int bodyLengthOffset = offset + bodyLengthStart;
+        if (buffer.getByte(bodyLengthOffset - 1) != '=') {
+            throw new FieldException(Tag.BodyLength, "Expected '=' at BodyLength(9) field");
+        }
+
+        int bodyLength = 0;
+
+        while (true) {
+            byte b = buffer.getByte(bodyLengthOffset++);
+            if (b == '\u0001') {
+                break;
+            }
+
+            bodyLength = 10 * bodyLength + (b - '0');
+        }
+
+        int headerLength = bodyLengthOffset - offset;
         return headerLength + bodyLength + FieldUtil.CHECK_SUM_FIELD_LENGTH;
     }
 
     protected void checkMessageLength(int messageLength) {
         int capacity = buffer.capacity();
-        if (messageLength > capacity)
+        if (messageLength > capacity) {
             throw new InsufficientSpaceException(String.format("Message length %s exceeds buffer size %s", messageLength, capacity));
+        }
     }
 
 }
