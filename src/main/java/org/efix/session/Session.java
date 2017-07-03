@@ -56,7 +56,7 @@ public abstract class Session implements Worker {
     protected final Resender resender;
 
     protected final Header header = new Header();
-    protected final ByteSequenceWrapper testReqId = new ByteSequenceWrapper();
+    protected final ByteSequenceWrapper wrapper = new ByteSequenceWrapper();
 
     protected final SessionType sessionType;
     protected final FixVersion fixVersion;
@@ -481,7 +481,7 @@ public abstract class Session implements Worker {
 
         onAdminMessage(header, message);
         if (state.status() == APPLICATION_CONNECTED) {
-            CharSequence reqId = message.getString(Tag.TestReqID, testReqId);
+            CharSequence reqId = message.getString(Tag.TestReqID, wrapper);
             sendHeartbeat(reqId);
         }
     }
@@ -661,6 +661,26 @@ public abstract class Session implements Worker {
     }
 
     protected void validateLogon(Message message) {
+        ByteSequenceWrapper wrapper = this.wrapper;
+
+        ByteSequence actual = message.getString(Tag.BeginString, wrapper);
+        ByteSequence expected = fixVersion.beginString();
+        if (!actual.equals(expected)) {
+            throw new FieldException(Tag.BeginString, "BeginString(8) does not match, expected " + expected + " but received " + actual);
+        }
+
+        actual = message.getString(Tag.SenderCompID, wrapper);
+        expected = sessionId.targetCompId();
+        if (!actual.equals(expected)) {
+            throw new FieldException(Tag.SenderCompID, "SenderCompID(49) does not match, expected " + expected + " but received " + actual);
+        }
+
+        actual = message.getString(Tag.TargetCompID, wrapper);
+        expected = sessionId.senderCompId();
+        if (!actual.equals(expected)) {
+            throw new FieldException(Tag.TargetCompID, "TargetCompID(46) does not match, expected " + expected + " but received " + actual);
+        }
+
         int heartBtInt = message.getUInt(Tag.HeartBtInt);
         if (heartBtInt != heartbeatInterval) {
             throw new FieldException(Tag.HeartBtInt, "HeartBtInt(108) does not match. Expected " + heartbeatInterval + " but received " + heartBtInt);
