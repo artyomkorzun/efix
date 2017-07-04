@@ -16,11 +16,14 @@ public class BoolParser {
         }
 
         byte b = buffer.getByte(offset);
+
         switch (b) {
             case BooleanType.TRUE:
                 return true;
+
             case BooleanType.FALSE:
                 return false;
+
             default:
                 throw new FieldException(tag, "Not bool field. Value: " + (char) b);
         }

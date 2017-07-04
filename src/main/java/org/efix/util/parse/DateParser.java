@@ -12,7 +12,7 @@ import static org.efix.util.parse.ParserUtil.*;
 public class DateParser {
 
     protected static final int DAYS_TO_EPOCH = 1969 * 365 + 1969 / 4 - 1969 / 100 + 1969 / 400;
-    protected static final long DAY_IN_MILLIS = 24 * 60 * 60 * 1000;
+    protected static final long DAY_MS = 24 * 60 * 60 * 1000;
     protected static final int DAYS_IN_YEAR = 365;
 
     private static final byte[] MONTH_TO_DAYS = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -60,7 +60,7 @@ public class DateParser {
         checkDay(day, daysInMonth);
         days += day - 1 - daysToNewYear - DAYS_TO_EPOCH;
 
-        return days * DAY_IN_MILLIS;
+        return days * DAY_MS;
     }
 
     private static int checkDay(int day, int daysInMonth) {
