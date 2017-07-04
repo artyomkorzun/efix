@@ -34,7 +34,7 @@ public class TimestampParser {
         int milliseconds = 0;
 
         if (length == TimestampType.MILLISECOND_TIMESTAMP_LENGTH) {
-            checkByte(tag, '.', buffer, TimestampType.DOT_OFFSET);
+            checkByte(tag, '.', buffer, offset + TimestampType.DOT_OFFSET);
             milliseconds = parseMilliseconds(tag, buffer, offset);
         } else if (length != TimestampType.SECOND_TIMESTAMP_LENGTH) {
             throw new FieldException(tag, "Not valid timestamp");

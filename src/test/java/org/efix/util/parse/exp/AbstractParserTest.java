@@ -14,12 +14,12 @@ public abstract class AbstractParserTest {
 
     @SafeVarargs
     protected static <T> void shouldParse(String string, Verifier<T> verifier, Parser<T>... parsers) {
-        Buffer buffer = BufferUtil.fromString(string);
+        Buffer buffer = BufferUtil.fromString("          " + string);
         int end = buffer.capacity();
 
         T expected = verifier.parse(string);
         for (Parser<T> parser : parsers) {
-            T actual = parser.parse(TAG, buffer, 0, end);
+            T actual = parser.parse(TAG, buffer, 10, end);
             assertEquals(string, expected, actual);
         }
     }
