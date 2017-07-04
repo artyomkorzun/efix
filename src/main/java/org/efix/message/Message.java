@@ -4,6 +4,7 @@ import org.efix.util.ByteSequence;
 import org.efix.util.ByteSequenceWrapper;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
+import org.efix.util.buffer.UnsafeBuffer;
 import org.efix.util.parse.*;
 
 import java.util.Arrays;
@@ -13,13 +14,13 @@ public final class Message {
 
     private final static int NOT_FOUND = -1;
 
+    private final MutableBuffer buffer = new UnsafeBuffer(0, 0);
     private final float loadFactor;
 
     private int[] entries;
     private int size;
     private int resizeThreshold;
 
-    private Buffer buffer;
 
     public Message() {
         this(128);
@@ -34,11 +35,16 @@ public final class Message {
         resize(initialCapacity);
     }
 
+    public Buffer buffer() {
+        return buffer;
+    }
+
     public void parse(Buffer buffer, int offset, int length) {
-        this.buffer = buffer;
+        this.buffer.wrap(buffer, offset, length);
         clear();
 
-        final int end = offset + length;
+        buffer = this.buffer;
+        offset = 0;
 
         do {
             int tag = buffer.getByte(offset++) - '0';
@@ -56,7 +62,7 @@ public final class Message {
             while (buffer.getByte(++offset) != '\u0001') ;
 
             put(tag, valueOffset, offset++);
-        } while (offset < end);
+        } while (offset < length);
     }
 
     public boolean getBool(int tag) throws NoFieldException {
