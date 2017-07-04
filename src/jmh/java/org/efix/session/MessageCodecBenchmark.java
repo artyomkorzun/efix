@@ -55,7 +55,7 @@ public class MessageCodecBenchmark {
 
         this.message = message;
     }
-/*
+
     @Benchmark
     public void encode() {
         builder.wrap(buffer);
@@ -78,7 +78,7 @@ public class MessageCodecBenchmark {
     public void decodeWithPredefinedLayout() {
         parser.wrap(buffer);
         codec.decodeWithPredefinedLayout(message, parser);
-    }*/
+    }
 
     @Benchmark
     public void decodeWithIndexMap() {

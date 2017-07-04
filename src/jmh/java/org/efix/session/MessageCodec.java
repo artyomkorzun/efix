@@ -563,7 +563,6 @@ public class MessageCodec {
         message.setTransactTime(transactTime);
     }
 
-    // TODO: null check
     public void decodeWithIndexMap(Message message, MessageParser parser) {
         org.efix.message.Message map = this.map;
 
