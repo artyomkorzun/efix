@@ -1,20 +1,99 @@
 package org.efix.util.parse;
 
+import org.efix.message.FieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.TimeType;
 
 import static org.efix.util.parse.IntParser.parse2DigitUInt;
 import static org.efix.util.parse.IntParser.parse3DigitUInt;
-import static org.efix.util.parse.ParserUtil.*;
+import static org.efix.util.parse.ParserUtil.SEPARATOR_LENGTH;
+import static org.efix.util.parse.ParserUtil.checkBounds;
 
 
 public class TimeParser {
 
-    protected static int parseTime(int tag, Buffer buffer, int offset, int end) {
-        int time = parseSecondTime(buffer, offset);
-        time += parse3DigitUInt(buffer, offset + TimeType.MILLISECOND_OFFSET);
-        return time;
+    public static long parseTime(int tag, Buffer buffer, int offset, int end) {
+        int length = end - offset;
+        if (length < TimeType.SECOND_TIME_LENGTH) {
+            throw new FieldException(tag, "Not valid time");
+        }
+
+        int seconds = parseSeconds(tag, buffer, offset);
+        int milliseconds = 0;
+
+        if (length == TimeType.MILLISECOND_TIME_LENGTH) {
+            checkByte(tag, '.', buffer, offset + TimeType.DOT_OFFSET);
+            milliseconds = parse3DigitUInt(buffer, offset + TimeType.MILLISECOND_OFFSET);
+        } else if (length != TimeType.SECOND_TIME_LENGTH) {
+            throw new FieldException(tag, "Not valid time");
+        }
+
+        return 1000 * seconds + milliseconds;
+    }
+
+    private static int parseSeconds(int tag, Buffer buffer, int offset) {
+        int hour = parseHour(tag, buffer, offset);
+        checkByte(tag, ':', buffer, offset + TimeType.FIRST_COLON_OFFSET);
+
+        int minute = parseMinute(tag, buffer, offset);
+        checkByte(tag, ':', buffer, offset + TimeType.SECOND_COLON_OFFSET);
+
+        int second = parseSecond(tag, buffer, offset);
+
+        return 3600 * hour + 60 * minute + second;
+    }
+
+    private static int parseHour(int tag, Buffer buffer, int offset) {
+        byte b1 = buffer.getByte(offset + TimeType.HOUR_OFFSET + 0);
+        byte b2 = buffer.getByte(offset + TimeType.HOUR_OFFSET + 1);
+
+        if (b1 < '0' | b1 > '2' | b2 < '0' | b2 > '9') {
+            throw new FieldException(tag, "Not valid time");
+        }
+
+        return 10 * (b1 - '0') + (b2 - '0');
+    }
+
+    private static int parseMinute(int tag, Buffer buffer, int offset) {
+        byte b1 = buffer.getByte(offset + TimeType.MINUTE_OFFSET + 0);
+        byte b2 = buffer.getByte(offset + TimeType.MINUTE_OFFSET + 1);
+
+        if (b1 < '0' | b1 > '5' | b2 < '0' | b2 > '9') {
+            throw new FieldException(tag, "Not valid time");
+        }
+
+        return 10 * (b1 - '0') + (b2 - '0');
+    }
+
+    private static int parseSecond(int tag, Buffer buffer, int offset) {
+        byte b1 = buffer.getByte(offset + TimeType.SECOND_OFFSET + 0);
+        byte b2 = buffer.getByte(offset + TimeType.SECOND_OFFSET + 1);
+
+        if (b1 < '0' | b1 > '5' | b2 < '0' | b2 > '9') {
+            throw new FieldException(tag, "Not valid time");
+        }
+
+        return 10 * (b1 - '0') + (b2 - '0');
+    }
+
+    private static int parseMilliseconds(int tag, Buffer buffer, int offset) {
+        byte b1 = buffer.getByte(offset + TimeType.MILLISECOND_OFFSET + 0);
+        byte b2 = buffer.getByte(offset + TimeType.MILLISECOND_OFFSET + 1);
+        byte b3 = buffer.getByte(offset + TimeType.MILLISECOND_OFFSET + 2);
+
+        if (b1 < '0' | b1 > '9' | b2 < '0' | b2 > '9' | b3 < '0' | b3 > '9') {
+            throw new FieldException(tag, "Not valid time");
+        }
+
+        return 100 * (b1 - '0') + 10 * (b2 - '0') + (b3 - '0');
+    }
+
+    private static void checkByte(int tag, char expected, Buffer buffer, int offset) {
+        byte b = buffer.getByte(offset);
+        if (b != expected) {
+            throw new FieldException(tag, "Not valid time");
+        }
     }
 
 
@@ -38,7 +117,7 @@ public class TimeParser {
             off += TimeType.SECOND_TIME_LENGTH + SEPARATOR_LENGTH;
         }
 
-        checkByte(b, separator);
+        ParserUtil.checkByte(b, separator);
         offset.set(off);
 
         return time;
@@ -47,11 +126,11 @@ public class TimeParser {
     protected static int parseSecondTime(Buffer buffer, int offset) {
         int hour = parse2DigitUInt(buffer, offset + TimeType.HOUR_OFFSET);
         checkHour(hour);
-        checkByte(buffer.getByte(offset + TimeType.FIRST_COLON_OFFSET), (byte) ':');
+        ParserUtil.checkByte(buffer.getByte(offset + TimeType.FIRST_COLON_OFFSET), (byte) ':');
 
         int minute = parse2DigitUInt(buffer, offset + TimeType.MINUTE_OFFSET);
         checkMinute(minute);
-        checkByte(buffer.getByte(offset + TimeType.SECOND_COLON_OFFSET), (byte) ':');
+        ParserUtil.checkByte(buffer.getByte(offset + TimeType.SECOND_COLON_OFFSET), (byte) ':');
 
         int second = parse2DigitUInt(buffer, offset + TimeType.SECOND_OFFSET);
         checkSecond(second);

@@ -1,5 +1,6 @@
 package org.efix.util.parse;
 
+import org.efix.message.FieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.DateType;
@@ -20,6 +21,68 @@ public class DateParser {
 
     private static final short[] DAYS_TO_NEW_YEAR = {0, 365, 334, 306, 275, 245, 214, 184, 153, 122, 92, 61, 31};
     private static final short[] DAYS_TO_NEW_YEAR_LEAP = {0, 366, 335, 306, 275, 245, 214, 184, 153, 122, 92, 61, 31};
+
+
+    private static final int DAYS_TO_2000 = 1999 * 365 + 1999 / 4 - 1999 / 100 + 1999 / 400;
+    private static final int DAYS_EPOCH_TO_2000 = DAYS_TO_2000 - DAYS_TO_EPOCH;
+
+    private static final short[] DAYS_FROM_NEW_YEAR = {1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
+    private static final short[] DAYS_FROM_NEW_YEAR_LEAP = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
+
+    public static long parseDate(int tag, Buffer buffer, int offset, int end) {
+        if (offset + DateType.LENGTH != end) {
+            throw new FieldException(tag, "Not valid date");
+        }
+
+        int days = parseDays(tag, buffer, offset);
+        return days * DAY_MS;
+    }
+
+    private static int parseDays(int tag, Buffer buffer, int offset) {
+        int year = parseYear(tag, buffer, offset + DateType.YEAR_OFFSET);
+        int month = parseMonth(tag, buffer, offset + DateType.MONTH_OFFSET);
+        int day = parseDay(tag, buffer, offset + DateType.DAY_OFFSET);
+
+        boolean leapYear = ((year & 0x3) == 0);
+        int daysFromNewYear = (leapYear ? DAYS_FROM_NEW_YEAR_LEAP[month] : DAYS_FROM_NEW_YEAR[month]);
+
+        return 365 * year + (year >> 2) + daysFromNewYear + day + DAYS_EPOCH_TO_2000;
+    }
+
+    private static int parseYear(int tag, Buffer buffer, int offset) {
+        byte b1 = buffer.getByte(offset);
+        byte b2 = buffer.getByte(offset + 1);
+        byte b3 = buffer.getByte(offset + 2);
+        byte b4 = buffer.getByte(offset + 3);
+
+        if (b1 != '2' | b2 != '0' | b3 < '0' | b3 > '9' | b4 < '0' | b4 > '9') {
+            throw new FieldException(tag, "Not valid date");
+        }
+
+        return 10 * (b3 - '0') + (b4 - '0');
+    }
+
+    private static int parseMonth(int tag, Buffer buffer, int offset) {
+        byte b1 = buffer.getByte(offset);
+        byte b2 = buffer.getByte(offset + 1);
+
+        if (b1 < '0' | b1 > '1' | b2 < '0' | b2 > '9') {
+            throw new FieldException(tag, "Not valid date");
+        }
+
+        return 10 * (b1 - '0') + (b2 - '1'); // month - 1
+    }
+
+    private static int parseDay(int tag, Buffer buffer, int offset) {
+        byte b1 = buffer.getByte(offset);
+        byte b2 = buffer.getByte(offset + 1);
+
+        if (b1 < '0' | b1 > '3' | b2 < '0' | b2 > '9') {
+            throw new FieldException(tag, "Not valid date");
+        }
+
+        return 10 * (b1 - '0') + (b2 - '1'); // day - 1
+    }
 
     public static long parseDate(byte separator, Buffer buffer, MutableInt offset, int end) {
         int off = offset.get();

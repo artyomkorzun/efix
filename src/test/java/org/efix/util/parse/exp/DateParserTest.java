@@ -1,9 +1,9 @@
 package org.efix.util.parse.exp;
 
 import org.efix.util.TestUtil;
-import org.efix.util.parse.AbstractParserTest;
 import org.efix.util.parse.DateParser;
 import org.junit.Test;
+
 
 public class DateParserTest extends AbstractParserTest {
 
@@ -15,20 +15,21 @@ public class DateParserTest extends AbstractParserTest {
 
     @Test
     public void shouldParseDates() {
-        for (int year = 0; year <= 9999; year++) {
+        for (int year = 2000; year <= 2099; year++) {
             boolean leapYear = (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0);
             int[] daysInMonth = leapYear ? DAYS_IN_MONTH_LEAP : DAYS_IN_MONTH;
 
             for (int month = 1; month <= 12; month++) {
-                for (int day = 1; day <= daysInMonth[month]; day++)
+                for (int day = 1; day <= daysInMonth[month]; day++) {
                     shouldParse(String.format("%04d%02d%02d", year, month, day));
+                }
             }
         }
     }
 
     @Test
     public void shouldFailParseDates() {
-        shouldFailParse("19700101");
+        shouldFailParse("19700101`");
         shouldFailParse("19700101|");
         shouldFailParse("1970010=");
         shouldFailParse("s9700101=");

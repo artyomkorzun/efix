@@ -1,14 +1,14 @@
 package org.efix.util.parse.exp;
 
 import org.efix.util.TestUtil;
-import org.efix.util.parse.AbstractParserTest;
 import org.efix.util.parse.TimeParser;
 import org.junit.Test;
 
+
 public class TimeParserTest extends AbstractParserTest {
 
-    protected static final Verifier<Integer> VERIFIER = TestUtil::parseTime;
-    protected static final Parser<Integer> PARSER = TimeParser::parseTime;
+    protected static final Verifier<Long> VERIFIER = string -> (long) TestUtil.parseTime(string);
+    protected static final Parser<Long> PARSER = TimeParser::parseTime;
 
     @Test
     public void shouldParseTimes() {

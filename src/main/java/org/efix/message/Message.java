@@ -317,13 +317,61 @@ public final class Message {
         return TimestampParser.parseTimestamp(tag, buffer, offset, end);
     }
 
-   /* public long getDate(int tag, long noValue) {
-        return noValue; // TODO
+    public long getDate(int tag/*, TimeUnit units*/) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DateParser.parseDate(tag, buffer, offset, end);
     }
 
-    public int getTime(int tag, int noValue) {
-        return noValue; // TODO
-    }*/
+    public long getDate(int tag/*, TimeUnit units*/, long noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DateParser.parseDate(tag, buffer, offset, end);
+    }
+
+    public long getTime(int tag/*, TimeUnit units*/) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return TimeParser.parseTime(tag, buffer, offset, end);
+    }
+
+    public long getTime(int tag/*, TimeUnit units*/, long noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return TimeParser.parseTime(tag, buffer, offset, end);
+    }
 
     public ByteSequence getString(int tag, ByteSequenceWrapper wrapper) throws NoFieldException {
         final int[] entries = this.entries;
