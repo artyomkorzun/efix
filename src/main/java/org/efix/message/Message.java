@@ -334,21 +334,6 @@ public final class Message {
         return wrapper;
     }
 
-    public CharSequence getString(int tag, ByteSequenceWrapper wrapper, CharSequence noValue) {
-        final int[] entries = this.entries;
-        final int index = getIndex(tag, entries);
-
-        if (index == NOT_FOUND) {
-            return noValue;
-        }
-
-        int offset = entries[index + 1];
-        int end = entries[index + 2];
-
-        wrapper.wrap(buffer, offset, end - offset);
-        return wrapper;
-    }
-/*
     public ByteSequence getString(int tag, ByteSequenceWrapper wrapper, ByteSequence noValue) {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
@@ -362,7 +347,7 @@ public final class Message {
 
         wrapper.wrap(buffer, offset, end - offset);
         return wrapper;
-    }*/
+    }
 
     public Buffer getRaw(int tag, MutableBuffer wrapper) throws NoFieldException {
         final int[] entries = this.entries;
@@ -394,7 +379,7 @@ public final class Message {
         return wrapper;
     }
 
-    public void getAny(int tag){
+    public void getAny(int tag) throws NoFieldException {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
 

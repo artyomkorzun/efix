@@ -71,7 +71,7 @@ public class Receiver {
             throw new FieldException(Tag.BodyLength, "Expected '=' at BodyLength(9) field");
         }
 
-        int bodyLength = 0;
+        int bodyLength = buffer.getByte(bodyLengthOffset++) - '0';
 
         while (true) {
             byte b = buffer.getByte(bodyLengthOffset++);
