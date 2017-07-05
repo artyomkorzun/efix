@@ -289,6 +289,62 @@ public final class Message {
         return DecimalParser.parseUDecimal(tag, scale, buffer, offset, end);
     }
 
+    public long getDecimalHalfUp(int tag, int scale) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DecimalParser.parseDecimalHalfUp(tag, scale, buffer, offset, end);
+    }
+
+    public long getDecimalHalfUp(int tag, int scale, long noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DecimalParser.parseDecimalHalfUp(tag, scale, buffer, offset, end);
+    }
+
+    public long getUDecimalHalfUp(int tag, int scale) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DecimalParser.parseUDecimalHalfUp(tag, scale, buffer, offset, end);
+    }
+
+    public long getUDecimalHalfUp(int tag, int scale, long noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DecimalParser.parseUDecimalHalfUp(tag, scale, buffer, offset, end);
+    }
+
     public long getTimestamp(int tag/*, TimeUnit units*/) throws NoFieldException {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);

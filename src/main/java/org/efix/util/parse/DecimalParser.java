@@ -10,6 +10,100 @@ import static org.efix.util.parse.ParserUtil.*;
 
 public class DecimalParser {
 
+    public static long parseDecimalHalfUp(int tag, int scale, Buffer buffer, int offset, int end) {
+        long value = 0;
+        boolean sign = true;
+
+        if (buffer.getByte(offset) == '-') {
+            offset++;
+            sign = false;
+        }
+
+        if (offset < end) {
+            do {
+                byte b = buffer.getByte(offset++);
+                if (b >= '0' & b <= '9') {
+                    value = 10 * value - (b - '0');
+                } else if (b == '.') {
+                    break;
+                } else {
+                    throw new FieldException(tag, "Not valid decimal");
+                }
+            } while (offset < end);
+
+            if (offset < end) {
+                int limit = Math.min(offset + scale, end);
+                scale -= end - offset;
+
+                while (offset < limit) {
+                    byte b = buffer.getByte(offset++);
+                    if (b < '0' | b > '9') {
+                        throw new FieldException(tag, "Not valid decimal");
+                    }
+
+                    value = 10 * value - (b - '0');
+                }
+
+                if (scale < 0) {
+                    byte b = buffer.getByte(offset);
+                    if (b < '0' | b > '9') {
+                        throw new FieldException(tag, "Not valid decimal");
+                    }
+
+                    value -= b < '5' ? 0 : 1;
+                    scale = 0;
+                }
+            }
+
+            value *= DecimalType.multiplier(scale);
+            value = sign ? -value : value;
+        }
+
+        return value;
+    }
+
+    public static long parseUDecimalHalfUp(int tag, int scale, Buffer buffer, int offset, int end) {
+        long value = 0;
+
+        do {
+            byte b = buffer.getByte(offset++);
+            if (b >= '0' & b <= '9') {
+                value = 10 * value + (b - '0');
+            } else if (b == '.') {
+                break;
+            } else {
+                throw new FieldException(tag, "Not valid decimal");
+            }
+        } while (offset < end);
+
+        if (offset < end) {
+            int limit = Math.min(offset + scale, end);
+            scale -= end - offset;
+
+            while (offset < limit) {
+                byte b = buffer.getByte(offset++);
+                if (b < '0' | b > '9') {
+                    throw new FieldException(tag, "Not valid decimal");
+                }
+
+                value = 10 * value + (b - '0');
+            }
+
+            if (scale < 0) {
+                byte b = buffer.getByte(offset);
+                if (b < '0' | b > '9') {
+                    throw new FieldException(tag, "Not valid decimal");
+                }
+
+                value += b < '5' ? 0 : 1;
+                scale = 0;
+            }
+        }
+
+        value *= DecimalType.multiplier(scale);
+        return value;
+    }
+
     public static long parseDecimal(int tag, int scale, Buffer buffer, int offset, int end) {
         long value = 0;
         boolean sign = true;
@@ -22,7 +116,7 @@ public class DecimalParser {
         if (offset < end) {
             do {
                 byte b = buffer.getByte(offset++);
-                if (ParserUtil.isDigit(b)) {
+                if (b >= '0' & b <= '9') {
                     value = 10 * value - (b - '0');
                 } else if (b == '.') {
                     break;
@@ -32,16 +126,19 @@ public class DecimalParser {
             } while (offset < end);
 
             if (offset < end) {
+                scale -= end - offset;
+                if (scale < 0) {
+                    throw new FieldException(tag, "Not valid decimal, too long fractional part");
+                }
+
                 do {
                     byte b = buffer.getByte(offset++);
-                    if (!ParserUtil.isDigit(b)) {
+                    if (b < '0' | b > '9') {
                         throw new FieldException(tag, "Not valid decimal");
                     }
 
                     value = 10 * value - (b - '0');
                 } while (offset < end);
-
-                scale -= end - offset;
             }
 
             value *= DecimalType.multiplier(scale);
@@ -56,7 +153,7 @@ public class DecimalParser {
 
         do {
             byte b = buffer.getByte(offset++);
-            if (ParserUtil.isDigit(b)) {
+            if (b >= '0' & b <= '9') {
                 value = 10 * value + (b - '0');
             } else if (b == '.') {
                 break;
@@ -66,16 +163,19 @@ public class DecimalParser {
         } while (offset < end);
 
         if (offset < end) {
+            scale -= end - offset;
+            if (scale < 0) {
+                throw new FieldException(tag, "Not valid decimal, too long fractional part");
+            }
+
             do {
                 byte b = buffer.getByte(offset++);
-                if (!ParserUtil.isDigit(b)) {
+                if (b < '0' | b > '9') {
                     throw new FieldException(tag, "Not valid decimal");
                 }
 
                 value = 10 * value + (b - '0');
             } while (offset < end);
-
-            scale -= end - offset;
         }
 
         value *= DecimalType.multiplier(scale);

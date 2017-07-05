@@ -1,10 +1,9 @@
 package org.efix.util.parse.exp;
 
-import org.efix.util.MutableInt;
+import org.efix.message.FieldException;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.BufferUtil;
 import org.efix.util.parse.DecimalParser;
-import org.efix.util.parse.ParserException;
 import org.efix.util.type.DecimalType;
 import org.junit.Assert;
 import org.junit.Test;
@@ -16,9 +15,6 @@ import static org.efix.util.TestUtil.generateDecimal;
 
 
 public class DecimalParserTest extends AbstractParserTest {
-
-    protected static final long MAX_VALUE = 999999999999999999L;
-    protected static final long MIN_VALUE = -999999999999999999L;
 
     @Test
     public void shouldParseDecimals() {
@@ -155,19 +151,23 @@ public class DecimalParserTest extends AbstractParserTest {
         shouldParse("000000000000000.", 3);
         shouldParse("-000000000000000.", 3);
 
-        shouldParse("0.011", 4, true);
-        shouldParse("-0.011", 4, false);
+        shouldParseHalfUp("0.011", 4);
+        shouldParseHalfUp("-0.011", 4);
 
-        shouldParse("9.999", 2, true);
-        shouldParse("10.99", 1, false);
-        shouldParse("99.99", 1, true);
-        shouldParse("10.095", 2, false);
-        shouldParse("10.05000", 1, false);
-        shouldParse("10.05000", 1, true);
-        shouldParse("-10.05000", 1, false);
-        shouldParse("-10.05000", 1, true);
-        shouldParse("10.05001", 1, false);
-        shouldParse("10.05001", 1, true);
+        shouldParse(Long.toString(Long.MAX_VALUE), 0);
+        shouldParse(Long.toString(Long.MIN_VALUE), 0);
+
+        shouldParseHalfUp("-0.69770346228442", 0);
+        shouldParseHalfUp("9.999", 2);
+        shouldParseHalfUp("10.99", 1);
+        shouldParseHalfUp("99.99", 1);
+        shouldParseHalfUp("10.095", 2);
+        shouldParseHalfUp("10.05000", 1);
+        shouldParseHalfUp("10.05000", 1);
+        shouldParseHalfUp("-10.05000", 1);
+        shouldParseHalfUp("-10.05000", 1);
+        shouldParseHalfUp("10.05001", 1);
+        shouldParseHalfUp("10.05001", 1);
     }
 
     @Test
@@ -181,8 +181,7 @@ public class DecimalParserTest extends AbstractParserTest {
                 shouldParse(decimal, scale);
 
                 for (scale = 0; scale <= fractionalDigits; scale++) {
-                    shouldParse(decimal, scale, true);
-                    shouldParse(decimal, scale, false);
+                    shouldParseHalfUp(decimal, scale);
                 }
             }
         }
@@ -190,22 +189,15 @@ public class DecimalParserTest extends AbstractParserTest {
 
     @Test
     public void shouldFailParseDecimals() {
-        shouldFailParse(Long.MAX_VALUE, 0);
-        shouldFailParse(Long.MIN_VALUE, 0);
-        shouldFailParse(MIN_VALUE - 1, 0);
-        shouldFailParse(MAX_VALUE + 1, 0);
-
         shouldFailParse("hd", 0);
         shouldFailParse("3ttt", 0);
         shouldFailParse("111");
         shouldFailParse("111111111111111111111111111111=", 0);
-        shouldFailParse("1", 0);
-        shouldFailParse("12345", 0);
-        shouldFailParse("-", 0);
+        shouldFailParse("1+", 0);
+        shouldFailParse("1-2345", 0);
+        shouldFailParse("-+", 0);
         shouldFailParse("-=", 0);
-        shouldFailParse("-123", 0);
         shouldFailParse("=", 0);
-        shouldFailParse("", 0);
         shouldFailParse(".0=", 0);
         shouldFailParse("0.11=", 1);
         shouldFailParse("-0.11=", 1);
@@ -215,81 +207,72 @@ public class DecimalParserTest extends AbstractParserTest {
         shouldFailParse("123456789012341.1=", 1);
         shouldFailParse("s", 1);
 
-        shouldFailParse("hd", 0, true);
-        shouldFailParse("3ttt", 0, true);
-        shouldFailParse("111", 0, true);
-        shouldFailParse("111111111111111111111111111111=", 0, true);
-        shouldFailParse("1", 0, true);
-        shouldFailParse("12345", 0, true);
-        shouldFailParse("-", 0, true);
-        shouldFailParse("-=", 0, true);
-        shouldFailParse("-123", 0, true);
-        shouldFailParse("=", 0, true);
-        shouldFailParse("", 0, true);
-        shouldFailParse(".0=", 0, true);
-        shouldFailParse("-0.s11=", 2, true);
-        shouldFailParse("12345678901234.11=", 2, true);
-        shouldFailParse("1234567890123411=", 0, true);
-        shouldFailParse("123456789012341.1=", 1, true);
-        shouldFailParse("s", 1, true);
-        shouldFailParse("1234567890123.1=", 6, true);
-        shouldFailParse("1.123456789012345=", 0, true);
+        shouldFailParseHalfUp("hd", 0);
+        shouldFailParseHalfUp("3ttt", 0);
+        shouldFailParseHalfUp("111111111111111111111111111111=", 0);
+        shouldFailParseHalfUp("1+", 0);
+        shouldFailParseHalfUp("12-345", 0);
+        shouldFailParseHalfUp("-+", 0);
+        shouldFailParseHalfUp("-=", 0);
+        shouldFailParseHalfUp("-12+3", 0);
+        shouldFailParseHalfUp("=", 0);
+        shouldFailParseHalfUp(".0=", 1);
+        shouldFailParseHalfUp("-0.s11=", 2);
+        shouldFailParseHalfUp("12345678901234.11=", 2);
+        shouldFailParseHalfUp("1234567890123411=", 0);
+        shouldFailParseHalfUp("123456789012341.1=", 1);
+        shouldFailParseHalfUp("s", 1);
+        shouldFailParseHalfUp("1234567890123.1=", 6);
+        shouldFailParseHalfUp("1.-123456789012345=", 0);
     }
 
     protected static void shouldParse(String value, int scale) {
-        Buffer buffer = BufferUtil.fromString(value + (char) SEPARATOR);
-        MutableInt offset = new MutableInt(0);
+        Buffer buffer = BufferUtil.fromString("1234567890" + value);
         int end = buffer.capacity();
 
         long expected = new BigDecimal(value).movePointRight(scale).longValueExact();
-        long actual = DecimalParser.parseDecimal(scale, SEPARATOR, buffer, offset, end);
+        long actual = DecimalParser.parseDecimal(TAG, scale, buffer, 10, end);
 
-        Assert.assertEquals("Can't parse " + value, end, offset.get());
         Assert.assertEquals("Can't parse " + value, expected, actual);
     }
 
     protected static void shouldFailParse(long value, int scale) {
-        shouldFailParse(Long.toString(value) + (char) SEPARATOR, scale);
+        shouldFailParse(Long.toString(value), scale);
     }
 
     protected static void shouldFailParse(String string, int scale) {
         Buffer buffer = BufferUtil.fromString(string);
-        MutableInt offset = new MutableInt(0);
         int end = buffer.capacity();
 
         try {
-            DecimalParser.parseDecimal(scale, SEPARATOR, buffer, offset, end);
+            DecimalParser.parseDecimal(TAG, scale, buffer, 0, end);
             Assert.fail("Should fail parse " + string);
-        } catch (ParserException e) {
+        } catch (FieldException e) {
             Assert.assertTrue("Caught", true);
         }
     }
 
-    protected static void shouldParse(String value, int scale, boolean roundUp) {
-        Buffer buffer = BufferUtil.fromString(value + (char) SEPARATOR);
-        MutableInt offset = new MutableInt(0);
+    protected static void shouldParseHalfUp(String value, int scale) {
+        Buffer buffer = BufferUtil.fromString("          " + value);
         int end = buffer.capacity();
 
         long expected = new BigDecimal(value)
-                .setScale(scale, roundUp ? RoundingMode.HALF_UP : RoundingMode.HALF_DOWN)
+                .setScale(scale, RoundingMode.HALF_UP)
                 .movePointRight(scale)
                 .longValueExact();
 
-        long actual = DecimalParser.parseDecimal(scale, roundUp, SEPARATOR, buffer, offset, end);
-
-        Assert.assertEquals("Can't parse " + value, end, offset.get());
-        Assert.assertEquals("Can't parse " + value, expected, actual);
+        long actual = DecimalParser.parseDecimalHalfUp(TAG, scale, buffer, 10, end);
+        Assert.assertEquals("Can't parse (scale: " + scale + ") " + value, expected, actual);
     }
 
-    protected static void shouldFailParse(String string, int scale, boolean roundUp) {
+    protected static void shouldFailParseHalfUp(String string, int scale) {
         Buffer buffer = BufferUtil.fromString(string);
-        MutableInt offset = new MutableInt(0);
         int end = buffer.capacity();
 
         try {
-            DecimalParser.parseDecimal(scale, roundUp, SEPARATOR, buffer, offset, end);
+            DecimalParser.parseDecimalHalfUp(TAG, scale, buffer, 0, end);
             Assert.fail("Should fail parse " + string);
-        } catch (ParserException e) {
+        } catch (FieldException e) {
             Assert.assertTrue("Caught", true);
         }
     }
