@@ -86,15 +86,14 @@ public class SessionAcceptorTest extends SessionTest {
         String inLogon = "8=FIX.4.4|9=64|35=A|34=5|49=SENDER|52=20140522-12:07:39.552|56=RECEIVER|108=30|10=061|";
 
         String outLogon = "8=FIX.4.4|9=75|35=A|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|98=0|108=30|141=N|10=021|";
-        String outResendRequest = "8=FIX.4.4|9=66|35=2|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|7=1|16=0|10=071|";
-        String outTestRequest = "8=FIX.4.4|9=77|35=1|34=3|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|112=MsgSeqNum check|10=062|";
+        String outResendRequest = "8=FIX.4.4|9=66|35=2|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|7=1|16=5|10=076|";
 
         int work = process(inLogon);
 
         assertNoErrors();
         assertWorkDone(work);
-        assertOutMessages(outLogon, outResendRequest, outTestRequest);
-        assertSeqNums(1, 4);
+        assertOutMessages(outLogon, outResendRequest);
+        assertSeqNums(1, 3);
         assertStatuses(SOCKET_CONNECTED, LOGON_RECEIVED, LOGON_SENT, APPLICATION_CONNECTED);
     }
 
@@ -103,15 +102,14 @@ public class SessionAcceptorTest extends SessionTest {
         String inLogon = "8=FIX.4.4|9=64|35=A|34=5|49=SENDER|52=20140522-12:07:39.552|56=RECEIVER|108=30|10=061|";
 
         String outLogon = "8=FIX.4.4|9=75|35=A|34=5|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|98=0|108=30|141=N|10=025|";
-        String outTestRequest = "8=FIX.4.4|9=77|35=1|34=6|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|112=MsgSeqNum check|10=065|";
 
         seqNums(5, 5);
         int work = process(inLogon);
 
         assertNoErrors();
         assertWorkDone(work);
-        assertOutMessages(outLogon, outTestRequest);
-        assertSeqNums(6, 7);
+        assertOutMessages(outLogon);
+        assertSeqNums(6, 6);
         assertStatuses(SOCKET_CONNECTED, LOGON_RECEIVED, LOGON_SENT, APPLICATION_CONNECTED);
     }
 
@@ -120,15 +118,14 @@ public class SessionAcceptorTest extends SessionTest {
         String inLogon = "8=FIX.4.4|9=70|35=A|34=1|49=SENDER|52=20140522-12:07:39.552|56=RECEIVER|108=30|141=Y|10=099|";
 
         String outLogon = "8=FIX.4.4|9=75|35=A|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|98=0|108=30|141=Y|10=032|";
-        String outTestRequest = "8=FIX.4.4|9=77|35=1|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|112=MsgSeqNum check|10=061|";
 
         seqNums(100, 100);
         int work = process(inLogon);
 
         assertNoErrors();
         assertWorkDone(work);
-        assertOutMessages(outLogon, outTestRequest);
-        assertSeqNums(2, 3);
+        assertOutMessages(outLogon);
+        assertSeqNums(2, 2);
         assertStatuses(SOCKET_CONNECTED, LOGON_RECEIVED, LOGON_SENT, APPLICATION_CONNECTED);
     }
 

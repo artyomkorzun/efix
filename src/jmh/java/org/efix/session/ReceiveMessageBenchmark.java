@@ -43,7 +43,7 @@ public class ReceiveMessageBenchmark {
     @Benchmark
     public void receiveMessage() {
         session.state.targetSeqNum(1000);
-        session.receiveInboundMessages();
+        session.receiveMessages();
     }
 
     private static final class ReceivingSession extends Session {
@@ -60,7 +60,7 @@ public class ReceiveMessageBenchmark {
         }
 
         @Override
-        protected int doSendOutboundMessages() {
+        protected int doSendMessages() {
             return 0;
         }
 

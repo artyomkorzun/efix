@@ -55,11 +55,6 @@ public class SessionUtil {
         return actual == expected;
     }
 
-    public static void assertNotDuplicate(boolean possDup, String message) {
-        if (possDup)
-            throw new FieldException(Tag.PossDupFlag, message);
-    }
-
     public static void assertStatus(SessionStatus expected1, SessionStatus expected2, SessionStatus expected3, SessionStatus actual) {
         if (actual != expected1 && actual != expected2 && actual != expected3)
             throw new IllegalStateException(String.format("Expected statuses %s, %s, %s but actual %s", expected1, expected2, expected3, actual));

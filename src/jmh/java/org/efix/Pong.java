@@ -39,7 +39,7 @@ public class Pong {
         }
 
         @Override
-        protected int doSendOutboundMessages() {
+        protected int doSendMessages() {
             return 0;
         }
 

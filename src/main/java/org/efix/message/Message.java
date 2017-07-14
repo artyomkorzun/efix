@@ -582,4 +582,9 @@ public final class Message {
         return (index + 4) & mask;
     }
 
+    @Override
+    public String toString() {
+        return new ByteSequenceWrapper(buffer).toString();
+    }
+
 }

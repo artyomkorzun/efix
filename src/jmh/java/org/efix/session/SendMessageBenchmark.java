@@ -82,7 +82,7 @@ public class SendMessageBenchmark {
         }
 
         @Override
-        protected int doSendOutboundMessages() {
+        protected int doSendMessages() {
             return 0;
         }
 

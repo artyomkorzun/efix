@@ -64,6 +64,7 @@ public class SessionContext {
     protected int sendTimeout = Configuration.SEND_TIMEOUT_MS;
     protected boolean resetSeqNumsOnLogon;
     protected boolean logonWithNextExpectedSeqNum;
+    protected int syncBatchSize = Configuration.SYNC_BATCH_SIZE;
 
     protected Sender sender;
     protected Receiver receiver;
@@ -337,6 +338,14 @@ public class SessionContext {
         return logonWithNextExpectedSeqNum;
     }
 
+    public int syncBatchSize() {
+        return syncBatchSize;
+    }
+
+    public void syncBatchSize(int syncBatchSize) {
+        this.syncBatchSize = syncBatchSize;
+    }
+
     public SessionContext logonWithNextExpectedSeqNum(boolean logonWithNextExpectedSeqNum) {
         this.logonWithNextExpectedSeqNum = logonWithNextExpectedSeqNum;
         return this;
@@ -367,23 +376,29 @@ public class SessionContext {
         requireNonNull(sessionId.senderCompId());
         requireNonNull(sessionId.targetCompId());
 
-        if (state == null)
+        if (state == null) {
             state = new MemorySessionState();
+        }
 
-        if (store == null)
+        if (store == null) {
             store = new MemoryMessageStore(Configuration.MESSAGE_STORE_SIZE);
+        }
 
-        if (schedule == null)
+        if (schedule == null) {
             schedule = ContinuousSessionSchedule.INSTANCE;
+        }
 
-        if (log == null)
+        if (log == null) {
             log = EmptyMessageLog.INSTANCE;
+        }
 
-        if (parser == null)
+        if (parser == null) {
             parser = new FastMessageParser();
+        }
 
-        if (builder == null)
+        if (builder == null) {
             builder = new FastMessageBuilder();
+        }
 
         if (connector == null) {
             SocketOptions acceptorOptions = new SocketOptions();

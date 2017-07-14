@@ -54,7 +54,7 @@ public class Ping {
         }
 
         @Override
-        protected int doSendOutboundMessages() {
+        protected int doSendMessages() {
             if (state.status() == SessionStatus.APPLICATION_CONNECTED && sendNs == LONG_NULL) {
                 sendNs = System.nanoTime();
 

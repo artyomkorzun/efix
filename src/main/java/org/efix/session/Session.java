@@ -27,7 +27,6 @@ import org.efix.util.concurrent.Worker;
 
 import java.util.ArrayList;
 
-import static org.efix.session.SessionUtil.assertNotDuplicate;
 import static org.efix.session.SessionUtil.parseHeader;
 import static org.efix.state.SessionStatus.*;
 
@@ -68,11 +67,14 @@ public abstract class Session implements Worker {
     protected final int logoutTimeout;
     protected final boolean resetSeqNumsOnLogon;
     protected final boolean logonWithNextExpectedSeqNum;
-
+    protected final int syncBatchSize;
 
     protected final ArrayList<Disposable> openResources = new ArrayList<>();
 
     protected volatile boolean closing = false;
+
+    protected int syncLow;
+    protected int syncHigh;
 
     public Session(SessionContext context) {
         context.conclude();
@@ -105,6 +107,7 @@ public abstract class Session implements Worker {
         this.logoutTimeout = context.logoutTimeout();
         this.resetSeqNumsOnLogon = context.resetSeqNumsOnLogon();
         this.logonWithNextExpectedSeqNum = context.logonWithNextExpectedSeqNum();
+        this.syncBatchSize = context.syncBatchSize();
     }
 
     @Override
@@ -167,8 +170,8 @@ public abstract class Session implements Worker {
         int work = 0;
 
         work += checkSession(clock.time());
-        work += receiveInboundMessages();
-        work += sendOutboundMessages();
+        work += receiveMessages();
+        work += sendMessages();
         work += processTimers(clock.time());
 
         return work;
@@ -205,7 +208,7 @@ public abstract class Session implements Worker {
         return work;
     }
 
-    protected int receiveInboundMessages() {
+    protected int receiveMessages() {
         int work = 0;
 
         if (state.status() != DISCONNECTED) {
@@ -244,6 +247,7 @@ public abstract class Session implements Worker {
     protected int checkSessionStart(long now) {
         int work = 0;
         long start = schedule.getStartTime(now);
+
         if (canStartSession(now) && now >= start && !closing) {
             boolean connected = connect();
             if (connected) {
@@ -426,60 +430,59 @@ public abstract class Session implements Worker {
 
     protected void processLogon(Header header, Message message) {
         assertStatus(SOCKET_CONNECTED, LOGON_SENT);
-        assertNotDuplicate(header.possDup(), "Logon with PossDup(44)=Y");
 
         final boolean resetSeqNums = message.getBool(Tag.ResetSeqNumFlag, false);
-        final int msgSeqNum = header.msgSeqNum();
+        final int seqNum = header.msgSeqNum();
 
-        boolean expectedSeqNum = checkTargetSeqNum(resetSeqNums ? 1 : state.targetSeqNum(), msgSeqNum, resetSeqNums);
-        if (!resetSeqNums && expectedSeqNum) {
-            state.targetSeqNum(msgSeqNum + 1);
+        final boolean synced = checkTargetSeqNum(resetSeqNums ? 1 : state.targetSeqNum(), seqNum, resetSeqNums);
+        if (synced && !resetSeqNums) {
+            state.targetSeqNum(seqNum + 1);
         }
 
         validateLogon(message);
         onAdminMessage(header, message);
 
-        state.targetSeqNumSynced(false);
-        if (resetSeqNums) {
-            state.targetSeqNum(msgSeqNum + 1);
+        state.synced(synced);
+        if (synced) {
+            state.targetSeqNum(seqNum + 1);
         }
 
         if (updateStatus(LOGON_RECEIVED) == SOCKET_CONNECTED) {
             sendLogon(resetSeqNums);
         }
 
-        if (!expectedSeqNum) {
-            sendResendRequest(state.targetSeqNum(), 0);
+        if (!synced) {
+            syncLow = state.targetSeqNum() - 1;
+            syncHigh = seqNum;
+            sync(true, syncLow);
         }
 
-        sendTestRequest("MsgSeqNum check");
         updateStatus(APPLICATION_CONNECTED);
     }
 
     protected void processHeartbeat(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
-        assertNotDuplicate(header.possDup(), "Heartbeat with PossDup(44)=Y");
 
-        int msgSeqNum = header.msgSeqNum();
-        checkTargetSeqNum(msgSeqNum, true);
-
-        state.targetSeqNum(msgSeqNum + 1);
+        final int seqNum = header.msgSeqNum();
         state.testRequestSent(false);
-        state.targetSeqNumSynced(true);
+
+        if (checkTargetSeqNum(seqNum, state.synced())) {
+            state.targetSeqNum(seqNum + 1);
+        }
 
         onAdminMessage(header, message);
     }
 
     protected void processTestRequest(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
-        assertNotDuplicate(header.possDup(), "TestRequest with PossDup(44)=Y");
 
-        int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced())) {
-            state.targetSeqNum(msgSeqNum + 1);
+        final int seqNum = header.msgSeqNum();
+        if (checkTargetSeqNum(seqNum, state.synced())) {
+            state.targetSeqNum(seqNum + 1);
         }
 
         onAdminMessage(header, message);
+
         if (state.status() == APPLICATION_CONNECTED) {
             CharSequence reqId = message.getString(Tag.TestReqID, wrapper);
             sendHeartbeat(reqId);
@@ -488,18 +491,17 @@ public abstract class Session implements Worker {
 
     protected void processResendRequest(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
-        assertNotDuplicate(header.possDup(), "ResendRequest with PossDup(44)=Y");
 
-        int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced())) {
-            state.targetSeqNum(msgSeqNum + 1);
+        final int seqNum = header.msgSeqNum();
+        if (checkTargetSeqNum(seqNum, state.synced())) {
+            state.targetSeqNum(seqNum + 1);
         }
 
         validateResendRequest(message);
         onAdminMessage(header, message);
 
-        int beginSeqNo = message.getUInt(Tag.BeginSeqNo);
-        int endSeqNo = message.getUInt(Tag.EndSeqNo);
+        final int beginSeqNo = message.getUInt(Tag.BeginSeqNo);
+        final int endSeqNo = message.getUInt(Tag.EndSeqNo);
 
         resendMessages(beginSeqNo, endSeqNo == 0 ? (state.senderSeqNum() - 1) : endSeqNo);
     }
@@ -507,9 +509,16 @@ public abstract class Session implements Worker {
     protected void processReject(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        int msgSeqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(msgSeqNum, state.targetSeqNumSynced())) {
-            state.targetSeqNum(msgSeqNum + 1);
+        final boolean synced = state.synced();
+        final int seqNum = header.msgSeqNum();
+        final boolean expectedSeqNum = checkTargetSeqNum(seqNum, synced);
+
+        if (!synced) {
+            sync(expectedSeqNum, seqNum);
+        }
+
+        if (expectedSeqNum) {
+            state.targetSeqNum(seqNum + 1);
             onAdminMessage(header, message);
         }
     }
@@ -517,7 +526,7 @@ public abstract class Session implements Worker {
     protected void processSequenceReset(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        boolean gapFill = message.getBool(Tag.GapFillFlag, false);
+        final boolean gapFill = message.getBool(Tag.GapFillFlag, false);
         if (gapFill) {
             checkTargetSeqNum(header.msgSeqNum(), true);
         }
@@ -525,15 +534,20 @@ public abstract class Session implements Worker {
         validateSequenceReset(message);
         onAdminMessage(header, message);
 
-        int newSeqNo = message.getUInt(Tag.NewSeqNo);
+        final int newSeqNo = message.getUInt(Tag.NewSeqNo);
         state.targetSeqNum(newSeqNo);
+
+        if (gapFill && !state.synced()) {
+            sync(true, newSeqNo - 1);
+        } else {
+            state.synced(true);
+        }
     }
 
     protected void processLogout(Header header, Message message) {
         assertStatus(LOGON_SENT, APPLICATION_CONNECTED, LOGOUT_SENT);
-        assertNotDuplicate(header.possDup(), "Logout with PossDup(44)=Y");
 
-        boolean expectedSeqNum = checkTargetSeqNum(header.msgSeqNum(), state.targetSeqNumSynced());
+        final boolean expectedSeqNum = checkTargetSeqNum(header.msgSeqNum(), state.synced());
         if (expectedSeqNum) {
             state.targetSeqNum(header.msgSeqNum() + 1);
         }
@@ -550,17 +564,39 @@ public abstract class Session implements Worker {
     protected void processAppMessage(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        if (checkTargetSeqNum(header.msgSeqNum(), state.targetSeqNumSynced())) {
-            state.targetSeqNum(header.msgSeqNum() + 1);
+        final boolean synced = state.synced();
+        final int seqNum = header.msgSeqNum();
+        final boolean expectedSeqNum = checkTargetSeqNum(seqNum, synced);
+
+        if (!synced) {
+            sync(expectedSeqNum, seqNum);
+        }
+
+        if (expectedSeqNum) {
+            state.targetSeqNum(seqNum + 1);
             onAppMessage(header, message);
         }
     }
 
-    protected int sendOutboundMessages() {
+    protected void sync(boolean expectedSeqNum, int seqNum) {
+        syncHigh = Math.max(syncHigh, seqNum);
+
+        if (expectedSeqNum && seqNum == syncLow) {
+            final boolean synced = (seqNum == syncHigh);
+            state.synced(synced);
+
+            if (!synced) {
+                syncLow = Math.min(seqNum + syncBatchSize, syncHigh);
+                sendResendRequest(seqNum + 1, syncLow);
+            }
+        }
+    }
+
+    protected int sendMessages() {
         int work = 0;
 
         try {
-            work += doSendOutboundMessages();
+            work += doSendMessages();
         } catch (Exception e) {
             work += 1;
             processError(e);
@@ -697,8 +733,9 @@ public abstract class Session implements Worker {
     }
 
     protected void validateSequenceReset(Message message) {
-        int newSeqNo = message.getUInt(Tag.NewSeqNo);
-        int targetSeqNum = state.targetSeqNum();
+        final boolean gapFill = message.getBool(Tag.GapFillFlag, false);
+        final int newSeqNo = message.getUInt(Tag.NewSeqNo);
+        final int targetSeqNum = gapFill ? state.targetSeqNum() : 1;
 
         if (newSeqNo <= targetSeqNum) {
             throw new FieldException(Tag.NewSeqNo, "NewSeqNo(36) " + newSeqNo + " should be more expected target MsgSeqNum " + targetSeqNum);
@@ -757,7 +794,7 @@ public abstract class Session implements Worker {
 
     protected abstract void onStatusUpdate(SessionStatus previous, SessionStatus current);
 
-    protected abstract int doSendOutboundMessages();
+    protected abstract int doSendMessages();
 
     protected abstract void onAdminMessage(Header header, Message message);
 

@@ -28,6 +28,9 @@ public class Configuration {
     public static final String LOGOUT_TIMEOUT_PROP_NAME = "efix.logout.timeout";
     public static final String SEND_TIMEOUT_PROP_NAME = "efix.send.timeout";
 
+    public static final String SYNC_BATCH_SIZE_PROP_NAME = "efix.sync.batch.size";
+
+
     public static final int CONNECT_INTERVAL_MS = getInteger(CONNECT_INTERVAL_PROP_NAME, 5000);
 
     public static final int MESSAGE_STORE_SIZE = getInteger(MESSAGE_STORE_SIZE_PROP_NAME, 1 << 22);
@@ -51,6 +54,7 @@ public class Configuration {
     public static final int LOGOUT_TIMEOUT_MS = getInteger(LOGOUT_TIMEOUT_PROP_NAME, 2000);
     public static final int SEND_TIMEOUT_MS = getInteger(SEND_TIMEOUT_PROP_NAME, 500);
 
+    public static final int SYNC_BATCH_SIZE = getInteger(SYNC_BATCH_SIZE_PROP_NAME, 1000);
 
     public static boolean getBoolean(String propName, boolean defaultValue) {
         boolean value = defaultValue;

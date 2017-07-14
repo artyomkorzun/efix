@@ -10,9 +10,9 @@ public interface SessionState extends SessionComponent {
     void status(SessionStatus status);
 
 
-    boolean targetSeqNumSynced();
+    boolean synced();
 
-    void targetSeqNumSynced(boolean synced);
+    void synced(boolean synced);
 
 
     int senderSeqNum();

@@ -5,7 +5,7 @@ public abstract class AbstractSessionState implements SessionState {
     protected SessionStatus status = SessionStatus.DISCONNECTED;
     protected long lastReceivedTime = Long.MIN_VALUE;
     protected long lastSentTime = Long.MIN_VALUE;
-    protected boolean targetSeqNumSynchronized;
+    protected boolean synced;
     protected boolean testRequestSent;
 
     @Override
@@ -19,13 +19,13 @@ public abstract class AbstractSessionState implements SessionState {
     }
 
     @Override
-    public boolean targetSeqNumSynced() {
-        return targetSeqNumSynchronized;
+    public boolean synced() {
+        return synced;
     }
 
     @Override
-    public void targetSeqNumSynced(boolean synced) {
-        this.targetSeqNumSynchronized = synced;
+    public void synced(boolean synced) {
+        this.synced = synced;
     }
 
     @Override
