@@ -1,6 +1,6 @@
 package org.efix.util.parse;
 
-import org.efix.message.FieldException;
+import org.efix.message.InvalidFieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.DateType;
@@ -31,7 +31,7 @@ public class DateParser {
 
     public static long parseDate(int tag, Buffer buffer, int offset, int end) {
         if (offset + DateType.LENGTH != end) {
-            throw new FieldException(tag, "Not valid date");
+            throw new InvalidFieldException(tag, "Not valid date");
         }
 
         int days = parseDays(tag, buffer, offset);
@@ -56,7 +56,7 @@ public class DateParser {
         byte b4 = buffer.getByte(offset + 3);
 
         if (b1 != '2' | b2 != '0' | b3 < '0' | b3 > '9' | b4 < '0' | b4 > '9') {
-            throw new FieldException(tag, "Not valid date");
+            throw new InvalidFieldException(tag, "Not valid date");
         }
 
         return 10 * (b3 - '0') + (b4 - '0');
@@ -67,7 +67,7 @@ public class DateParser {
         byte b2 = buffer.getByte(offset + 1);
 
         if (b1 < '0' | b1 > '1' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid date");
+            throw new InvalidFieldException(tag, "Not valid date");
         }
 
         return 10 * (b1 - '0') + (b2 - '1'); // month - 1
@@ -78,7 +78,7 @@ public class DateParser {
         byte b2 = buffer.getByte(offset + 1);
 
         if (b1 < '0' | b1 > '3' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid date");
+            throw new InvalidFieldException(tag, "Not valid date");
         }
 
         return 10 * (b1 - '0') + (b2 - '1'); // day - 1

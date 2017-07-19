@@ -1,6 +1,6 @@
 package org.efix.util.parse;
 
-import org.efix.message.FieldException;
+import org.efix.message.InvalidFieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.TimestampType;
@@ -24,7 +24,7 @@ public class TimestampParser {
     public static long parseTimestamp(int tag, Buffer buffer, int offset, int end) {
         int length = end - offset;
         if (length < TimestampType.SECOND_TIMESTAMP_LENGTH) {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
 
         int days = parseDays(tag, buffer, offset);
@@ -37,7 +37,7 @@ public class TimestampParser {
             checkByte(tag, '.', buffer, offset + TimestampType.DOT_OFFSET);
             milliseconds = parseMilliseconds(tag, buffer, offset);
         } else if (length != TimestampType.SECOND_TIMESTAMP_LENGTH) {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
 
         return days * DAY_MS + 1000 * seconds + milliseconds;
@@ -70,7 +70,7 @@ public class TimestampParser {
         byte b4 = buffer.getByte(offset + 3);
 
         if (b1 != '2' | b2 != '0' | b3 < '0' | b3 > '9' | b4 < '0' | b4 > '9') {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
 
         return 10 * (b3 - '0') + (b4 - '0');
@@ -81,7 +81,7 @@ public class TimestampParser {
         byte b2 = buffer.getByte(offset + 1);
 
         if (b1 < '0' | b1 > '1' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
 
         return 10 * (b1 - '0') + (b2 - '1'); // month - 1
@@ -92,7 +92,7 @@ public class TimestampParser {
         byte b2 = buffer.getByte(offset + 1);
 
         if (b1 < '0' | b1 > '3' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
 
         return 10 * (b1 - '0') + (b2 - '1'); // day - 1
@@ -115,7 +115,7 @@ public class TimestampParser {
         byte b2 = buffer.getByte(offset + TimestampType.HOUR_OFFSET + 1);
 
         if (b1 < '0' | b1 > '2' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
 
         return 10 * (b1 - '0') + (b2 - '0');
@@ -126,7 +126,7 @@ public class TimestampParser {
         byte b2 = buffer.getByte(offset + TimestampType.MINUTE_OFFSET + 1);
 
         if (b1 < '0' | b1 > '5' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
 
         return 10 * (b1 - '0') + (b2 - '0');
@@ -137,7 +137,7 @@ public class TimestampParser {
         byte b2 = buffer.getByte(offset + TimestampType.SECOND_OFFSET + 1);
 
         if (b1 < '0' | b1 > '5' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
 
         return 10 * (b1 - '0') + (b2 - '0');
@@ -149,7 +149,7 @@ public class TimestampParser {
         byte b3 = buffer.getByte(offset + TimestampType.MILLISECOND_OFFSET + 2);
 
         if (b1 < '0' | b1 > '9' | b2 < '0' | b2 > '9' | b3 < '0' | b3 > '9') {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
 
         return 100 * (b1 - '0') + 10 * (b2 - '0') + (b3 - '0');
@@ -158,7 +158,7 @@ public class TimestampParser {
     private static void checkByte(int tag, char expected, Buffer buffer, int offset) {
         byte b = buffer.getByte(offset);
         if (b != expected) {
-            throw new FieldException(tag, "Not valid timestamp");
+            throw new InvalidFieldException(tag, "Not valid timestamp");
         }
     }
 

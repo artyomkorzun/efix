@@ -1,6 +1,6 @@
 package org.efix.util.parse;
 
-import org.efix.message.FieldException;
+import org.efix.message.InvalidFieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.TimeType;
@@ -16,7 +16,7 @@ public class TimeParser {
     public static long parseTime(int tag, Buffer buffer, int offset, int end) {
         int length = end - offset;
         if (length < TimeType.SECOND_TIME_LENGTH) {
-            throw new FieldException(tag, "Not valid time");
+            throw new InvalidFieldException(tag, "Not valid time");
         }
 
         int seconds = parseSeconds(tag, buffer, offset);
@@ -26,7 +26,7 @@ public class TimeParser {
             checkByte(tag, '.', buffer, offset + TimeType.DOT_OFFSET);
             milliseconds = parse3DigitUInt(buffer, offset + TimeType.MILLISECOND_OFFSET);
         } else if (length != TimeType.SECOND_TIME_LENGTH) {
-            throw new FieldException(tag, "Not valid time");
+            throw new InvalidFieldException(tag, "Not valid time");
         }
 
         return 1000 * seconds + milliseconds;
@@ -49,7 +49,7 @@ public class TimeParser {
         byte b2 = buffer.getByte(offset + TimeType.HOUR_OFFSET + 1);
 
         if (b1 < '0' | b1 > '2' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid time");
+            throw new InvalidFieldException(tag, "Not valid time");
         }
 
         return 10 * (b1 - '0') + (b2 - '0');
@@ -60,7 +60,7 @@ public class TimeParser {
         byte b2 = buffer.getByte(offset + TimeType.MINUTE_OFFSET + 1);
 
         if (b1 < '0' | b1 > '5' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid time");
+            throw new InvalidFieldException(tag, "Not valid time");
         }
 
         return 10 * (b1 - '0') + (b2 - '0');
@@ -71,7 +71,7 @@ public class TimeParser {
         byte b2 = buffer.getByte(offset + TimeType.SECOND_OFFSET + 1);
 
         if (b1 < '0' | b1 > '5' | b2 < '0' | b2 > '9') {
-            throw new FieldException(tag, "Not valid time");
+            throw new InvalidFieldException(tag, "Not valid time");
         }
 
         return 10 * (b1 - '0') + (b2 - '0');
@@ -83,7 +83,7 @@ public class TimeParser {
         byte b3 = buffer.getByte(offset + TimeType.MILLISECOND_OFFSET + 2);
 
         if (b1 < '0' | b1 > '9' | b2 < '0' | b2 > '9' | b3 < '0' | b3 > '9') {
-            throw new FieldException(tag, "Not valid time");
+            throw new InvalidFieldException(tag, "Not valid time");
         }
 
         return 100 * (b1 - '0') + 10 * (b2 - '0') + (b3 - '0');
@@ -92,7 +92,7 @@ public class TimeParser {
     private static void checkByte(int tag, char expected, Buffer buffer, int offset) {
         byte b = buffer.getByte(offset);
         if (b != expected) {
-            throw new FieldException(tag, "Not valid time");
+            throw new InvalidFieldException(tag, "Not valid time");
         }
     }
 

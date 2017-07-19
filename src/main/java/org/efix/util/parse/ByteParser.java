@@ -1,6 +1,6 @@
 package org.efix.util.parse;
 
-import org.efix.message.FieldException;
+import org.efix.message.InvalidFieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.ByteType;
@@ -11,7 +11,7 @@ public class ByteParser {
 
     public static byte parseByte(int tag, Buffer buffer, int offset, int end) {
         if (offset + 1 != end) {
-            throw new FieldException(tag, "Not valid byte field");
+            throw new InvalidFieldException(tag, "Not valid byte field");
         }
 
         return buffer.getByte(offset);

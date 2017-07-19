@@ -1,6 +1,6 @@
 package org.efix.util.parse;
 
-import org.efix.message.FieldException;
+import org.efix.message.InvalidFieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.BooleanType;
@@ -12,7 +12,7 @@ public class BoolParser {
 
     public static boolean parseBool(int tag, Buffer buffer, int offset, int end) {
         if (offset + 1 != end) {
-            throw new FieldException(tag, "Not valid bool field");
+            throw new InvalidFieldException(tag, "Not valid bool field");
         }
 
         byte b = buffer.getByte(offset);
@@ -25,7 +25,7 @@ public class BoolParser {
                 return false;
 
             default:
-                throw new FieldException(tag, "Not bool field. Value: " + (char) b);
+                throw new InvalidFieldException(tag, "Not bool field. Value: " + (char) b);
         }
     }
 

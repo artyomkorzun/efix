@@ -1,6 +1,6 @@
 package org.efix.util.parse;
 
-import org.efix.message.FieldException;
+import org.efix.message.InvalidFieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.DecimalType;
@@ -27,7 +27,7 @@ public class DecimalParser {
                 } else if (b == '.') {
                     break;
                 } else {
-                    throw new FieldException(tag, "Not valid decimal");
+                    throw new InvalidFieldException(tag, "Not valid decimal");
                 }
             } while (offset < end);
 
@@ -38,7 +38,7 @@ public class DecimalParser {
                 while (offset < limit) {
                     byte b = buffer.getByte(offset++);
                     if (b < '0' | b > '9') {
-                        throw new FieldException(tag, "Not valid decimal");
+                        throw new InvalidFieldException(tag, "Not valid decimal");
                     }
 
                     value = 10 * value - (b - '0');
@@ -47,7 +47,7 @@ public class DecimalParser {
                 if (scale < 0) {
                     byte b = buffer.getByte(offset);
                     if (b < '0' | b > '9') {
-                        throw new FieldException(tag, "Not valid decimal");
+                        throw new InvalidFieldException(tag, "Not valid decimal");
                     }
 
                     value -= b < '5' ? 0 : 1;
@@ -72,7 +72,7 @@ public class DecimalParser {
             } else if (b == '.') {
                 break;
             } else {
-                throw new FieldException(tag, "Not valid decimal");
+                throw new InvalidFieldException(tag, "Not valid decimal");
             }
         } while (offset < end);
 
@@ -83,7 +83,7 @@ public class DecimalParser {
             while (offset < limit) {
                 byte b = buffer.getByte(offset++);
                 if (b < '0' | b > '9') {
-                    throw new FieldException(tag, "Not valid decimal");
+                    throw new InvalidFieldException(tag, "Not valid decimal");
                 }
 
                 value = 10 * value + (b - '0');
@@ -92,7 +92,7 @@ public class DecimalParser {
             if (scale < 0) {
                 byte b = buffer.getByte(offset);
                 if (b < '0' | b > '9') {
-                    throw new FieldException(tag, "Not valid decimal");
+                    throw new InvalidFieldException(tag, "Not valid decimal");
                 }
 
                 value += b < '5' ? 0 : 1;
@@ -121,20 +121,20 @@ public class DecimalParser {
                 } else if (b == '.') {
                     break;
                 } else {
-                    throw new FieldException(tag, "Not valid decimal");
+                    throw new InvalidFieldException(tag, "Not valid decimal");
                 }
             } while (offset < end);
 
             if (offset < end) {
                 scale -= end - offset;
                 if (scale < 0) {
-                    throw new FieldException(tag, "Not valid decimal, too long fractional part");
+                    throw new InvalidFieldException(tag, "Not valid decimal, too long fractional part");
                 }
 
                 do {
                     byte b = buffer.getByte(offset++);
                     if (b < '0' | b > '9') {
-                        throw new FieldException(tag, "Not valid decimal");
+                        throw new InvalidFieldException(tag, "Not valid decimal");
                     }
 
                     value = 10 * value - (b - '0');
@@ -158,20 +158,20 @@ public class DecimalParser {
             } else if (b == '.') {
                 break;
             } else {
-                throw new FieldException(tag, "Not valid decimal");
+                throw new InvalidFieldException(tag, "Not valid decimal");
             }
         } while (offset < end);
 
         if (offset < end) {
             scale -= end - offset;
             if (scale < 0) {
-                throw new FieldException(tag, "Not valid decimal, too long fractional part");
+                throw new InvalidFieldException(tag, "Not valid decimal, too long fractional part");
             }
 
             do {
                 byte b = buffer.getByte(offset++);
                 if (b < '0' | b > '9') {
-                    throw new FieldException(tag, "Not valid decimal");
+                    throw new InvalidFieldException(tag, "Not valid decimal");
                 }
 
                 value = 10 * value + (b - '0');

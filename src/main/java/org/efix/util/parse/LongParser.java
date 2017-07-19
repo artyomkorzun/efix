@@ -1,6 +1,6 @@
 package org.efix.util.parse;
 
-import org.efix.message.FieldException;
+import org.efix.message.InvalidFieldException;
 import org.efix.util.MutableInt;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.type.LongType;
@@ -25,7 +25,7 @@ public class LongParser {
         while (offset < end) {
             b = buffer.getByte(offset++);
             if (!ParserUtil.isDigit(b)) {
-                throw new FieldException(tag, "Not integer field");
+                throw new InvalidFieldException(tag, "Not integer field");
             }
 
             value = 10 * value - (b - '0');
@@ -40,7 +40,7 @@ public class LongParser {
         do {
             byte b = buffer.getByte(offset++);
             if (!ParserUtil.isDigit(b)) {
-                throw new FieldException(tag, "Not integer field");
+                throw new InvalidFieldException(tag, "Not integer field");
             }
 
             value = 10 * value + (b - '0');
