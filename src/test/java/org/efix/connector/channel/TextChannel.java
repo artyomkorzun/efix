@@ -1,6 +1,5 @@
 package org.efix.connector.channel;
 
-import org.efix.connector.ConnectionException;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.BufferUtil;
 import org.efix.util.buffer.MutableBuffer;
@@ -23,7 +22,7 @@ public class TextChannel implements Channel {
     @Override
     public int read(MutableBuffer buffer, int offset, int length) {
         if (inQueue.isEmpty())
-            throw new ConnectionException("No more data", null, null);
+            return 0;
 
         Buffer chunk = byteMessage(inQueue.remove());
         buffer.putBytes(offset, chunk, 0, chunk.capacity());

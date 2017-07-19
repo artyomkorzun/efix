@@ -73,7 +73,7 @@ public abstract class Session implements Worker {
 
     protected volatile boolean closing = false;
 
-    protected int syncLow;
+    protected int syncBatchEnd;
     protected int syncHigh;
 
     public Session(SessionContext context) {
@@ -231,6 +231,7 @@ public abstract class Session implements Worker {
             if (status == SOCKET_CONNECTED || status == LOGON_SENT) {
                 work += checkLogonTimeout(now);
             } else if (status == APPLICATION_CONNECTED) {
+                work += checkSynced(now);
                 work += checkInHeartbeatTimeout(now);
                 work += checkOutHeartbeatTimeout(now);
             } else if (status == LOGOUT_SENT) {
@@ -312,6 +313,21 @@ public abstract class Session implements Worker {
         long elapsed = now - state.lastSentTime();
         if (elapsed >= logoutTimeout) {
             throw new TimeoutException(String.format("Logout timeout %s ms. Elapsed %s ms", logoutTimeout, elapsed));
+        }
+
+        return work;
+    }
+
+    protected int checkSynced(long now) {
+        int work = 0;
+
+        final int seqNum = state.targetSeqNum();
+        if (seqNum <= syncHigh) {
+            if (seqNum > syncBatchEnd) {
+                final int endSeqNum = Math.min(seqNum - 1 + syncBatchSize, syncHigh);
+                sendResendRequest(seqNum, endSeqNum);
+                syncBatchEnd = endSeqNum;
+            }
         }
 
         return work;
@@ -442,7 +458,9 @@ public abstract class Session implements Worker {
         validateLogon(message);
         onAdminMessage(header, message);
 
-        state.synced(synced);
+        state.testRequestSent(false);
+        syncBatchEnd = 0;
+        syncHigh = seqNum;
         if (synced) {
             state.targetSeqNum(seqNum + 1);
         }
@@ -451,36 +469,21 @@ public abstract class Session implements Worker {
             sendLogon(resetSeqNums);
         }
 
-        if (!synced) {
-            syncLow = state.targetSeqNum() - 1;
-            syncHigh = seqNum;
-            sync(true, syncLow);
-        }
-
         updateStatus(APPLICATION_CONNECTED);
     }
 
     protected void processHeartbeat(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        final int seqNum = header.msgSeqNum();
+        updateTargetSeqNum(header.msgSeqNum());
         state.testRequestSent(false);
-
-        if (checkTargetSeqNum(seqNum, state.synced())) {
-            state.targetSeqNum(seqNum + 1);
-        }
-
         onAdminMessage(header, message);
     }
 
     protected void processTestRequest(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        final int seqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(seqNum, state.synced())) {
-            state.targetSeqNum(seqNum + 1);
-        }
-
+        updateTargetSeqNum(header.msgSeqNum());
         onAdminMessage(header, message);
 
         if (state.status() == APPLICATION_CONNECTED) {
@@ -492,10 +495,7 @@ public abstract class Session implements Worker {
     protected void processResendRequest(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        final int seqNum = header.msgSeqNum();
-        if (checkTargetSeqNum(seqNum, state.synced())) {
-            state.targetSeqNum(seqNum + 1);
-        }
+        updateTargetSeqNum(header.msgSeqNum());
 
         validateResendRequest(message);
         onAdminMessage(header, message);
@@ -509,16 +509,7 @@ public abstract class Session implements Worker {
     protected void processReject(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        final boolean synced = state.synced();
-        final int seqNum = header.msgSeqNum();
-        final boolean expectedSeqNum = checkTargetSeqNum(seqNum, synced);
-
-        if (!synced) {
-            sync(expectedSeqNum, seqNum);
-        }
-
-        if (expectedSeqNum) {
-            state.targetSeqNum(seqNum + 1);
+        if (updateTargetSeqNum(header.msgSeqNum())) {
             onAdminMessage(header, message);
         }
     }
@@ -535,23 +526,16 @@ public abstract class Session implements Worker {
         onAdminMessage(header, message);
 
         final int newSeqNo = message.getUInt(Tag.NewSeqNo);
-        state.targetSeqNum(newSeqNo);
-
-        if (gapFill && !state.synced()) {
-            sync(true, newSeqNo - 1);
-        } else {
-            state.synced(true);
+        if (!gapFill) {
+            syncHigh = newSeqNo - 1;
         }
+        state.targetSeqNum(newSeqNo);
     }
 
     protected void processLogout(Header header, Message message) {
         assertStatus(LOGON_SENT, APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        final boolean expectedSeqNum = checkTargetSeqNum(header.msgSeqNum(), state.synced());
-        if (expectedSeqNum) {
-            state.targetSeqNum(header.msgSeqNum() + 1);
-        }
-
+        updateTargetSeqNum(header.msgSeqNum());
         onAdminMessage(header, message);
 
         if (updateStatus(LOGOUT_RECEIVED) == APPLICATION_CONNECTED) {
@@ -564,31 +548,8 @@ public abstract class Session implements Worker {
     protected void processAppMessage(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        final boolean synced = state.synced();
-        final int seqNum = header.msgSeqNum();
-        final boolean expectedSeqNum = checkTargetSeqNum(seqNum, synced);
-
-        if (!synced) {
-            sync(expectedSeqNum, seqNum);
-        }
-
-        if (expectedSeqNum) {
-            state.targetSeqNum(seqNum + 1);
+        if (updateTargetSeqNum(header.msgSeqNum())) {
             onAppMessage(header, message);
-        }
-    }
-
-    protected void sync(boolean expectedSeqNum, int seqNum) {
-        syncHigh = Math.max(syncHigh, seqNum);
-
-        if (expectedSeqNum && seqNum == syncLow) {
-            final boolean synced = (seqNum == syncHigh);
-            state.synced(synced);
-
-            if (!synced) {
-                syncLow = Math.min(seqNum + syncBatchSize, syncHigh);
-                sendResendRequest(seqNum + 1, syncLow);
-            }
         }
     }
 
@@ -767,6 +728,17 @@ public abstract class Session implements Worker {
 
     protected void makeLogout(CharSequence text, MessageBuilder builder) {
         SessionUtil.makeLogout(text, builder);
+    }
+
+    protected boolean updateTargetSeqNum(int seqNum) {
+        final boolean synced = checkTargetSeqNum(seqNum, false);
+        syncHigh = Math.max(syncHigh, seqNum);
+
+        if (synced) {
+            state.targetSeqNum(seqNum + 1);
+        }
+
+        return synced;
     }
 
     protected SessionStatus updateStatus(SessionStatus status) {

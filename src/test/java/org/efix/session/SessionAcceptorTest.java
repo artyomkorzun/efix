@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import static org.efix.state.SessionStatus.*;
 
+
 public class SessionAcceptorTest extends SessionTest {
 
     public SessionAcceptorTest() {

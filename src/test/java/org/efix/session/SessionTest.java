@@ -132,20 +132,20 @@ public abstract class SessionTest {
     @Test
     public void shouldDisconnectOnLogoutWithSeqNumMoreExpected() {
         String inLogout = "8=FIX.4.4|9=57|35=5|34=4|49=SENDER|52=20140522-12:07:39.552|56=RECEIVER|10=248|";
-
+        String outLogout = "8=FIX.4.4|9=76|35=5|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|58=Logout response|10=132|";
         exchangeLogons();
 
         int work = process(inLogout);
 
-        assertErrors("MsgSeqNum too high, expecting 3 but received 4");
+        assertNoErrors();
         assertWorkDone(work);
-        assertSeqNums(3, 2);
-        assertNoOutMessages();
-        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+        assertSeqNums(3, 3);
+        assertOutMessages(outLogout);
+        assertStatuses(LOGOUT_RECEIVED, LOGOUT_SENT, SOCKET_CONNECTED, DISCONNECTED);
     }
 
     @Test
-    public void shouldDisconnectOnLogoutWithSeqNumLessExpected() {
+    public void shouldSendLogoutOnLogoutWithSeqNumLessExpected() {
         String inLogout = "8=FIX.4.4|9=57|35=5|34=2|49=SENDER|52=20140522-12:07:39.552|56=RECEIVER|10=246|";
 
         exchangeLogons();
@@ -182,18 +182,19 @@ public abstract class SessionTest {
     // -------------------- HEARTBEAT --------------------
 
     @Test
-    public void shouldDisconnectOnHeartbeatWithSeqNumMoreExpected() {
+    public void shouldSendResendRequestOnHeartbeatWithSeqNumMoreExpected() {
         String inHeartbeat = "8=FIX.4.4|9=57|35=0|34=4|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=212|";
+        String outResendRequest = "8=FIX.4.4|9=66|35=2|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|7=3|16=4|10=077|";
 
         exchangeLogons();
 
         int work = process(inHeartbeat);
 
-        assertErrors("MsgSeqNum too high, expecting 3 but received 4");
+        assertNoErrors();
         assertWorkDone(work);
-        assertSeqNums(3, 2);
-        assertNoOutMessages();
-        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+        assertSeqNums(3, 3);
+        assertOutMessages(outResendRequest);
+        assertStatuses();
     }
 
     @Test
@@ -233,19 +234,19 @@ public abstract class SessionTest {
     public void shouldSendHeartbeatOnTestRequestWithSeqNumMoreExpectedEvenIfSeqNumIsNotSynced() {
         String inTestRequest = "8=FIX.4.4|9=77|35=1|34=4|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|112=Test Request ID|10=255|";
         String outHeartbeat = "8=FIX.4.4|9=77|35=0|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|112=Test Request ID|10=244|";
+        String outResendRequest = "8=FIX.4.4|9=66|35=2|34=3|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|7=3|16=4|10=078|";
 
         exchangeLogons();
-        state.synced(false);
         int work = process(inTestRequest);
 
         assertNoErrors();
         assertWorkDone(work);
-        assertSeqNums(3, 3);
-        assertOutMessages(outHeartbeat);
+        assertSeqNums(3, 4);
+        assertOutMessages(outHeartbeat, outResendRequest);
         assertStatuses();
     }
 
-    @Test
+    /*@Test
     public void shouldDisconnectOnTestRequestWithSeqNumMoreExpected() {
         String inTestRequest = "8=FIX.4.4|9=77|35=1|34=4|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|112=Test Request ID|10=255|";
 
@@ -258,7 +259,7 @@ public abstract class SessionTest {
         assertSeqNums(3, 2);
         assertNoOutMessages();
         assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
-    }
+    }*/
 
     @Test
     public void shouldDisconnectOnTestRequestWithSeqNumLessExpected() {
@@ -400,18 +401,19 @@ public abstract class SessionTest {
     // -------------------- REJECT --------------------
 
     @Test
-    public void shouldDisconnectOnRejectWithSeqNumMoreExpected() {
+    public void shouldSendResendRequestOnRejectWithSeqNumMoreExpected() {
         String inReject = "8=FIX.4.4|9=57|35=3|34=4|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=215|";
-
+        String outResendRequest = "8=FIX.4.4|9=66|35=2|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|7=3|16=4|10=077|";
+        
         exchangeLogons();
 
         int work = process(inReject);
 
-        assertErrors("MsgSeqNum too high, expecting 3 but received 4");
+        assertNoErrors();
         assertWorkDone(work);
-        assertSeqNums(3, 2);
-        assertNoOutMessages();
-        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+        assertSeqNums(3, 3);
+        assertOutMessages(outResendRequest);
+        assertStatuses();
     }
 
     @Test
@@ -520,7 +522,6 @@ public abstract class SessionTest {
         assertWorkDone(work);
         assertStatus(SessionStatus.APPLICATION_CONNECTED);
         assertSeqNums(206, 5);
-        assertTrue(state.synced());
         assertFalse(state.testRequestSent());
         assertOutMessages(outLogon, outResendRequest1, outResendRequest2, outResendRequest3);
     }
@@ -545,7 +546,6 @@ public abstract class SessionTest {
         assertWorkDone(work);
         assertStatus(SessionStatus.APPLICATION_CONNECTED);
         assertSeqNums(202, 5);
-        assertTrue(state.synced());
         assertFalse(state.testRequestSent());
         assertOutMessages(outLogon, outResendRequest1, outResendRequest2, outResendRequest3);
     }
@@ -566,18 +566,21 @@ public abstract class SessionTest {
     }
 
     @Test
-    public void shouldDisconnectOnResendRequestWithSeqNumMoreExpected() {
+    public void shouldSendGapFillAndResendRequestOnResendRequestWithSeqNumMoreExpected() {
         String inResendRequest = "8=FIX.4.4|9=66|35=2|34=4|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|7=1|16=0|10=081|";
+
+        String outGapFill = "8=FIX.4.4|9=73|35=4|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|43=Y|36=2|123=Y|10=207|";
+        String outResendRequest = "8=FIX.4.4|9=66|35=2|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|7=3|16=4|10=077|";
 
         exchangeLogons();
 
         int work = process(inResendRequest);
 
-        assertErrors("MsgSeqNum too high, expecting 3 but received 4");
+        assertNoErrors();
         assertWorkDone(work);
-        assertSeqNums(3, 2);
-        assertNoOutMessages();
-        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+        assertSeqNums(3, 3);
+        assertOutMessages(outGapFill, outResendRequest);
+        assertStatuses();
     }
 
     @Test
@@ -628,18 +631,19 @@ public abstract class SessionTest {
     // -------------------- APPLICATION MESSAGE --------------------
 
     @Test
-    public void shouldDisconnectOnAppMessageWithSeqNumMoreExpected() {
+    public void shouldSendResendRequestOnAppMessageWithSeqNumMoreExpected() {
         String appMessage = "8=FIX.4.4|9=57|35=D|34=4|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|10=232|";
+        String outResendRequest = "8=FIX.4.4|9=66|35=2|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|7=3|16=4|10=077|";
 
         exchangeLogons();
 
         int work = process(appMessage);
 
-        assertErrors("MsgSeqNum too high, expecting 3 but received 4");
+        assertNoErrors();
         assertWorkDone(work);
-        assertSeqNums(3, 2);
-        assertNoOutMessages();
-        assertStatuses(SOCKET_CONNECTED, DISCONNECTED);
+        assertSeqNums(3, 3);
+        assertOutMessages(outResendRequest);
+        assertStatuses();
     }
 
     @Test
@@ -764,7 +768,6 @@ public abstract class SessionTest {
         assertWorkDone(work);
         assertStatus(SessionStatus.APPLICATION_CONNECTED);
         assertSeqNums(3, 2);
-        assertTrue(state.synced());
         assertFalse(state.testRequestSent());
         assertOutMessages(outLogon);
 
@@ -778,8 +781,13 @@ public abstract class SessionTest {
     }
 
     protected int process(String... inMessages) {
-        channel.inQueue().add(concatenate(inMessages));
-        return session.work();
+        int work = 0;
+        for (String inMessage : inMessages) {
+            channel.inQueue().add(inMessage);
+            work += session.work();
+        }
+
+        return work;
     }
 
     protected void assertWorkDone(int work) {

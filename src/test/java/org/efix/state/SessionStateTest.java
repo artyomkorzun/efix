@@ -41,10 +41,6 @@ public class SessionStateTest {
         state.status(SessionStatus.APPLICATION_CONNECTED);
         assertEquals(SessionStatus.APPLICATION_CONNECTED, state.status());
 
-        assertFalse(state.synced());
-        state.synced(true);
-        assertTrue(state.synced());
-
         assertEquals(1, state.senderSeqNum());
         state.senderSeqNum(99);
         assertEquals(99, state.senderSeqNum());
