@@ -45,43 +45,49 @@ public class MessagePackerTest {
 
     @Test(expected = InsufficientSpaceException.class)
     public void shouldThrowExceptionMessageLengthExceedsMaxOnPackSendMessage() {
-        int messageLength = 67;
         SessionId sessionId = new SessionId("S", "T");
+        FixVersion fixVersion = FixVersion.FIX42;
+
+        int messageLength = 67;
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(messageLength - 1);
-        MessagePacker packer = new MessagePacker(FixVersion.FIX42, sessionId, buffer);
+        MessagePacker packer = new MessagePacker(buffer);
 
         int seqNum = 1;
         long time = System.currentTimeMillis();
         ByteSequence msgType = MsgType.ORDER_SINGLE;
         Buffer body = UnsafeBuffer.allocateHeap(0);
 
-        packer.pack(seqNum, time, msgType, body, 0, 0);
+        packer.pack(fixVersion, sessionId, seqNum, time, msgType, body, 0, 0);
     }
 
     @Test(expected = InsufficientSpaceException.class)
     public void shouldThrowExceptionMessageLengthExceedsMaxOnPackResendMessage() {
-        int messageLength = 109;
         SessionId sessionId = new SessionId("S", "T");
+        FixVersion fixVersion = FixVersion.FIX42;
+
+        int messageLength = 109;
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(messageLength - 1);
-        MessagePacker packer = new MessagePacker(FixVersion.FIX42, sessionId, buffer);
+        MessagePacker packer = new MessagePacker(buffer);
 
         int seqNum = 99;
         long time = System.currentTimeMillis();
         ByteSequence msgType = MsgType.EXECUTION_REPORT;
         Buffer body = UnsafeBuffer.allocateHeap(10);
 
-        packer.pack(seqNum, time, time, msgType, body, 0, 10);
+        packer.pack(fixVersion, sessionId, seqNum, time, time, msgType, body, 0, 10);
     }
 
     protected static void shouldPackSendMessage(String expected, String senderCompID, String senderSubId, String targetCompID, String targetSubId,
                                                 int msgSeqNum, String sendingTime, String msgType, String body) {
 
         SessionId id = new SessionId(senderCompID, senderSubId, targetCompID, targetSubId);
+        FixVersion fixVersion = FixVersion.FIX44;
+
         body = stringMessage(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
-        MessagePacker packer = new MessagePacker(FixVersion.FIX44, id, buffer);
-        int length = packer.pack(msgSeqNum, parseTimestamp(sendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
+        MessagePacker packer = new MessagePacker(buffer);
+        int length = packer.pack(fixVersion, id, msgSeqNum, parseTimestamp(sendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
         expected = stringMessage(expected);
@@ -92,11 +98,13 @@ public class MessagePackerTest {
                                                   int msgSeqNum, String sendingTime, String origSendingTime, String msgType, String body) {
 
         SessionId id = new SessionId(senderCompID, senderSubId, targetCompID, targetSubId);
+        FixVersion fixVersion = FixVersion.FIX44;
+
         body = stringMessage(body);
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
-        MessagePacker packer = new MessagePacker(FixVersion.FIX44, id, buffer);
-        int length = packer.pack(msgSeqNum, parseTimestamp(sendingTime), parseTimestamp(origSendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
+        MessagePacker packer = new MessagePacker(buffer);
+        int length = packer.pack(fixVersion, id, msgSeqNum, parseTimestamp(sendingTime), parseTimestamp(origSendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
         expected = stringMessage(expected);

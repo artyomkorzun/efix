@@ -95,7 +95,7 @@ public abstract class Session implements Worker {
         this.receiver = context.receiver();
         this.sender = context.sender();
         this.resender = new Resender(this);
-        this.packer = new MessagePacker(context.fixVersion(), context.sessionId(), sendBuffer);
+        this.packer = new MessagePacker(sendBuffer);
 
         this.sessionType = context.sessionType();
         this.fixVersion = context.fixVersion();
@@ -613,7 +613,7 @@ public abstract class Session implements Worker {
         makeSequenceReset(gapFill, newSeqNo, builder);
 
         long time = clock.time();
-        int messageLength = packer.pack(seqNum, time, MsgType.SEQUENCE_RESET, messageBuffer, 0, builder.length());
+        int messageLength = packer.pack(fixVersion, sessionId, seqNum, time, MsgType.SEQUENCE_RESET, messageBuffer, 0, builder.length());
 
         sendRawMessage(time, sendBuffer, 0, messageLength);
     }
@@ -633,15 +633,19 @@ public abstract class Session implements Worker {
 
     protected void resendMessage(int seqNum, long origTime, ByteSequence msgType, Buffer body, int offset, int length) {
         long time = clock.time();
-        int messageLength = packer.pack(seqNum, time, origTime, msgType, body, offset, length);
+        int messageLength = packer.pack(fixVersion, sessionId, seqNum, time, origTime, msgType, body, offset, length);
         sendRawMessage(time, sendBuffer, 0, messageLength);
     }
 
     protected void sendMessage(ByteSequence msgType, Buffer body, int offset, int length) {
+        sendMessage(fixVersion, sessionId, msgType, body, offset, length);
+    }
+
+    protected void sendMessage(FixVersion version, SessionId sessionId, ByteSequence msgType, Buffer body, int offset, int length) {
         int seqNum = state.senderSeqNum();
         long time = clock.time();
 
-        int messageLength = packer.pack(seqNum, time, msgType, body, offset, length);
+        int messageLength = packer.pack(version, sessionId, seqNum, time, msgType, body, offset, length);
 
         sendRawMessage(time, sendBuffer, 0, messageLength);
         state.senderSeqNum(seqNum + 1);
