@@ -66,6 +66,7 @@ public class MessagePacker {
         offset = addByteSequence(Tag.TargetCompID, sessionId.targetCompId(), buffer, offset);
         offset = addNullableByteSequence(Tag.TargetSubID, sessionId.targetSubId(), buffer, offset);
         offset = addTimestamp(Tag.SendingTime, time, buffer, offset);
+        offset = addNullableByteSequence(Tag.SenderLocationID, sessionId.senderLocationId(), buffer, offset);
 
         return offset;
     }
@@ -135,6 +136,7 @@ public class MessagePacker {
         bodyLength += 4 + sessionId.targetCompId().length();
         bodyLength += (sessionId.targetSubId() == null) ? 0 : 4 + sessionId.targetSubId().length();
         bodyLength += 4 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
+        bodyLength += (sessionId.senderLocationId() == null) ? 0 : 5 + sessionId.senderLocationId().length();
         bodyLength += length;
 
         return bodyLength;
