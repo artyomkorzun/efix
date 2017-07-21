@@ -30,6 +30,10 @@ public class SessionId {
         );
     }
 
+    public SessionId(ByteSequence senderCompId, ByteSequence targetCompId) {
+        this(senderCompId, null, targetCompId, null);
+    }
+
     public SessionId(ByteSequence senderCompId, ByteSequence senderSubId, ByteSequence targetCompId, ByteSequence targetSubId) {
         this(senderCompId, senderSubId, targetCompId, targetSubId, null);
     }
@@ -44,10 +48,6 @@ public class SessionId {
         this.targetCompId = targetCompId;
         this.targetSubId = targetSubId;
         this.senderLocationId = senderLocationId;
-    }
-
-    public SessionId(ByteSequence senderCompId, ByteSequence targetCompId) {
-        this(senderCompId, null, targetCompId, null);
     }
 
     public ByteSequence senderCompId() {
