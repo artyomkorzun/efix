@@ -10,7 +10,7 @@ public class FailoverConnector implements Connector {
     protected int current;
     protected int next;
 
-    public FailoverConnector(Connector[] connectors) {
+    public FailoverConnector(Connector... connectors) {
         if (connectors.length == 0) {
             throw new IllegalArgumentException("No connectors");
         }
