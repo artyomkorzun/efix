@@ -21,8 +21,9 @@ public class SessionUtil {
     }
 
     public static void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {
-        if (testReqID != null)
+        if (testReqID != null) {
             builder.addCharSequence(Tag.TestReqID, testReqID);
+        }
     }
 
     public static void makeTestRequest(CharSequence testReqID, MessageBuilder builder) {
@@ -32,6 +33,18 @@ public class SessionUtil {
     public static void makeResendRequest(int beginSeqNo, int endSeqNo, MessageBuilder builder) {
         builder.addInt(Tag.BeginSeqNo, beginSeqNo);
         builder.addInt(Tag.EndSeqNo, endSeqNo);
+    }
+
+    public static void makeReject(int refSeqNum, CharSequence refMsgType, int sessionRejectReason, CharSequence text, MessageBuilder builder) {
+        builder.addInt(Tag.RefSeqNum, refSeqNum);
+        builder.addCharSequence(Tag.RefMsgType, refMsgType);
+        builder.addInt(Tag.SessionRejectReason, sessionRejectReason);
+        builder.addCharSequence(Tag.Text, text);
+    }
+
+    public static void makeReject(int refSeqNum, int refTagId, CharSequence refMsgType, int sessionRejectReason, CharSequence text, MessageBuilder builder) {
+        makeReject(refSeqNum, refMsgType, sessionRejectReason, text, builder);
+        builder.addInt(Tag.RefTagID, refTagId);
     }
 
     public static void makeSequenceReset(boolean gapFill, int newSeqNo, MessageBuilder builder) {

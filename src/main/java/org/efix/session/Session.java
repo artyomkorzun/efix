@@ -608,6 +608,18 @@ public abstract class Session implements Worker {
         sendMessage(MsgType.REJECT, buffer, offset, length);
     }
 
+    protected void sendReject(int refSeqNum, CharSequence refMsgType, int sessionRejectReason, CharSequence text) {
+        builder.wrap(messageBuffer);
+        makeReject(refSeqNum, refMsgType, sessionRejectReason, text, builder);
+        sendMessage(MsgType.REJECT, messageBuffer, 0, builder.length());
+    }
+
+    protected void sendReject(int refSeqNum, int refTagId, CharSequence refMsgType, int sessionRejectReason, CharSequence text) {
+        builder.wrap(messageBuffer);
+        makeReject(refSeqNum, refTagId, refMsgType, sessionRejectReason, text, builder);
+        sendMessage(MsgType.REJECT, messageBuffer, 0, builder.length());
+    }
+
     protected void sendSequenceReset(boolean gapFill, int seqNum, int newSeqNo) {
         builder.wrap(messageBuffer);
         makeSequenceReset(gapFill, newSeqNo, builder);
@@ -708,6 +720,7 @@ public abstract class Session implements Worker {
     }
 
     protected void makeLogon(boolean resetSeqNum, MessageBuilder builder) {
+        makeAdminHeader(builder);
         SessionUtil.makeLogon(resetSeqNum, heartbeatInterval, builder);
         if (logonWithNextExpectedSeqNum) {
             builder.addInt(Tag.NextExpectedMsgSeqNum, state.targetSeqNum());
@@ -715,23 +728,41 @@ public abstract class Session implements Worker {
     }
 
     protected void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {
+        makeAdminHeader(builder);
         SessionUtil.makeHeartbeat(testReqID, builder);
     }
 
     protected void makeTestRequest(CharSequence testReqID, MessageBuilder builder) {
+        makeAdminHeader(builder);
         SessionUtil.makeTestRequest(testReqID, builder);
     }
 
     protected void makeResendRequest(int beginSeqNo, int endSeqNo, MessageBuilder builder) {
+        makeAdminHeader(builder);
         SessionUtil.makeResendRequest(beginSeqNo, endSeqNo, builder);
     }
 
+    protected void makeReject(int refSeqNum, CharSequence refMsgType, int sessionRejectReason, CharSequence text, MessageBuilder builder) {
+        makeAdminHeader(builder);
+        SessionUtil.makeReject(refSeqNum, refMsgType, sessionRejectReason, text, builder);
+    }
+
+    protected void makeReject(int refSeqNum, int refTagId, CharSequence refMsgType, int sessionRejectReason, CharSequence text, MessageBuilder builder) {
+        makeAdminHeader(builder);
+        SessionUtil.makeReject(refSeqNum, refTagId, refMsgType, sessionRejectReason, text, builder);
+    }
+
     protected void makeSequenceReset(boolean gapFill, int newSeqNo, MessageBuilder builder) {
+        makeAdminHeader(builder);
         SessionUtil.makeSequenceReset(gapFill, newSeqNo, builder);
     }
 
     protected void makeLogout(CharSequence text, MessageBuilder builder) {
+        makeAdminHeader(builder);
         SessionUtil.makeLogout(text, builder);
+    }
+
+    protected void makeAdminHeader(MessageBuilder builder) {
     }
 
     protected boolean updateTargetSeqNum(int seqNum) {
