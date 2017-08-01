@@ -48,7 +48,6 @@ public class SessionUtil {
     }
 
     public static void makeSequenceReset(boolean gapFill, int newSeqNo, MessageBuilder builder) {
-        builder.addBoolean(Tag.PossDupFlag, true);
         builder.addInt(Tag.NewSeqNo, newSeqNo);
         builder.addBoolean(Tag.GapFillFlag, gapFill);
     }

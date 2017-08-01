@@ -165,7 +165,7 @@ public abstract class SessionTest {
         String inLogout = "8=FIX.4.4|9=57|35=5|34=4|49=SENDER|52=20140522-12:07:39.552|56=RECEIVER|10=248|";
 
         String outLogout = "8=FIX.4.4|9=72|35=5|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|58=Session end|10=178|";
-        String outGapFill = "8=FIX.4.4|9=73|35=4|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|43=Y|36=3|123=Y|10=208|";
+        String outGapFill = "8=FIX.4.4|9=99|35=4|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|122=20160101-00:00:00.000|43=Y|36=3|123=Y|10=181|";
 
         exchangeLogons();
         session.sendLogout("Session end");
@@ -478,11 +478,11 @@ public abstract class SessionTest {
         String outExecutionReport = "8=FIX.4.4|9=70|35=8|34=4|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|100=EXCHANGE|10=225|";
         String outSecondHeartbeat = "8=FIX.4.4|9=57|35=0|34=5|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|10=205|";
 
-        String firstGapFill = "8=FIX.4.4|9=73|35=4|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|43=Y|36=2|123=Y|10=207|";
+        String firstGapFill = "8=FIX.4.4|9=99|35=4|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|122=20160101-00:00:00.000|43=Y|36=2|123=Y|10=180|";
         String outResendOrderSingle = "8=FIX.4.4|9=98|35=D|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|122=20160101-00:00:00.000|43=Y|1=ACCOUNT|10=058|";
-        String secondGapFill = "8=FIX.4.4|9=73|35=4|34=3|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|43=Y|36=4|123=Y|10=211|";
+        String secondGapFill = "8=FIX.4.4|9=99|35=4|34=3|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|122=20160101-00:00:00.000|43=Y|36=4|123=Y|10=184|";
         String outResendExecutionReport = "8=FIX.4.4|9=101|35=8|34=4|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|122=20160101-00:00:00.000|43=Y|100=EXCHANGE|10=231|";
-        String thirdGapFill = "8=FIX.4.4|9=73|35=4|34=5|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|43=Y|36=6|123=Y|10=215|";
+        String thirdGapFill = "8=FIX.4.4|9=99|35=4|34=5|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|122=20160101-00:00:00.000|43=Y|36=6|123=Y|10=188|";
 
         exchangeLogons();
         sendAppMessage("D", "1=ACCOUNT|");
@@ -571,7 +571,7 @@ public abstract class SessionTest {
     public void shouldSendGapFillAndResendRequestOnResendRequestWithSeqNumMoreExpected() {
         String inResendRequest = "8=FIX.4.4|9=66|35=2|34=4|49=SENDER|52=19700101-00:00:00.000|56=RECEIVER|7=1|16=0|10=081|";
 
-        String outGapFill = "8=FIX.4.4|9=73|35=4|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|43=Y|36=2|123=Y|10=207|";
+        String outGapFill = "8=FIX.4.4|9=99|35=4|34=1|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|122=20160101-00:00:00.000|43=Y|36=2|123=Y|10=180|";
         String outResendRequest = "8=FIX.4.4|9=66|35=2|34=2|49=RECEIVER|56=SENDER|52=20160101-00:00:00.000|7=3|16=4|10=077|";
 
         exchangeLogons();

@@ -625,7 +625,7 @@ public abstract class Session implements Worker {
         makeSequenceReset(gapFill, newSeqNo, builder);
 
         long time = clock.time();
-        int messageLength = packer.pack(fixVersion, sessionId, seqNum, time, MsgType.SEQUENCE_RESET, messageBuffer, 0, builder.length());
+        int messageLength = packer.pack(fixVersion, sessionId, seqNum, time, time, MsgType.SEQUENCE_RESET, messageBuffer, 0, builder.length());
 
         sendRawMessage(time, sendBuffer, 0, messageLength);
     }
