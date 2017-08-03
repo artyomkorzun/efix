@@ -23,14 +23,14 @@ import java.util.concurrent.TimeUnit;
 public class MessagePackerBenchmark {
 
     private static final long NOW = System.currentTimeMillis();
-    private final MessagePacker packer = new MessagePacker(FixVersion.FIX44, new SessionId("Sender", "Receiver"), new UnsafeBuffer(new byte[1024]));
+    private final SessionId sessionId = new SessionId("Sender", "Receiver");
+    private final MessagePacker packer = new MessagePacker(new UnsafeBuffer(new byte[1024]));
     private final Buffer buffer = BenchmarkUtil.makeMessage("1=account|11=1|38=1000|40=2|44=1.2345|54=1|55=EUR/USD|59=0|60=20170220-09:15:33.704|76=cfh|100=#INSTANT-FILL|167=FOR");
 
     @Benchmark
     public void pack() {
-        packer.pack(1000, NOW, MsgType.ORDER_SINGLE, buffer, 0, buffer.capacity());
+        packer.pack(FixVersion.FIX44, sessionId, 1000, NOW, MsgType.ORDER_SINGLE, buffer, 0, buffer.capacity());
     }
-
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
