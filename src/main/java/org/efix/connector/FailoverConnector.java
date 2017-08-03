@@ -34,10 +34,15 @@ public class FailoverConnector implements Connector {
 
     @Override
     public boolean initiateConnect() throws ConnectionException {
+        if (current != next && connectors[current].isConnectionInitiated()) {
+            throw new IllegalStateException("Connection is initiated for current connector. Can't switch to next one");
+        }
+
         try {
+            current = next;
             return connectors[current].initiateConnect();
-        } catch (Throwable e) {
-            // next();
+        } catch (ConnectionException e) {
+            next();
             throw e;
         }
     }
@@ -46,8 +51,8 @@ public class FailoverConnector implements Connector {
     public Channel finishConnect() throws ConnectionException {
         try {
             return connectors[current].finishConnect();
-        } catch (Throwable e) {
-            // next();
+        } catch (ConnectionException e) {
+            next();
             throw e;
         }
     }
@@ -55,7 +60,6 @@ public class FailoverConnector implements Connector {
     @Override
     public void disconnect() throws ConnectionException {
         connectors[current].disconnect();
-        current = next;
     }
 
     @Override
