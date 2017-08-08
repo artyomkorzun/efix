@@ -15,7 +15,7 @@ public abstract class AbstractSessionSchedule implements SessionSchedule {
     protected long startTimestamp = Long.MIN_VALUE;
     protected long endTimestamp = Long.MIN_VALUE;
 
-    protected long lastTime = Long.MIN_VALUE;
+    protected long updateTimestamp = Long.MIN_VALUE;
 
     protected AbstractSessionSchedule(LocalTime startTime, LocalTime endTime, ZoneId zoneId) {
         this.startTime = startTime;
@@ -38,12 +38,12 @@ public abstract class AbstractSessionSchedule implements SessionSchedule {
     protected void updateIfNeeded(long time) {
         if (shouldUpdate(time)) {
             update(time);
-            lastTime = time;
+            updateTimestamp = time;
         }
     }
 
     protected boolean shouldUpdate(long time) {
-        return time < Math.min(lastTime, startTimestamp) || time > endTimestamp;
+        return time < Math.min(updateTimestamp, startTimestamp) || time > endTimestamp;
     }
 
     protected abstract void update(long time);
