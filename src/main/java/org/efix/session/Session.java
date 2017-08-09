@@ -31,7 +31,7 @@ import static org.efix.session.SessionUtil.parseHeader;
 import static org.efix.state.SessionStatus.*;
 
 
-public abstract class Session implements Worker {
+public class Session implements Worker {
 
     protected final MessageHandler messageHandler = this::processMessage;
 
@@ -511,6 +511,8 @@ public abstract class Session implements Worker {
 
         if (updateTargetSeqNum(header.msgSeqNum())) {
             onAdminMessage(header, message);
+        } else {
+            onAdminMessageOutOfOrder(header, message);
         }
     }
 
@@ -550,6 +552,8 @@ public abstract class Session implements Worker {
 
         if (updateTargetSeqNum(header.msgSeqNum())) {
             onAppMessage(header, message);
+        } else {
+            onAppMessageOutOfOrder(header, message);
         }
     }
 
@@ -799,13 +803,26 @@ public abstract class Session implements Worker {
         return false;
     }
 
-    protected abstract void onStatusUpdate(SessionStatus previous, SessionStatus current);
+    protected void onStatusUpdate(SessionStatus previous, SessionStatus current) {
+    }
 
-    protected abstract int doSendMessages();
+    protected int doSendMessages() {
+        return 0;
+    }
 
-    protected abstract void onAdminMessage(Header header, Message message);
+    protected void onAdminMessage(Header header, Message message) {
 
-    protected abstract void onAppMessage(Header header, Message message);
+    }
+
+    protected void onAdminMessageOutOfOrder(Header header, Message message) {
+    }
+
+    protected void onAppMessage(Header header, Message message) {
+
+    }
+
+    protected void onAppMessageOutOfOrder(Header header, Message message) {
+    }
 
     protected boolean onStoreMessage(int seqNum, long sendingTime, ByteSequence msgType, Buffer body, int offset, int length) {
         return !AdminMsgType.isAdmin(msgType) || MsgType.REJECT.equals(msgType);
@@ -815,7 +832,8 @@ public abstract class Session implements Worker {
         return true;
     }
 
-    protected abstract void onError(Exception e);
+    protected void onError(Exception e) {
+    }
 
     protected void assertStatus(SessionStatus expected1, SessionStatus expected2) {
         SessionUtil.assertStatus(expected1, expected2, state.status());
