@@ -7,21 +7,25 @@ import org.efix.message.FieldUtil;
 import org.efix.message.field.Tag;
 import org.efix.util.InsufficientSpaceException;
 import org.efix.util.buffer.Buffer;
+import org.efix.util.buffer.BufferUtil;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
+
+import static org.efix.message.FieldUtil.MIN_HEADER_LENGTH;
+import static org.efix.message.FieldUtil.MIN_MESSAGE_LENGTH;
 
 
 public class Receiver {
 
     protected final MutableBuffer buffer;
     protected final int mtuSize;
-    protected final int bodyLengthStart;
+    protected final int bodyLengthValueOffset;
 
     protected Channel channel;
     protected int offset;
 
     public Receiver(FixVersion fixVersion, int bufferSize, int mtuSize) {
-        this.bodyLengthStart = 5 + fixVersion.beginString().length();
+        this.bodyLengthValueOffset = 5 + fixVersion.beginString().length();
         this.buffer = UnsafeBuffer.allocateDirect(bufferSize);
         this.mtuSize = mtuSize;
     }
@@ -37,7 +41,7 @@ public class Receiver {
             int remaining = offset + bytesReceived;
             offset = 0;
 
-            while (remaining >= FieldUtil.MIN_MESSAGE_LENGTH) {
+            while (remaining >= MIN_MESSAGE_LENGTH) {
                 int length = parseMessageLength(buffer, offset, remaining);
                 if (length > remaining) {
                     checkMessageLength(length);
@@ -66,9 +70,9 @@ public class Receiver {
     }
 
     protected int parseMessageLength(Buffer buffer, int offset, int length) {
-        int bodyLengthOffset = offset + bodyLengthStart;
+        int bodyLengthOffset = offset + bodyLengthValueOffset;
         if (buffer.getByte(bodyLengthOffset - 1) != '=') {
-            throw new FieldException(Tag.BodyLength, "Expected '=' at BodyLength(9) field");
+            throw new FieldException(Tag.BodyLength, "Invalid position of BodyLength(9) field in header: " + BufferUtil.toString(buffer, offset, MIN_HEADER_LENGTH));
         }
 
         int bodyLength = buffer.getByte(bodyLengthOffset++) - '0';

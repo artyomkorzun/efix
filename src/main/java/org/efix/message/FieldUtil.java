@@ -8,10 +8,12 @@ import org.efix.util.buffer.Buffer;
 
 public class FieldUtil {
 
+    public static final int CHECK_SUM_FIELD_LENGTH = 7;
     public static final int MIN_MESSAGE_LENGTH = 63;
+    public static final int MIN_HEADER_LENGTH = MIN_MESSAGE_LENGTH - CHECK_SUM_FIELD_LENGTH;
+
     public static final byte TAG_VALUE_SEPARATOR = '=';
     public static final byte FIELD_SEPARATOR = '\u0001';
-    public static final int CHECK_SUM_FIELD_LENGTH = 7;
 
     public static final long LONG_NULL = Long.MIN_VALUE;
     public static final long DECIMAL_NULL = Long.MIN_VALUE;
@@ -47,9 +49,9 @@ public class FieldUtil {
         return value;
     }
 
-    public static ByteSequenceWrapper checkEqual(int tag, ByteSequenceWrapper value, ByteSequence expected){
-        if(!value.equals(expected))
-           throw new FieldException(tag, String.format("Field #%s does not match, expected %s but received %s", tag, expected, value));
+    public static ByteSequenceWrapper checkEqual(int tag, ByteSequenceWrapper value, ByteSequence expected) {
+        if (!value.equals(expected))
+            throw new FieldException(tag, String.format("Field #%s does not match, expected %s but received %s", tag, expected, value));
 
         return value;
     }
