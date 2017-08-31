@@ -103,7 +103,7 @@ public class MessageBuilderTest {
     @Parameters(name = "{0}")
     public static List<MessageBuilder> builders() {
         FastMessageBuilder builder = new FastMessageBuilder();
-        return Arrays.asList(builder, CheckedMessageBuilder.wrap(builder));
+        return Arrays.asList(builder, SafeMessageBuilder.wrap(builder));
     }
 
 }

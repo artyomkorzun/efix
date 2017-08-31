@@ -8,6 +8,10 @@ import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +42,7 @@ public class MessageBuilderBenchmark {
                 builder = new FastMessageBuilder();
                 break;
             case "checked":
-                builder = new CheckedMessageBuilder(new FastMessageBuilder());
+                builder = new SafeMessageBuilder(new FastMessageBuilder());
                 break;
             default:
                 throw new IllegalArgumentException(implementation);
@@ -59,6 +63,15 @@ public class MessageBuilderBenchmark {
                 .addByte(Tag.TimeInForce, TimeInForce.DAY)
                 .addTimestamp(Tag.TransactTime, TRANSACT_TIME)
                 .addCharSequence(Tag.SecurityType, "FUT");
+    }
+
+    public static void main(String[] args) throws RunnerException {
+        Options opt = new OptionsBuilder()
+                .include(MessageBuilderBenchmark.class.getSimpleName())
+                .jvmArgsAppend("-Defix.disable.bounds.check=true", "-Defix.safe.message.builder.disable.bounds.check=true", "-Defix.safe.message.builder.disable.values.check=true"/*, "-XX:+PrintCompilation",*/ /*"-server",*/ /*"-XX:-TieredCompilation"*/)
+                .build();
+
+        new Runner(opt).run();
     }
 
 }
