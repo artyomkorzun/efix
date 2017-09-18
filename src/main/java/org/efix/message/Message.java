@@ -7,6 +7,7 @@ import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.buffer.UnsafeBuffer;
 import org.efix.util.parse.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 
@@ -233,6 +234,62 @@ public final class Message {
         return LongParser.parseULong(tag, buffer, offset, end);
     }
 
+    public double getDouble(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DoubleParser.parseDouble(tag, buffer, offset, end);
+    }
+
+    public double getDouble(int tag, double noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DoubleParser.parseDouble(tag, buffer, offset, end);
+    }
+
+    public double getUDouble(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DoubleParser.parseUDouble(tag, buffer, offset, end);
+    }
+
+    public double getUDouble(int tag, double noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return DoubleParser.parseUDouble(tag, buffer, offset, end);
+    }
+
     public long getDecimal(int tag, int scale) throws NoFieldException {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
@@ -427,6 +484,46 @@ public final class Message {
         int end = entries[index + 2];
 
         return TimeParser.parseTime(tag, buffer, offset, end);
+    }
+
+    public String getString(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        int length = end - offset;
+        byte[] array = new byte[length];
+
+        MutableBuffer buffer = this.buffer;
+        buffer.getBytes(offset, array);
+
+        return new String(array, StandardCharsets.US_ASCII);
+    }
+
+    public String getString(int tag, String noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        int length = end - offset;
+        byte[] array = new byte[length];
+
+        MutableBuffer buffer = this.buffer;
+        buffer.getBytes(offset, array);
+
+        return new String(array, StandardCharsets.US_ASCII);
     }
 
     public ByteSequence getString(int tag, ByteSequenceWrapper wrapper) throws NoFieldException {
