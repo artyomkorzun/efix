@@ -2,6 +2,7 @@ package org.efix.util.buffer;
 
 import java.nio.ByteBuffer;
 
+
 public interface Buffer {
 
     long addressOffset();
@@ -16,13 +17,7 @@ public interface Buffer {
 
     int getInt(int index);
 
-    double getDouble(int index);
-
-    float getFloat(int index);
-
     short getShort(int index);
-
-    char getChar(int index);
 
     byte getByte(int index);
 
@@ -34,6 +29,6 @@ public interface Buffer {
 
     void getBytes(int index, ByteBuffer dstBuffer, int length);
 
-    void checkBounds(int offset, int length);
+    void boundsCheck(int offset, int length);
 
 }

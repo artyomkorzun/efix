@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'org.efix'
-version = '0.3.18'
+version = '0.3.19'
 
 repositories {
     mavenCentral()
@@ -72,8 +72,8 @@ jmhJar {
 }
 
 jmh {
-    jmhVersion = '1.18'
-    include = 'MessageParser'
+    jmhVersion = '1.19'
+    include = 'org.efix.session'
     benchmarkMode = 'avgt'
     timeUnit = 'ns'
     warmup = '3s'
@@ -81,6 +81,6 @@ jmh {
     timeOnIteration = '5s'
     iterations = 3
     threads = 1
-    fork = 1
-    jvmArgsAppend = '-Defix.disable.bounds.check=true'
+    fork = 3
+    jvmArgsAppend = '-XX:BiasedLockingStartupDelay=0 -Defix.disable.bounds.check=true'
 }
