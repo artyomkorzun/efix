@@ -66,7 +66,6 @@ public class Session implements Worker {
     protected final int logonTimeout;
     protected final int logoutTimeout;
     protected final boolean resetSeqNumsOnLogon;
-    protected final boolean logonWithNextExpectedSeqNum;
     protected final int syncBatchSize;
 
     protected final ArrayList<Disposable> openResources = new ArrayList<>();
@@ -95,7 +94,7 @@ public class Session implements Worker {
         this.receiver = context.receiver();
         this.sender = context.sender();
         this.resender = new Resender(this);
-        this.packer = new MessagePacker(sendBuffer);
+        this.packer = new MessagePacker(sendBuffer, context.withLastMsgSeqNumProcessed());
 
         this.sessionType = context.sessionType();
         this.fixVersion = context.fixVersion();
@@ -106,7 +105,6 @@ public class Session implements Worker {
         this.logonTimeout = context.logonTimeout();
         this.logoutTimeout = context.logoutTimeout();
         this.resetSeqNumsOnLogon = context.resetSeqNumsOnLogon();
-        this.logonWithNextExpectedSeqNum = context.logonWithNextExpectedSeqNum();
         this.syncBatchSize = context.syncBatchSize();
     }
 
@@ -629,7 +627,7 @@ public class Session implements Worker {
         makeSequenceReset(gapFill, newSeqNo, builder);
 
         long time = clock.time();
-        int messageLength = packer.pack(fixVersion, sessionId, seqNum, time, time, MsgType.SEQUENCE_RESET, messageBuffer, 0, builder.length());
+        int messageLength = packer.pack(fixVersion, sessionId, seqNum, state.targetSeqNum() - 1, time, time, MsgType.SEQUENCE_RESET, messageBuffer, 0, builder.length());
 
         sendRawMessage(time, sendBuffer, 0, messageLength);
     }
@@ -649,7 +647,7 @@ public class Session implements Worker {
 
     protected void resendMessage(int seqNum, long origTime, ByteSequence msgType, Buffer body, int offset, int length) {
         long time = clock.time();
-        int messageLength = packer.pack(fixVersion, sessionId, seqNum, time, origTime, msgType, body, offset, length);
+        int messageLength = packer.pack(fixVersion, sessionId, seqNum, state.targetSeqNum() - 1, time, origTime, msgType, body, offset, length);
         sendRawMessage(time, sendBuffer, 0, messageLength);
     }
 
@@ -661,7 +659,7 @@ public class Session implements Worker {
         int seqNum = state.senderSeqNum();
         long time = clock.time();
 
-        int messageLength = packer.pack(version, sessionId, seqNum, time, msgType, body, offset, length);
+        int messageLength = packer.pack(version, sessionId, seqNum, state.targetSeqNum() - 1, time, msgType, body, offset, length);
 
         sendRawMessage(time, sendBuffer, 0, messageLength);
         state.senderSeqNum(seqNum + 1);
@@ -726,9 +724,6 @@ public class Session implements Worker {
     protected void makeLogon(boolean resetSeqNum, MessageBuilder builder) {
         makeAdminHeader(builder);
         SessionUtil.makeLogon(resetSeqNum, heartbeatInterval, builder);
-        if (logonWithNextExpectedSeqNum) {
-            builder.addInt(Tag.NextExpectedMsgSeqNum, state.targetSeqNum());
-        }
     }
 
     protected void makeHeartbeat(CharSequence testReqID, MessageBuilder builder) {

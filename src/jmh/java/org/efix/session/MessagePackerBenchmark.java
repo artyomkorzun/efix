@@ -29,7 +29,7 @@ public class MessagePackerBenchmark {
 
     @Benchmark
     public void pack() {
-        packer.pack(FixVersion.FIX44, sessionId, 1000, NOW, MsgType.ORDER_SINGLE, buffer, 0, buffer.capacity());
+        packer.pack(FixVersion.FIX44, sessionId, 1000, 99, NOW, MsgType.ORDER_SINGLE, buffer, 0, buffer.capacity());
     }
 
     public static void main(String[] args) throws RunnerException {

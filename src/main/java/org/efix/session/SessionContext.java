@@ -63,7 +63,7 @@ public class SessionContext {
     protected int logoutTimeout = Configuration.LOGOUT_TIMEOUT_MS;
     protected int sendTimeout = Configuration.SEND_TIMEOUT_MS;
     protected boolean resetSeqNumsOnLogon;
-    protected boolean logonWithNextExpectedSeqNum;
+    protected boolean withLastMsgSeqNumProcessed;
     protected int syncBatchSize = Configuration.SYNC_BATCH_SIZE;
 
     protected Sender sender;
@@ -334,8 +334,12 @@ public class SessionContext {
         return this;
     }
 
-    public boolean logonWithNextExpectedSeqNum() {
-        return logonWithNextExpectedSeqNum;
+    public boolean withLastMsgSeqNumProcessed() {
+        return withLastMsgSeqNumProcessed;
+    }
+
+    public void withLastMsgSeqNumProcessed(boolean withLastMsgSeqNumProcessed) {
+        this.withLastMsgSeqNumProcessed = withLastMsgSeqNumProcessed;
     }
 
     public int syncBatchSize() {
@@ -344,11 +348,6 @@ public class SessionContext {
 
     public void syncBatchSize(int syncBatchSize) {
         this.syncBatchSize = syncBatchSize;
-    }
-
-    public SessionContext logonWithNextExpectedSeqNum(boolean logonWithNextExpectedSeqNum) {
-        this.logonWithNextExpectedSeqNum = logonWithNextExpectedSeqNum;
-        return this;
     }
 
     public Sender sender() {

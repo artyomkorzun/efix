@@ -19,33 +19,39 @@ import static org.efix.util.format.BooleanFormatter.formatBoolean;
 public class MessagePacker {
 
     protected final MutableBuffer buffer;
+    protected final boolean withLastMsgSeqNumProcessed;
 
     public MessagePacker(MutableBuffer buffer) {
-        this.buffer = buffer;
+        this(buffer, false);
     }
 
-    public int pack(FixVersion fixVersion, SessionId sessionId, int msgSeqNum, long time, ByteSequence msgType,
+    public MessagePacker(MutableBuffer buffer, boolean withLastMsgSeqNumProcessed) {
+        this.buffer = buffer;
+        this.withLastMsgSeqNumProcessed = withLastMsgSeqNumProcessed;
+    }
+
+    public int pack(FixVersion fixVersion, SessionId sessionId, int msgSeqNum, int lastMsgSeqNumProcessed, long time, ByteSequence msgType,
                     Buffer body, int bodyOffset, int length) {
 
-        int bodyLength = bodyLength(sessionId, msgSeqNum, time, msgType, length);
+        int bodyLength = bodyLength(sessionId, msgSeqNum, lastMsgSeqNumProcessed, time, msgType, length);
         int messageLength = messageLength(fixVersion, bodyLength);
 
         int offset = 0;
-        offset = addStandardHeader(fixVersion, sessionId, bodyLength, msgSeqNum, time, msgType, buffer, offset);
+        offset = addStandardHeader(fixVersion, sessionId, bodyLength, msgSeqNum, lastMsgSeqNumProcessed, time, msgType, buffer, offset);
         offset = addBody(body, bodyOffset, length, buffer, offset);
         offset = addCheckSum(buffer, offset);
 
         return messageLength;
     }
 
-    public int pack(FixVersion fixVersion, SessionId sessionId, int msgSeqNum, long time, long origTime, ByteSequence msgType,
+    public int pack(FixVersion fixVersion, SessionId sessionId, int msgSeqNum, int lastMsgSeqNumProcessed, long time, long origTime, ByteSequence msgType,
                     Buffer body, int bodyOffset, int length) {
 
-        int bodyLength = bodyLength(sessionId, msgSeqNum, time, origTime, msgType, length);
+        int bodyLength = bodyLength(sessionId, msgSeqNum, lastMsgSeqNumProcessed, time, origTime, msgType, length);
         int messageLength = messageLength(fixVersion, bodyLength);
 
         int offset = 0;
-        offset = addStandardHeader(fixVersion, sessionId, bodyLength, msgSeqNum, time, msgType, buffer, offset);
+        offset = addStandardHeader(fixVersion, sessionId, bodyLength, msgSeqNum, lastMsgSeqNumProcessed, time, msgType, buffer, offset);
         offset = addTimestamp(Tag.OrigSendingTime, origTime, buffer, offset);
         offset = addBoolean(Tag.PossDupFlag, true, buffer, offset);
         offset = addBody(body, bodyOffset, length, buffer, offset);
@@ -54,13 +60,16 @@ public class MessagePacker {
         return messageLength;
     }
 
-    protected int addStandardHeader(FixVersion version, SessionId sessionId, int bodyLength, int msgSeqNum, long time, ByteSequence msgType,
+    protected int addStandardHeader(FixVersion version, SessionId sessionId, int bodyLength, int msgSeqNum, int lastMsgSeqNumProcessed, long time, ByteSequence msgType,
                                     MutableBuffer buffer, int offset) {
 
         offset = addByteSequence(Tag.BeginString, version.beginString(), buffer, offset);
         offset = addUInt(Tag.BodyLength, bodyLength, buffer, offset);
         offset = addByteSequence(Tag.MsgType, msgType, buffer, offset);
         offset = addUInt(Tag.MsgSeqNum, msgSeqNum, buffer, offset);
+        if (withLastMsgSeqNumProcessed) {
+            offset = addUInt(Tag.LastMsgSeqNumProcessed, lastMsgSeqNumProcessed, buffer, offset);
+        }
         offset = addByteSequence(Tag.SenderCompID, sessionId.senderCompId(), buffer, offset);
         offset = addNullableByteSequence(Tag.SenderSubID, sessionId.senderSubId(), buffer, offset);
         offset = addByteSequence(Tag.TargetCompID, sessionId.targetCompId(), buffer, offset);
@@ -126,11 +135,14 @@ public class MessagePacker {
         return offset;
     }
 
-    protected int bodyLength(SessionId sessionId, int msgSeqNum, long time, ByteSequence msgType, int length) {
+    protected int bodyLength(SessionId sessionId, int msgSeqNum, int lastMsgSeqNumProcessed, long time, ByteSequence msgType, int length) {
         int bodyLength = 0;
 
         bodyLength += 4 + msgType.length();
         bodyLength += 4 + IntFormatter.uintLength(msgSeqNum);
+        if (withLastMsgSeqNumProcessed) {
+            bodyLength += 5 + IntFormatter.uintLength(lastMsgSeqNumProcessed);
+        }
         bodyLength += 4 + sessionId.senderCompId().length();
         bodyLength += (sessionId.senderSubId() == null) ? 0 : 4 + sessionId.senderSubId().length();
         bodyLength += 4 + sessionId.targetCompId().length();
@@ -142,10 +154,10 @@ public class MessagePacker {
         return bodyLength;
     }
 
-    protected int bodyLength(SessionId sessionId, int msgSeqNum, long time, long origTime, ByteSequence msgType, int length) {
+    protected int bodyLength(SessionId sessionId, int msgSeqNum, int lastMsgSeqNumProcessed, long time, long origTime, ByteSequence msgType, int length) {
         int bodyLength = 0;
 
-        bodyLength += bodyLength(sessionId, msgSeqNum, time, msgType, length);
+        bodyLength += bodyLength(sessionId, msgSeqNum, lastMsgSeqNumProcessed, time, msgType, length);
         bodyLength += 5 + TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
         bodyLength += 5;
 

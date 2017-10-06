@@ -125,6 +125,7 @@ public class SendMessageBenchmark {
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
                 .include(SendMessageBenchmark.class.getSimpleName())
+                .jvmArgsAppend("-Defix.disable.bounds.check=true")
                 .build();
 
         new Runner(opt).run();

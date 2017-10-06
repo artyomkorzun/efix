@@ -94,7 +94,7 @@ public class IntegerFormatting {
     }
 
     @Benchmark
-    @CompilerControl(CompilerControl.Mode.PRINT)
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public int divBy100WithUnsafeStoreToArrayWithNestedIfs() {
         /**
          * Implementation details:
@@ -151,6 +151,98 @@ public class IntegerFormatting {
 
         UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, (byte) (digits));
         return end;
+    }
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public int divBy100WithUnsafeStoreToArrayInverse() {
+        /**
+         * Implementation details:
+         * 1) Find 2 digits at a time.
+         * 2) Store 2 digits at a time.
+         * 3) Unroll loop to eliminate safe point check and another stuff in loop body (It has <= 4 iterations only)
+         * 4) Substitute division by inverse multiplication (Compiler does that but adds one more mov instruction)
+         * 5) Use unsafe store to array to remove bounds check
+         */
+
+        byte[] array = Config.array;
+        int offset = Config.length;
+        int number = Config.randomInt();
+
+        if (number > 99) {
+            int newNumber = (int) (2748779070L * number >>> 38);
+            int remainder = number - newNumber * 100;
+            number = newNumber;
+
+            offset -= 2;
+            UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, NATIVE_DIGITS[remainder]);
+
+            if (number > 99) {
+                newNumber = (int) (2748779070L * number >>> 38);
+                remainder = number - newNumber * 100;
+                number = newNumber;
+
+                offset -= 2;
+                UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, NATIVE_DIGITS[remainder]);
+
+                if (number > 99) {
+                    newNumber = (int) (2748779070L * number >>> 38);
+                    remainder = number - newNumber * 100;
+                    number = newNumber;
+
+                    offset -= 2;
+                    UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, NATIVE_DIGITS[remainder]);
+
+                    if (number > 99) {
+                        newNumber = (41944 * number >>> 22);
+                        remainder = number - newNumber * 100;
+                        number = newNumber;
+
+                        offset -= 2;
+                        UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, NATIVE_DIGITS[remainder]);
+                    }
+                }
+            }
+        }
+
+        short digits = LAST_DIGITS[number];
+        if (number > 9) {
+            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + --offset, (byte) (digits >>> 8));
+        }
+
+        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + --offset, (byte) (digits));
+        return offset;
+    }
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public int divBy100WithUnsafeStoreToArrayINverseWithLoop() {
+        byte[] array = Config.array;
+        int offset = Config.length;
+        int number = Config.randomInt();
+
+        for (int i = 0; i < 4; i++) {
+            if (number <= 99) {
+                break;
+            }
+
+            int newNumber = (int) (2748779070L * number >>> 38);
+            int remainder = number - newNumber * 100;
+            number = newNumber;
+
+            short digits = NATIVE_DIGITS[remainder];
+            offset -= 2;
+            UNSAFE.putShort(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + offset, digits);
+        }
+
+        short digits = LAST_DIGITS[number];
+        if (number > 9) {
+            offset--;
+            UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + --offset, (byte) (digits));
+        }
+
+        UNSAFE.putByte(array, Unsafe.ARRAY_BYTE_BASE_OFFSET + --offset, (byte) (digits >>> 8));
+        return offset;
     }
 
     public static int integerLengthByCascadingIf(int value) {

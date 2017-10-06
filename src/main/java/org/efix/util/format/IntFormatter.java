@@ -14,6 +14,53 @@ public class IntFormatter {
 
     protected static final Buffer MIN_INT = BufferUtil.fromString(Integer.toString(Integer.MIN_VALUE));
 
+    public static int formatUIntInverse(int value, MutableBuffer buffer, int offset) {
+        if (value > 99) {
+            int newNumber = (int) (2748779070L * value >>> 38);
+            int remainder = value - newNumber * 100;
+            value = newNumber;
+
+            offset -= 2;
+            buffer.putShort(offset, NATIVE_DIGITS[remainder]);
+
+            if (value > 99) {
+                newNumber = (int) (2748779070L * value >>> 38);
+                remainder = value - newNumber * 100;
+                value = newNumber;
+
+                offset -= 2;
+                buffer.putShort(offset, NATIVE_DIGITS[remainder]);
+
+                if (value > 99) {
+                    newNumber = (int) (2748779070L * value >>> 38);
+                    remainder = value - newNumber * 100;
+                    value = newNumber;
+
+                    offset -= 2;
+                    buffer.putShort(offset, NATIVE_DIGITS[remainder]);
+
+                    if (value > 99) {
+                        newNumber = (41944 * value >>> 22);
+                        remainder = value - newNumber * 100;
+                        value = newNumber;
+
+                        offset -= 2;
+                        buffer.putShort(offset, NATIVE_DIGITS[remainder]);
+                    }
+                }
+            }
+        }
+
+        short digits = LAST_DIGITS[value];
+        if (value > 9) {
+            buffer.putByte(--offset, (byte) (digits >> 8));
+        }
+
+        buffer.putByte(--offset, (byte) (digits));
+        return offset;
+    }
+
+
     public static int formatInt(int value, MutableBuffer buffer, int offset) {
         if (value >= 0)
             return formatUInt(value, buffer, offset);
