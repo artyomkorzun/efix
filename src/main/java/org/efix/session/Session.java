@@ -473,7 +473,7 @@ public class Session implements Worker {
     protected void processHeartbeat(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        updateTargetSeqNum(header.msgSeqNum());
+        updateTargetSeqNum(header);
         state.testRequestSent(false);
         onAdminMessage(header, message);
     }
@@ -481,7 +481,7 @@ public class Session implements Worker {
     protected void processTestRequest(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        updateTargetSeqNum(header.msgSeqNum());
+        updateTargetSeqNum(header);
         onAdminMessage(header, message);
 
         if (state.status() == APPLICATION_CONNECTED) {
@@ -493,7 +493,7 @@ public class Session implements Worker {
     protected void processResendRequest(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        updateTargetSeqNum(header.msgSeqNum());
+        updateTargetSeqNum(header);
 
         validateResendRequest(message);
         onAdminMessage(header, message);
@@ -507,7 +507,7 @@ public class Session implements Worker {
     protected void processReject(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        if (updateTargetSeqNum(header.msgSeqNum())) {
+        if (updateTargetSeqNum(header)) {
             onAdminMessage(header, message);
         } else {
             onAdminMessageOutOfOrder(header, message);
@@ -518,24 +518,30 @@ public class Session implements Worker {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
         final boolean gapFill = message.getBool(Tag.GapFillFlag, false);
-        if (gapFill) {
-            checkTargetSeqNum(header.msgSeqNum(), true);
-        }
+        final int seqNum = header.msgSeqNum();
+        final boolean synced = !gapFill || checkTargetSeqNum(seqNum, false);
 
-        validateSequenceReset(message);
-        onAdminMessage(header, message);
+        if (synced) {
+            validateSequenceReset(message);
+            onAdminMessage(header, message);
 
-        final int newSeqNo = message.getUInt(Tag.NewSeqNo);
-        if (!gapFill) {
-            syncHigh = newSeqNo - 1;
+            final int newSeqNo = message.getUInt(Tag.NewSeqNo);
+            if (!gapFill) {
+                syncHigh = newSeqNo - 1;
+                syncBatchEnd = 0;
+            }
+
+            state.targetSeqNum(newSeqNo);
+        } else {
+            syncHigh = Math.max(syncHigh, seqNum);
+            syncBatchEnd = 0;
         }
-        state.targetSeqNum(newSeqNo);
     }
 
     protected void processLogout(Header header, Message message) {
         assertStatus(LOGON_SENT, APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        updateTargetSeqNum(header.msgSeqNum());
+        updateTargetSeqNum(header);
         onAdminMessage(header, message);
 
         if (updateStatus(LOGOUT_RECEIVED) == APPLICATION_CONNECTED) {
@@ -548,7 +554,7 @@ public class Session implements Worker {
     protected void processAppMessage(Header header, Message message) {
         assertStatus(APPLICATION_CONNECTED, LOGOUT_SENT);
 
-        if (updateTargetSeqNum(header.msgSeqNum())) {
+        if (updateTargetSeqNum(header)) {
             onAppMessage(header, message);
         } else {
             onAppMessageOutOfOrder(header, message);
@@ -764,12 +770,16 @@ public class Session implements Worker {
     protected void makeAdminHeader(MessageBuilder builder) {
     }
 
-    protected boolean updateTargetSeqNum(int seqNum) {
+    protected boolean updateTargetSeqNum(Header header) {
+        final int seqNum = header.msgSeqNum();
+        final boolean possDup = header.possDup();
         final boolean synced = checkTargetSeqNum(seqNum, false);
         syncHigh = Math.max(syncHigh, seqNum);
 
         if (synced) {
             state.targetSeqNum(seqNum + 1);
+        } else if (possDup) {
+            syncBatchEnd = 0;
         }
 
         return synced;
