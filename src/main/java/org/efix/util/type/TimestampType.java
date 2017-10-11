@@ -18,6 +18,6 @@ public class TimestampType {
     public static final int SECOND_COLON_OFFSET = TIME_OFFSET + 5;
     public static final int SECOND_OFFSET = TIME_OFFSET + 6;
     public static final int DOT_OFFSET = TIME_OFFSET + 8;
-    public static final int MILLISECOND_OFFSET = TIME_OFFSET + 9;
+    public static final int SUB_SECOND_OFFSET = TIME_OFFSET + 9;
 
 }

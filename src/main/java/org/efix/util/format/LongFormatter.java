@@ -5,54 +5,26 @@ import org.efix.util.buffer.BufferUtil;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.type.LongType;
 
+import static org.efix.util.format.IntFormatter.DIGITS;
+
 
 public class LongFormatter {
 
     protected static final Buffer MIN_LONG = BufferUtil.fromString(Long.toString(Long.MIN_VALUE));
 
-    private static final byte[] DIGIT_TEN = {
-            '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
-            '1', '1', '1', '1', '1', '1', '1', '1', '1', '1',
-            '2', '2', '2', '2', '2', '2', '2', '2', '2', '2',
-            '3', '3', '3', '3', '3', '3', '3', '3', '3', '3',
-            '4', '4', '4', '4', '4', '4', '4', '4', '4', '4',
-            '5', '5', '5', '5', '5', '5', '5', '5', '5', '5',
-            '6', '6', '6', '6', '6', '6', '6', '6', '6', '6',
-            '7', '7', '7', '7', '7', '7', '7', '7', '7', '7',
-            '8', '8', '8', '8', '8', '8', '8', '8', '8', '8',
-            '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',
-    };
-
-    private static final byte[] DIGIT_ONE = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    };
-
     public static int formatLong(long value, MutableBuffer buffer, int offset) {
-        if (value >= 0)
-            return formatULong(value, buffer, offset);
-        else
-            return formatNegativeLong(value, buffer, offset);
-    }
+        if (value < 0) {
+            if (value == Long.MIN_VALUE) {
+                buffer.putBytes(offset, MIN_LONG);
+                return offset + LongType.MAX_LENGTH;
+            }
 
-    public static int formatNegativeLong(long value, MutableBuffer buffer, int offset) {
-        if (value == Long.MIN_VALUE) {
-            buffer.putBytes(offset, MIN_LONG);
-            return offset + LongType.MAX_LENGTH;
+            buffer.putByte(offset++, (byte) '-');
+            value = -value;
         }
 
-        buffer.putByte(offset++, (byte) '-');
-        return formatULong(-value, buffer, offset);
+        return formatULong(value, buffer, offset);
     }
-
 
     public static int formatULong(long value, MutableBuffer buffer, int offset) {
         int length = ulongLength(value);
@@ -62,12 +34,9 @@ public class LongFormatter {
     }
 
     protected static void formatULong(long value, MutableBuffer buffer, int offset, int index) {
-        while (value > Integer.MAX_VALUE) {
-            long integer = value / 100;
-            int remainder = (int) (value - ((integer << 6) + (integer << 5) + (integer << 2)));
-            buffer.putByte(--index, DIGIT_ONE[remainder]);
-            buffer.putByte(--index, DIGIT_TEN[remainder]);
-            value = integer;
+        if (value > Integer.MAX_VALUE) {
+            value = format10ULong(value, buffer, index);
+            index -= 10;
         }
 
         IntFormatter.formatUInt((int) value, buffer, offset, index);
@@ -94,6 +63,18 @@ public class LongFormatter {
         if (value < 1000000000000000000L) return 18;
 
         return 19;
+    }
+
+    private static long format10ULong(long value, MutableBuffer buffer, int index) {
+        for (int i = 0; i < 5; i++) {
+            final long newValue = value / 100;
+            final int remainder = (int) (value - (newValue * 100));
+            value = newValue;
+
+            buffer.putShort(index - 2 - (i << 1), DIGITS[remainder]);
+        }
+
+        return value;
     }
 
 }

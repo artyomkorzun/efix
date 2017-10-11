@@ -23,7 +23,7 @@ public class MemoryMessageStoreTest {
     protected static final ByteSequence MSG_TYPE = MsgType.ORDER_SINGLE;
     protected static final int MAX_BODY_LENGTH = CAPACITY / 8 - EXTRA_SIZE - MSG_TYPE.length();
 
-    protected static final long TIME = TestUtil.parseTimestamp("20160125-00:00:00");
+    protected static final long TIME = TestUtil.parseTimestampMs("20160125-00:00:00");
 
     protected static final int SEQ_NUM_INCREMENT = 2;
 

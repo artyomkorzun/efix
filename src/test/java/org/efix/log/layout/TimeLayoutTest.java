@@ -12,7 +12,7 @@ import static org.junit.Assert.assertEquals;
 
 public class TimeLayoutTest {
 
-    protected static final long TIME = parseTimestamp("20160101-00:00:00");
+    protected static final long TIME = parseTimestampMs("20160101-00:00:00");
 
     @Test
     public void shouldFormat() {

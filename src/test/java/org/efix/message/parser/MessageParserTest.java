@@ -52,7 +52,7 @@ public class MessageParserTest {
                     assertTrue(parser.parseBoolean());
                     break;
                 case 7:
-                    assertEquals(parseTimestamp("20121009-13:44:49.421"), parser.parseTimestamp());
+                    assertEquals(parseTimestampMs("20121009-13:44:49.421"), parser.parseTimestamp());
                     break;
                 case 8:
                     assertEquals(parseDate("20121009"), parser.parseDate());

@@ -1,13 +1,14 @@
 package org.efix.schedule;
 
-import static org.efix.util.TestUtil.formatTimestamp;
-import static org.efix.util.TestUtil.parseTimestamp;
+import org.efix.util.TestUtil;
+
+import static org.efix.util.TestUtil.parseTimestampMs;
 import static org.junit.Assert.assertEquals;
 
 public class AbstractSessionScheduleTest {
 
     protected static void checkSchedule(String expectedStart, String expectedEnd, String now, SessionSchedule schedule) {
-        long timestamp = parseTimestamp(now);
+        long timestamp = parseTimestampMs(now);
         long start = schedule.getStartTime(timestamp);
         long end = schedule.getEndTime(timestamp);
 
@@ -16,7 +17,7 @@ public class AbstractSessionScheduleTest {
     }
 
     protected static void assertTimestamp(String message, String expected, long actual) {
-        message = String.format(message, expected, formatTimestamp(actual));
-        assertEquals(message, parseTimestamp(expected), actual);
+        message = String.format(message, expected, TestUtil.formatTimestampMs(actual));
+        assertEquals(message, parseTimestampMs(expected), actual);
     }
 }

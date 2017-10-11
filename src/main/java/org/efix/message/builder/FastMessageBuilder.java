@@ -3,6 +3,7 @@ package org.efix.message.builder;
 import org.efix.util.ByteSequence;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
+import org.efix.util.format.DateFormatter;
 
 import static org.efix.message.FieldUtil.FIELD_SEPARATOR;
 import static org.efix.message.FieldUtil.TAG_VALUE_SEPARATOR;
@@ -11,7 +12,6 @@ import static org.efix.util.format.ByteFormatter.formatByte;
 import static org.efix.util.format.ByteFormatter.formatBytes;
 import static org.efix.util.format.CharFormatter.formatChar;
 import static org.efix.util.format.CharFormatter.formatChars;
-import static org.efix.util.format.DateFormatter.formatDate;
 import static org.efix.util.format.DecimalFormatter.formatDecimal;
 import static org.efix.util.format.DoubleFormatter.formatDouble;
 import static org.efix.util.format.IntFormatter.formatInt;
@@ -122,7 +122,7 @@ public class FastMessageBuilder implements MessageBuilder {
     public MessageBuilder addDate(int tag, long timestamp) {
         offset = formatUInt(tag, buffer, offset);
         offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
-        offset = formatDate(timestamp, buffer, offset);
+        offset = DateFormatter.formatDate(timestamp, buffer, offset);
         offset = formatByte(FIELD_SEPARATOR, buffer, offset);
         return this;
     }
@@ -274,7 +274,7 @@ public class FastMessageBuilder implements MessageBuilder {
 
     @Override
     public MessageBuilder appendDate(long timestamp) {
-        offset = formatDate(timestamp, buffer, offset);
+        offset = DateFormatter.formatDate(timestamp, buffer, offset);
         return this;
     }
 

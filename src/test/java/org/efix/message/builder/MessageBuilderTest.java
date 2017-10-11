@@ -39,7 +39,7 @@ public class MessageBuilderTest {
                 .addByte(Tag.MsgType, (byte) 'A')
                 .addLong(Tag.MsgSeqNum, 1L)
                 .addBytes(Tag.SenderCompID, asciiBytes("DEMO2Kweoj_DEMOFIX"))
-                .addTimestamp(Tag.SendingTime, parseTimestamp("20121009-13:14:57.089"))
+                .addTimestamp(Tag.SendingTime, parseTimestampMs("20121009-13:14:57.089"))
                 .addBytes(Tag.TargetCompID, fromString("DUKASCOPYFIX"))
                 .addDouble(Tag.EncryptMethod, 0.0, 0)
                 .addDouble(Tag.HeartBtInt, 30.0, 1, false)
@@ -54,7 +54,7 @@ public class MessageBuilderTest {
 
     @Test
     public void shouldBuildMessage() {
-        String expected = "1=Y|2=b|3=c|4=4|5=5|6=6.1|7=7.2|8=19700101-00:00:00.000|9=00:00:00.000|10=19700101|" +
+        String expected = "1=Y|2=b|3=c|4=4|5=5|6=6.1|7=7.2|8=20000101-00:00:00.000|9=00:00:00.000|10=20000101|" +
                 "11=array|12=buffer|13=byte sequence|14=char sequence|15=N|16=b|17=c|18=812|19=923123|20=3.14|" +
                 "21=3.15|22=20000101-00:00:00.000|23=23:59:59.000|24=20000101|25=array|26=buffer|27=sequence|28=sequence|29=0.0001|30=10.099";
 
@@ -67,9 +67,9 @@ public class MessageBuilderTest {
                 .addLong(5, 5L)
                 .addDouble(6, 6.1, 2)
                 .addDouble(7, 7.2, 2, false)
-                .addTimestamp(8, parseTimestamp("19700101-00:00:00"))
+                .addTimestamp(8, parseTimestampMs("20000101-00:00:00"))
                 .addTime(9, parseTime("00:00:00"))
-                .addDate(10, parseDate("19700101"))
+                .addDate(10, parseDate("20000101"))
                 .addBytes(11, asciiBytes("array"))
                 .addBytes(12, fromString("buffer"))
                 .addByteSequence(13, new ByteSequenceWrapper(fromString("byte sequence")))
@@ -81,7 +81,7 @@ public class MessageBuilderTest {
                 .startField(19).appendLong(923123L).endField()
                 .startField(20).appendDouble(3.14, 2).endField()
                 .startField(21).appendDouble(3.15, 2, false).endField()
-                .startField(22).appendTimestamp(parseTimestamp("20000101-00:00:00")).endField()
+                .startField(22).appendTimestamp(parseTimestampMs("20000101-00:00:00")).endField()
                 .startField(23).appendTime(parseTime("23:59:59")).endField()
                 .startField(24).appendDate(parseDate("20000101")).endField()
                 .startField(25).appendBytes(asciiBytes("array")).endField()

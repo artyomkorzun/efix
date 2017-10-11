@@ -12,7 +12,7 @@ import org.efix.util.buffer.UnsafeBuffer;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.efix.util.TestUtil.parseTimestamp;
+import static org.efix.util.TestUtil.parseTimestampMs;
 import static org.efix.util.TestUtil.stringMessage;
 import static org.efix.util.buffer.BufferUtil.fromString;
 
@@ -36,17 +36,17 @@ public class MessagePackerTest {
 
     @Test
     public void shouldPackResendMessages() {
-        String expected = "8=FIX.4.4|9=126|35=D|34=10|49=senderComp|50=senderSub|56=targetComp|57=targetSub|52=20000101-00:00:00.000|122=19700101-00:00:00.000|43=Y|1=11|10=160|";
-        shouldPackResendMessage(expected, "senderComp", "senderSub", "targetComp", "targetSub", 10, "20000101-00:00:00", "19700101-00:00:00", "D", "1=11|");
+        String expected = "8=FIX.4.4|9=126|35=D|34=10|49=senderComp|50=senderSub|56=targetComp|57=targetSub|52=20000101-00:00:00.000|122=20000101-00:00:00.000|43=Y|1=11|10=145|";
+        shouldPackResendMessage(expected, "senderComp", "senderSub", "targetComp", "targetSub", 10, "20000101-00:00:00", "20000101-00:00:00", "D", "1=11|");
 
-        expected = "8=FIX.4.4|9=101|35=D|34=10|49=senderComp|56=targetComp|52=20000101-00:00:00.000|122=19700101-00:00:00.000|43=Y|55=ES|10=095|";
-        shouldPackResendMessage(expected, "senderComp", null, "targetComp", null, 10, "20000101-00:00:00", "19700101-00:00:00", "D", "55=ES|");
+        expected = "8=FIX.4.4|9=101|35=D|34=10|49=senderComp|56=targetComp|52=20000101-00:00:00.000|122=20000101-00:00:00.000|43=Y|55=ES|10=080|";
+        shouldPackResendMessage(expected, "senderComp", null, "targetComp", null, 10, "20000101-00:00:00", "20000101-00:00:00.000", "D", "55=ES|");
 
-        expected = "8=FIX.4.4|9=100|35=D|34=10|49=senderComp|56=targetComp|52=20000101-00:00:00.000|122=19700101-00:00:00.000|43=Y|55=A|10=007|";
-        shouldPackResendMessage(expected, "senderComp", null, "targetComp", null, 10, "20000101-00:00:00", "19700101-00:00:00", "D", "55=A|");
+        expected = "8=FIX.4.4|9=100|35=D|34=10|49=senderComp|56=targetComp|52=20000101-00:00:00.000|122=20000101-00:00:00.000|43=Y|55=A|10=248|";
+        shouldPackResendMessage(expected, "senderComp", null, "targetComp", null, 10, "20000101-00:00:00", "20000101-00:00:00.000", "D", "55=A|");
 
-        expected = "8=FIX.4.4|9=107|35=D|34=10|369=99|49=senderComp|56=targetComp|52=20000101-00:00:00.000|122=19700101-00:00:00.000|43=Y|55=A|10=096|";
-        shouldPackResendMessage(expected, "senderComp", null, "targetComp", null, 10, 99, "20000101-00:00:00", "19700101-00:00:00", "D", "55=A|");
+        expected = "8=FIX.4.4|9=107|35=D|34=10|369=99|49=senderComp|56=targetComp|52=20000101-00:00:00.000|122=20000101-00:00:00.000|43=Y|55=A|10=081|";
+        shouldPackResendMessage(expected, "senderComp", null, "targetComp", null, 10, 99, "20000101-00:00:00", "20000101-00:00:00.000", "D", "55=A|");
     }
 
     @Test(expected = InsufficientSpaceException.class)
@@ -93,7 +93,7 @@ public class MessagePackerTest {
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
         MessagePacker packer = new MessagePacker(buffer, true);
-        int length = packer.pack(fixVersion, id, msgSeqNum, lastMsgSeqNumProcessed, parseTimestamp(sendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
+        int length = packer.pack(fixVersion, id, msgSeqNum, lastMsgSeqNumProcessed, parseTimestampMs(sendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
         expected = stringMessage(expected);
@@ -110,7 +110,7 @@ public class MessagePackerTest {
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
         MessagePacker packer = new MessagePacker(buffer);
-        int length = packer.pack(fixVersion, id, msgSeqNum, 1, parseTimestamp(sendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
+        int length = packer.pack(fixVersion, id, msgSeqNum, 1, parseTimestampMs(sendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
         expected = stringMessage(expected);
@@ -127,7 +127,7 @@ public class MessagePackerTest {
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
         MessagePacker packer = new MessagePacker(buffer, true);
-        int length = packer.pack(fixVersion, id, msgSeqNum, lastMsgSeqnumProcessed, parseTimestamp(sendingTime), parseTimestamp(origSendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
+        int length = packer.pack(fixVersion, id, msgSeqNum, lastMsgSeqnumProcessed, parseTimestampMs(sendingTime), parseTimestampMs(origSendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
         expected = stringMessage(expected);
@@ -145,7 +145,7 @@ public class MessagePackerTest {
 
         UnsafeBuffer buffer = UnsafeBuffer.allocateHeap(1024);
         MessagePacker packer = new MessagePacker(buffer);
-        int length = packer.pack(fixVersion, id, msgSeqNum, 1, parseTimestamp(sendingTime), parseTimestamp(origSendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
+        int length = packer.pack(fixVersion, id, msgSeqNum, 1, parseTimestampMs(sendingTime), parseTimestampMs(origSendingTime), ByteSequenceWrapper.of(msgType), fromString(body), 0, body.length());
 
         String actual = BufferUtil.toString(buffer, 0, length);
         expected = stringMessage(expected);

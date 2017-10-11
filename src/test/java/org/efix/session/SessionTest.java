@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 public abstract class SessionTest {
 
     protected static final SessionId SESSION_ID = new SessionId("RECEIVER", "SENDER");
-    protected static final EpochClock CLOCK = new HaltedEpochClock(parseTimestamp("20160101-00:00:00"));
+    protected static final EpochClock CLOCK = new HaltedEpochClock(parseTimestampMs("20160101-00:00:00"));
 
     protected final SessionType sessionType;
 

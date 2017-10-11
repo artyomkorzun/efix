@@ -5,19 +5,46 @@ import org.efix.util.buffer.UnsafeBuffer;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TestUtil {
 
     protected static final ZoneId UTC_ZONE = ZoneId.of("UTC");
-    protected static final DateTimeFormatter TIMESTAMP_PARSER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss[.SSS]");
-    protected static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss.SSS");
+
+    protected static final DateTimeFormatter TIMESTAMP_PARSER = new DateTimeFormatterBuilder().appendPattern("uuuuMMdd-HH:mm:ss")
+            .appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
+            .toFormatter();
+
+    protected static final DateTimeFormatter TIMESTAMP_S_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss");
+    protected static final DateTimeFormatter TIMESTAMP_MS_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss.SSS");
+    protected static final DateTimeFormatter TIMESTAMP_US_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss.SSSSSS");
+    protected static final DateTimeFormatter TIMESTAMP_NS_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd-HH:mm:ss.SSSSSSSSS");
+
     protected static final DateTimeFormatter DATE_PARSER_FORMATTER = DateTimeFormatter.ofPattern("uuuuMMdd");
     protected static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
-    public static long parseTimestamp(String string) {
+    public static long parseTimestampS(String string) {
+        LocalDateTime timestamp = LocalDateTime.parse(string, TIMESTAMP_PARSER);
+        return timestamp.atZone(UTC_ZONE).toInstant().getEpochSecond();
+    }
+
+    public static long parseTimestampMs(String string) {
         LocalDateTime timestamp = LocalDateTime.parse(string, TIMESTAMP_PARSER);
         return timestamp.atZone(UTC_ZONE).toInstant().toEpochMilli();
+    }
+
+    public static long parseTimestampUs(String string) {
+        final LocalDateTime timestamp = LocalDateTime.parse(string, TIMESTAMP_PARSER);
+        final Instant instant = timestamp.atZone(UTC_ZONE).toInstant();
+        return instant.getEpochSecond() * 1_000_000 + instant.getNano() / 1000;
+    }
+
+    public static long parseTimestampNs(String string) {
+        final LocalDateTime timestamp = LocalDateTime.parse(string, TIMESTAMP_PARSER);
+        final Instant instant = timestamp.atZone(UTC_ZONE).toInstant();
+        return instant.getEpochSecond() * 1_000_000_000 + instant.getNano();
     }
 
     public static int parseTime(String string) {
@@ -30,9 +57,20 @@ public class TestUtil {
         return date.atStartOfDay(UTC_ZONE).toInstant().toEpochMilli();
     }
 
+    public static String formatTimestampS(long timestampS) {
+        return Instant.ofEpochSecond(timestampS).atZone(UTC_ZONE).format(TIMESTAMP_S_FORMATTER);
+    }
 
-    public static String formatTimestamp(long timestamp) {
-        return Instant.ofEpochMilli(timestamp).atZone(UTC_ZONE).format(TIMESTAMP_FORMATTER);
+    public static String formatTimestampMs(long timestampMs) {
+        return Instant.ofEpochMilli(timestampMs).atZone(UTC_ZONE).format(TIMESTAMP_MS_FORMATTER);
+    }
+
+    public static String formatTimestampUs(long timestampUs) {
+        return Instant.ofEpochSecond(0, timestampUs * 1_000).atZone(UTC_ZONE).format(TIMESTAMP_US_FORMATTER);
+    }
+
+    public static String formatTimestampNs(long timestamp) {
+        return Instant.ofEpochSecond(0, timestamp).atZone(UTC_ZONE).format(TIMESTAMP_NS_FORMATTER);
     }
 
     public static String formatDate(long timestamp) {

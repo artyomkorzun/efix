@@ -9,7 +9,7 @@ import static org.efix.util.TestUtil.generateLong;
 
 public class DateFormatterTest extends AbstractFormatterTest {
 
-    protected static final long MIN_TIMESTAMP = TestUtil.parseDate("19040101");
+    protected static final long MIN_TIMESTAMP = TestUtil.parseDate("20000101");
     protected static final long MAX_TIMESTAMP = TestUtil.parseDate("21000101");
 
     protected static final Verifier<Long> VERIFIER = TestUtil::formatDate;
@@ -20,6 +20,7 @@ public class DateFormatterTest extends AbstractFormatterTest {
         shouldFormat(MIN_TIMESTAMP);
         shouldFormat(MAX_TIMESTAMP);
         shouldFormat(3124193485230L);   // 20681231
+        shouldFormat(3279979719397L);
     }
 
     @Test

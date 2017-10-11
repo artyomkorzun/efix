@@ -7,7 +7,7 @@ import static org.efix.util.TestUtil.generateInt;
 
 public class TimestampParserTest extends AbstractParserTest {
 
-    protected static final Verifier<Long> VERIFIER = TestUtil::parseTimestamp;
+    protected static final Verifier<Long> VERIFIER = TestUtil::parseTimestampMs;
     protected static final Parser<Long> PARSER = TimestampParser::parseTimestamp;
 
     @Test

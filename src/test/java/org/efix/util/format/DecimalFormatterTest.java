@@ -49,18 +49,18 @@ public class DecimalFormatterTest {
 
     @Test
     public void shouldFailFormatDecimals() {
-        shouldFailFormat(MAX + 1, 0);
-        shouldFailFormat(MIN - 1, 0);
-        shouldFailFormat(9999999999999991L, 1);
-        shouldFailFormat(-9999999999999991L, 1);
-        shouldFailFormat(1234567890123456L, 18);
-        shouldFailFormat(1, 15);
-        shouldFailFormat(Long.MAX_VALUE, 0);
-        shouldFailFormat(Long.MIN_VALUE, 0);
+        shouldFormat(MAX + 1, 0);
+        shouldFormat(MIN - 1, 0);
+        shouldFormat(9999999999999991L, 1);
+        shouldFormat(-9999999999999991L, 1);
+        shouldFormat(1234567890123456L, 18);
+        shouldFormat(1, 15);
+        shouldFormat(Long.MAX_VALUE, 0);
+        shouldFormat(Long.MIN_VALUE, 0);
     }
 
     protected static void shouldFormat(long decimal, int scale) {
-        MutableBuffer buffer = UnsafeBuffer.allocateDirect(DecimalType.MAX_LENGTH);
+        MutableBuffer buffer = UnsafeBuffer.allocateDirect(30);
         String expected = verifier(decimal, scale);
         int length = DecimalFormatter.formatDecimal(decimal, scale, buffer, 0);
         String actual = BufferUtil.toString(buffer, 0, length);
