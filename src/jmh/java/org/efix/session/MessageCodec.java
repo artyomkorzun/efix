@@ -62,7 +62,7 @@ public class MessageCodec {
         }
 
         if (message.hasTransactTime()) {
-            builder.addTimestamp(Tag.TransactTime, message.getTransactTime());
+            builder.addTimestampMs(Tag.TransactTime, message.getTransactTime());
         }
 
         if (message.hasBroker()) {
@@ -86,7 +86,7 @@ public class MessageCodec {
         }
 
         if (message.hasExpireTime()) {
-            builder.addTimestamp(Tag.ExpireTime, message.getExpireTime());
+            builder.addTimestampMs(Tag.ExpireTime, message.getExpireTime());
         }
 
         if (message.hasSecurityType()) {
@@ -589,7 +589,7 @@ public class MessageCodec {
         long limitPrice = map.getDecimal(Tag.Price, SCALE, 0);
 
         byte timeInForce = map.getByte(Tag.TimeInForce, (byte) 0);
-        long transactTime = map.getTimestamp(Tag.TransactTime, 0);
+        long transactTime = map.getTimestampMs(Tag.TransactTime, 0);
 
         message.setAccount(account);
         message.setBroker(broker);

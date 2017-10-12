@@ -49,6 +49,19 @@ public class IntFormatter {
         return end;
     }
 
+    public static int format9DigitUInt(int value, MutableBuffer buffer, int offset) {
+        for (int i = 0; i < 4; i++) {
+            final int newValue = (int) (2748779070L * value >>> 38);
+            final int remainder = value - newValue * 100;
+            value = newValue;
+
+            buffer.putShort(offset + (7 - (i << 1)), DIGITS[remainder]);
+        }
+
+        buffer.putByte(offset, (byte) (value + '0'));
+        return offset + 9;
+    }
+
     public static int format4DigitUInt(int value, MutableBuffer buffer, int offset) {
         final int firstDigits = (int) (2748779070L * value >>> 38);
         final int lastDigits = value - firstDigits * 100;

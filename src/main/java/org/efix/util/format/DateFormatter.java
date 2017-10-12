@@ -2,8 +2,6 @@ package org.efix.util.format;
 
 import org.efix.util.buffer.MutableBuffer;
 
-import java.util.concurrent.TimeUnit;
-
 import static org.efix.util.format.IntFormatter.format2DigitUInt;
 import static org.efix.util.format.IntFormatter.format4DigitUInt;
 
@@ -61,13 +59,11 @@ public class DateFormatter {
     private static final short[] DAYS = {0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
     private static final short[] DAYS_LEAP = {0, 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
 
-    protected static int formatDate(long timestamp, TimeUnit unit, MutableBuffer buffer, int offset) {
-        timestamp = unit.toNanos(timestamp);
+    protected static int formatDateNs(final long timestampNs, final MutableBuffer buffer, final int offset) {
+        checkTimestampNs(timestampNs);
 
-        checkTimestampNs(timestamp);
-
-        int days = (int) ((timestamp - EPOCH_TO_2000_NS) / DAY_NS);
-        int cycles4 = days / DAYS_IN_4_CYCLE;
+        int days = (int) ((timestampNs - EPOCH_TO_2000_NS) / DAY_NS);
+        final int cycles4 = days / DAYS_IN_4_CYCLE;
         days -= cycles4 * DAYS_IN_4_CYCLE;
 
         int year = 2000 + (cycles4 << 2);
@@ -125,13 +121,13 @@ public class DateFormatter {
     }
 
     protected static void checkTimestamp(long timestamp) {
-        if (timestamp < EPOCH_TO_2000_MS || timestamp > EPOCH_TO_2100_MS) {
+        if (timestamp < EPOCH_TO_2000_MS | timestamp > EPOCH_TO_2100_MS) {
             throw new FormatterException("Timestamp " + timestamp + " is out of 2000-2100 years");
         }
     }
 
     protected static void checkTimestampNs(long timestamp) {
-        if (timestamp < EPOCH_TO_2000_NS || timestamp > EPOCH_TO_2100_NS) {
+        if (timestamp < EPOCH_TO_2000_NS | timestamp > EPOCH_TO_2100_NS) {
             throw new FormatterException("Timestamp " + timestamp + " is out of 2000-2100 years");
         }
     }

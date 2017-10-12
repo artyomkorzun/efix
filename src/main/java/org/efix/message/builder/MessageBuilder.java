@@ -27,7 +27,10 @@ public interface MessageBuilder {
     MessageBuilder addDecimal(int tag, long value, int scale);
 
 
-    MessageBuilder addTimestamp(int tag, long timestamp);
+    MessageBuilder addTimestampMs(int tag, long timestampMs);
+
+    MessageBuilder addTimestampNs(int tag, long timestampNs);
+
 
     MessageBuilder addTime(int tag, long timestamp);
 
@@ -79,7 +82,10 @@ public interface MessageBuilder {
     MessageBuilder appendDecimal(long value, int scale);
 
 
-    MessageBuilder appendTimestamp(long timestamp);
+    MessageBuilder appendTimestampMs(long timestampMs);
+
+    MessageBuilder appendTimestampNs(long timestampNs);
+
 
     MessageBuilder appendTime(long timestamp);
 

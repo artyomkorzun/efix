@@ -159,7 +159,7 @@ public class SafeMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public MessageBuilder addTimestamp(int tag, long timestamp) {
+    public MessageBuilder addTimestampMs(int tag, long timestampMs) {
         if (CHECK_BOUNDS) {
             final int required = IntType.MAX_UINT_LENGTH + ByteType.LENGTH + TimestampType.MILLISECOND_TIMESTAMP_LENGTH + ByteType.LENGTH;
             final int remaining = remaining();
@@ -169,7 +169,22 @@ public class SafeMessageBuilder implements MessageBuilder {
             }
         }
 
-        builder.addTimestamp(tag, timestamp);
+        builder.addTimestampMs(tag, timestampMs);
+        return this;
+    }
+
+    @Override
+    public MessageBuilder addTimestampNs(int tag, long timestampNs) {
+        if (CHECK_BOUNDS) {
+            final int required = IntType.MAX_UINT_LENGTH + ByteType.LENGTH + TimestampType.NANOSECOND_TIMESTAMP_LENGTH + ByteType.LENGTH;
+            final int remaining = remaining();
+
+            if (required > remaining) {
+                throw new InsufficientSpaceException(String.format("Insufficient space in buffer, required %s, remaining %s", required, remaining));
+            }
+        }
+
+        builder.addTimestampNs(tag, timestampNs);
         return this;
     }
 
@@ -573,7 +588,7 @@ public class SafeMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public MessageBuilder appendTimestamp(long timestamp) {
+    public MessageBuilder appendTimestampMs(long timestampMs) {
         if (CHECK_BOUNDS) {
             final int required = TimestampType.MILLISECOND_TIMESTAMP_LENGTH;
             final int remaining = remaining();
@@ -582,7 +597,23 @@ public class SafeMessageBuilder implements MessageBuilder {
                 throw new InsufficientSpaceException(String.format("Insufficient space in buffer, required %s, remaining %s", required, remaining));
             }
         }
-        builder.appendTimestamp(timestamp);
+
+        builder.appendTimestampMs(timestampMs);
+        return this;
+    }
+
+    @Override
+    public MessageBuilder appendTimestampNs(final long timestampNs) {
+        if (CHECK_BOUNDS) {
+            final int required = TimestampType.NANOSECOND_TIMESTAMP_LENGTH;
+            final int remaining = remaining();
+
+            if (required > remaining) {
+                throw new InsufficientSpaceException(String.format("Insufficient space in buffer, required %s, remaining %s", required, remaining));
+            }
+        }
+
+        builder.appendTimestampNs(timestampNs);
         return this;
     }
 

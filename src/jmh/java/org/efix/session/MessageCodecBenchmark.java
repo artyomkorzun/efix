@@ -88,7 +88,7 @@ public class MessageCodecBenchmark {
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
-                .include("org.efix.session")
+                .include("org.efix.session.MessageCodecBenchmark")
                 .jvmArgsAppend("-Defix.disable.bounds.check=true")
                 .forks(2)
                 .build();

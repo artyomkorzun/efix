@@ -142,7 +142,7 @@ public class Ping {
                     .addCharSequence(Tag.Symbol, "ESH6")
                     .addCharSequence(Tag.Text, "TEXT")
                     .addByte(Tag.TimeInForce, TimeInForce.DAY)
-                    .addTimestamp(Tag.TransactTime, TRANSACT_TIME)
+                    .addTimestampMs(Tag.TransactTime, TRANSACT_TIME)
                     .addCharSequence(Tag.SecurityType, "FUT");
         }
 

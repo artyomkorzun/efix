@@ -20,7 +20,7 @@ public class TimeLayout implements Layout {
 
     @Override
     public void format(boolean inbound, long time, Buffer message, int offset, int length, MutableBuffer buffer, int bufferOffset) {
-        bufferOffset = TimestampFormatter.formatTimestamp(time, buffer, bufferOffset);
+        bufferOffset = TimestampFormatter.formatTimestampMs(time, buffer, bufferOffset);
         bufferOffset = formatChar(':', buffer, bufferOffset);
         bufferOffset = formatChar(' ', buffer, bufferOffset);
         bufferOffset = ByteFormatter.formatBytes(message, offset, length, buffer, bufferOffset);

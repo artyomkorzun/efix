@@ -129,7 +129,7 @@ public class MessagePacker {
     protected static int addTimestamp(int tag, long value, MutableBuffer buffer, int offset) {
         offset = IntFormatter.formatUInt(tag, buffer, offset);
         offset = ByteFormatter.formatByte(FieldUtil.TAG_VALUE_SEPARATOR, buffer, offset);
-        offset = TimestampFormatter.formatTimestamp(value, buffer, offset);
+        offset = TimestampFormatter.formatTimestampMs(value, buffer, offset);
         offset = ByteFormatter.formatByte(FieldUtil.FIELD_SEPARATOR, buffer, offset);
 
         return offset;

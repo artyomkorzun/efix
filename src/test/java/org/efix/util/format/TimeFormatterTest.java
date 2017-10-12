@@ -10,7 +10,7 @@ public class TimeFormatterTest extends AbstractFormatterTest {
     protected static final long MAX_TIMESTAMP = TestUtil.parseDate("99991231");
 
     protected static final Verifier<Long> VERIFIER = TestUtil::formatTime;
-    protected static final Formatter<Long> FORMATTER = TimeFormatter::formatTime;
+    protected static final Formatter<Long> FORMATTER = TimeFormatter::formatTimeMs;
 
     @Test
     public void shouldFormatTimes() {

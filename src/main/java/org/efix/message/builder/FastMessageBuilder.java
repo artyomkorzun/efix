@@ -4,6 +4,7 @@ import org.efix.util.ByteSequence;
 import org.efix.util.buffer.Buffer;
 import org.efix.util.buffer.MutableBuffer;
 import org.efix.util.format.DateFormatter;
+import org.efix.util.format.TimestampFormatter;
 
 import static org.efix.message.FieldUtil.FIELD_SEPARATOR;
 import static org.efix.message.FieldUtil.TAG_VALUE_SEPARATOR;
@@ -17,8 +18,7 @@ import static org.efix.util.format.DoubleFormatter.formatDouble;
 import static org.efix.util.format.IntFormatter.formatInt;
 import static org.efix.util.format.IntFormatter.formatUInt;
 import static org.efix.util.format.LongFormatter.formatLong;
-import static org.efix.util.format.TimeFormatter.formatTime;
-import static org.efix.util.format.TimestampFormatter.formatTimestamp;
+import static org.efix.util.format.TimeFormatter.formatTimeMs;
 
 
 public class FastMessageBuilder implements MessageBuilder {
@@ -101,10 +101,19 @@ public class FastMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public MessageBuilder addTimestamp(int tag, long timestamp) {
+    public MessageBuilder addTimestampMs(int tag, long timestampMs) {
         offset = formatUInt(tag, buffer, offset);
         offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
-        offset = formatTimestamp(timestamp, buffer, offset);
+        offset = TimestampFormatter.formatTimestampMs(timestampMs, buffer, offset);
+        offset = formatByte(FIELD_SEPARATOR, buffer, offset);
+        return this;
+    }
+
+    @Override
+    public MessageBuilder addTimestampNs(int tag, long timestampNs) {
+        offset = formatUInt(tag, buffer, offset);
+        offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
+        offset = TimestampFormatter.formatTimestampNs(timestampNs, buffer, offset);
         offset = formatByte(FIELD_SEPARATOR, buffer, offset);
         return this;
     }
@@ -113,7 +122,7 @@ public class FastMessageBuilder implements MessageBuilder {
     public MessageBuilder addTime(int tag, long timestamp) {
         offset = formatUInt(tag, buffer, offset);
         offset = formatByte(TAG_VALUE_SEPARATOR, buffer, offset);
-        offset = formatTime(timestamp, buffer, offset);
+        offset = formatTimeMs(timestamp, buffer, offset);
         offset = formatByte(FIELD_SEPARATOR, buffer, offset);
         return this;
     }
@@ -261,14 +270,20 @@ public class FastMessageBuilder implements MessageBuilder {
     }
 
     @Override
-    public MessageBuilder appendTimestamp(long timestamp) {
-        offset = formatTimestamp(timestamp, buffer, offset);
+    public MessageBuilder appendTimestampMs(long timestampMs) {
+        offset = TimestampFormatter.formatTimestampMs(timestampMs, buffer, offset);
+        return this;
+    }
+
+    @Override
+    public MessageBuilder appendTimestampNs(final long timestampNs) {
+        offset = TimestampFormatter.formatTimestampNs(timestampNs, buffer, offset);
         return this;
     }
 
     @Override
     public MessageBuilder appendTime(long timestamp) {
-        offset = formatTime(timestamp, buffer, offset);
+        offset = formatTimeMs(timestamp, buffer, offset);
         return this;
     }
 

@@ -402,7 +402,7 @@ public final class Message {
         return DecimalParser.parseUDecimalHalfUp(tag, scale, buffer, offset, end);
     }
 
-    public long getTimestamp(int tag/*, TimeUnit units*/) throws NoFieldException {
+    public long getTimestampMs(int tag) throws NoFieldException {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
 
@@ -413,10 +413,10 @@ public final class Message {
         int offset = entries[index + 1];
         int end = entries[index + 2];
 
-        return TimestampParser.parseTimestamp(tag, buffer, offset, end);
+        return TimestampParser.parseTimestampMs(tag, buffer, offset, end);
     }
 
-    public long getTimestamp(int tag/*, TimeUnit units*/, long noValue) {
+    public long getTimestampMs(int tag, long noValue) {
         final int[] entries = this.entries;
         final int index = getIndex(tag, entries);
 
@@ -427,7 +427,35 @@ public final class Message {
         int offset = entries[index + 1];
         int end = entries[index + 2];
 
-        return TimestampParser.parseTimestamp(tag, buffer, offset, end);
+        return TimestampParser.parseTimestampMs(tag, buffer, offset, end);
+    }
+
+    public long getTimestampNs(int tag) throws NoFieldException {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            throw new NoFieldException(tag);
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return TimestampParser.parseTimestampNs(tag, buffer, offset, end);
+    }
+
+    public long getTimestampNs(int tag, long noValue) {
+        final int[] entries = this.entries;
+        final int index = getIndex(tag, entries);
+
+        if (index == NOT_FOUND) {
+            return noValue;
+        }
+
+        int offset = entries[index + 1];
+        int end = entries[index + 2];
+
+        return TimestampParser.parseTimestampNs(tag, buffer, offset, end);
     }
 
     public long getDate(int tag/*, TimeUnit units*/) throws NoFieldException {

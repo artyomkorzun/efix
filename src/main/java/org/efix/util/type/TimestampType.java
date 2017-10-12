@@ -4,6 +4,8 @@ public class TimestampType {
 
     public static final int SECOND_TIMESTAMP_LENGTH = DateType.LENGTH + 1 + TimeType.SECOND_TIME_LENGTH;
     public static final int MILLISECOND_TIMESTAMP_LENGTH = DateType.LENGTH + 1 + TimeType.MILLISECOND_TIME_LENGTH;
+    public static final int MICROSECOND_TIMESTAMP_LENGTH = MILLISECOND_TIMESTAMP_LENGTH + 3;
+    public static final int NANOSECOND_TIMESTAMP_LENGTH = MICROSECOND_TIMESTAMP_LENGTH + 3;
 
     public static final int YEAR_OFFSET = 0;
     public static final int MONTH_OFFSET = 4;
