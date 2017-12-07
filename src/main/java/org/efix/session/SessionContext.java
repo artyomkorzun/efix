@@ -205,16 +205,18 @@ public class SessionContext {
         return socketReuseAddress;
     }
 
-    public void socketReuseAddress(boolean socketReuseAddress) {
+    public SessionContext socketReuseAddress(boolean socketReuseAddress) {
         this.socketReuseAddress = socketReuseAddress;
+        return this;
     }
 
     public boolean socketKeepAlive() {
         return socketKeepAlive;
     }
 
-    public void socketKeepAlive(boolean socketKeepAlive) {
+    public SessionContext socketKeepAlive(boolean socketKeepAlive) {
         this.socketKeepAlive = socketKeepAlive;
+        return this;
     }
 
     public int messageBufferSize() {
@@ -338,16 +340,18 @@ public class SessionContext {
         return withLastMsgSeqNumProcessed;
     }
 
-    public void withLastMsgSeqNumProcessed(boolean withLastMsgSeqNumProcessed) {
+    public SessionContext withLastMsgSeqNumProcessed(boolean withLastMsgSeqNumProcessed) {
         this.withLastMsgSeqNumProcessed = withLastMsgSeqNumProcessed;
+        return this;
     }
 
     public int syncBatchSize() {
         return syncBatchSize;
     }
 
-    public void syncBatchSize(int syncBatchSize) {
+    public SessionContext syncBatchSize(int syncBatchSize) {
         this.syncBatchSize = syncBatchSize;
+        return this;
     }
 
     public Sender sender() {
