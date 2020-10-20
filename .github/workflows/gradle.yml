@@ -3,6 +3,9 @@
 
 name: Java CI with Gradle
 
+env:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
 on:
   workflow_dispatch:
   push:
